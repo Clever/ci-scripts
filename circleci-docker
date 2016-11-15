@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -e
+
+DOCKERHUB_USER=$1
+DOCKERHUB_PASS=$2
+DOCKERHUB_EMAIL=$3
+
+ORG=$4
+REPO=$CIRCLE_PROJECT_REPONAME
+SHORT_SHA=${CIRCLE_SHA1:0:7}
+
+echo "Logging into DockerHub..."
+docker login -u $DOCKERHUB_USER -p $DOCKERHUB_PASS --email="$DOCKERHUB_EMAIL"
+
+echo "Building docker image..."
+docker build -t $ORG/$REPO:$SHORT_SHA .
+
+echo "Pushing docker image..."
+docker push $ORG/$REPO:$SHORT_SHA
