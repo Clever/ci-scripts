@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Logs into Docker registry, then builds and pushes docker image.
+# Docker image is tagged with 7 character git commit SHA.
+#
+# Usage:
+#
+#   circleci-docker [DOCKERHUB_USER] [DOCKERHUB_PASS] [DOCKERHUB_EMAIL] [ORG]
+
+
 set -e
 
 DOCKERHUB_USER=$1

@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Authenticates to NPM and publishes a package.
+#
+# Sets up an npmrc file using NPM_TOKEN.
+# Publish the package in directory PACKAGE_DIR.
+
+set -e
+
+NPM_TOKEN=$1
+PACKAGE_DIR=$2
+
+NPM_REGISTRY=registry.npmjs.org
+NPMRC=$HOME/.npmrc
+echo "Setting up $NPMRC ..."
+
+if [ ! -f $NPMRC ];
+then
+    echo "$NPMRC already exists, but publish script expects it to not yet exist."
+    exit 1
+fi
+
+touch $NPMRC
+echo "//$NPM_REGISTRY/:_authToken=$NPM_TOKEN" >> $NPMRC
+echo "always-auth=true" >> $NPMRC
+
+echo "Publishing package to NPM..."
+_NPM_PACKAGE_NAME=$(cd $PACKAGE_DIR && npm list | head -n 1 | cut -d ' ' -f1)
+_EXISTING_NPM_PKG=$(npm info ${_NPM_PACKAGE_NAME} 2> /dev/null || true)
+if [ "${_EXISTING_NPM_PKG}" = "" ] || [ "${_EXISTING_NPM_PKG}" = "undefined" ]
+then
+	npm publish $PACKAGE_DIR
+else
+	echo "Skipped publish, package ${_NPM_PACKAGE_NAME} already published."
+fi
