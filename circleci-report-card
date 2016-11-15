@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+
+DOCKERHUB_USER=$1
+DOCKERHUB_PASS=$2
+DOCKERHUB_EMAIL=$3
+
+echo "Logging into DockerHub..."
+docker login -u $DOCKERHUB_USER -p $DOCKERHUB_PASS --email="$DOCKERHUB_EMAIL"
+
+echo "Running report-card..."
+docker run -t -v `pwd`:/repo/$(basename `pwd`) clever/report-card --repo /repo/$(basename `pwd`)
