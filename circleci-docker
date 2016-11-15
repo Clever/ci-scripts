@@ -10,12 +10,20 @@
 
 set -e
 
+# User supplied args
 DOCKERHUB_USER=$1
+if [[ -z $DOCKERHUB_USER ]]; then echo "Missing arg1 DOCKERHUB_USER" && exit 1; fi
 DOCKERHUB_PASS=$2
+if [[ -z $DOCKERHUB_PASS ]]; then echo "Missing arg2 DOCKERHUB_PASS" && exit 1; fi
 DOCKERHUB_EMAIL=$3
-
+if [[ -z $DOCKERHUB_EMAIL ]]; then echo "Missing arg3 DOCKERHUB_EMAIL" && exit 1; fi
 ORG=$4
+if [[ -z $ORG ]]; then echo "Missing arg4 ORG" && exit 1; fi
+
+# Set automatically by CircleCI
+: ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
 REPO=$CIRCLE_PROJECT_REPONAME
+: ${CIRCLE_SHA1?"Missing required env var"}
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 
 echo "Logging into DockerHub..."
