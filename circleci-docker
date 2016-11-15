@@ -5,18 +5,18 @@
 #
 # Usage:
 #
-#   circleci-docker [DOCKERHUB_USER] [DOCKERHUB_PASS] [DOCKERHUB_EMAIL] [ORG]
+#   circleci-docker [DOCKER_USER] [DOCKER_PASS] [DOCKER_EMAIL] [ORG]
 
 
 set -e
 
 # User supplied args
-DOCKERHUB_USER=$1
-if [[ -z $DOCKERHUB_USER ]]; then echo "Missing arg1 DOCKERHUB_USER" && exit 1; fi
-DOCKERHUB_PASS=$2
-if [[ -z $DOCKERHUB_PASS ]]; then echo "Missing arg2 DOCKERHUB_PASS" && exit 1; fi
-DOCKERHUB_EMAIL=$3
-if [[ -z $DOCKERHUB_EMAIL ]]; then echo "Missing arg3 DOCKERHUB_EMAIL" && exit 1; fi
+DOCKER_USER=$1
+if [[ -z $DOCKER_USER ]]; then echo "Missing arg1 DOCKER_USER" && exit 1; fi
+DOCKER_PASS=$2
+if [[ -z $DOCKER_PASS ]]; then echo "Missing arg2 DOCKER_PASS" && exit 1; fi
+DOCKER_EMAIL=$3
+if [[ -z $DOCKER_EMAIL ]]; then echo "Missing arg3 DOCKER_EMAIL" && exit 1; fi
 ORG=$4
 if [[ -z $ORG ]]; then echo "Missing arg4 ORG" && exit 1; fi
 
@@ -27,7 +27,7 @@ REPO=$CIRCLE_PROJECT_REPONAME
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 
 echo "Logging into DockerHub..."
-docker login -u $DOCKERHUB_USER -p $DOCKERHUB_PASS --email="$DOCKERHUB_EMAIL"
+docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL"
 
 echo "Building docker image..."
 docker build -t $ORG/$REPO:$SHORT_SHA .
