@@ -17,7 +17,7 @@ NPM_REGISTRY=registry.npmjs.org
 NPMRC=$HOME/.npmrc
 echo "Setting up $NPMRC ..."
 
-if [ ! -f $NPMRC ];
+if [ -f $NPMRC ];
 then
     echo "$NPMRC already exists, but publish script expects it to not yet exist."
     exit 1
