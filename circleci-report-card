@@ -11,7 +11,7 @@ DOCKER_EMAIL=$3
 if [[ -z $DOCKER_EMAIL ]]; then echo "Missing arg3 DOCKER_EMAIL" && exit 1; fi
 
 echo "Logging into DockerHub..."
-docker login -u $DOCKERHUB_USER -p $DOCKERHUB_PASS --email="$DOCKERHUB_EMAIL"
+docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL"
 
 echo "Running report-card..."
 docker run -t -v `pwd`:/repo/$(basename `pwd`) clever/report-card --repo /repo/$(basename `pwd`)
