@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Publishes build and application objects to Catapult.
+#
+# Usage:
+#
+#   circleci-catapult [CATAPULT_URL] [APP_NAME]
+
+# TODO: Implement functionality from here...
+# https://github.com/Clever/drone/blob/master/plugin/publish/catapult.go
+set -e
+
+# User supplied args
+CATAPULT_URL=$1
+if [[ -z $CATAPULT_URL ]]; then echo "Missing arg1 CATAPULT_URL" && exit 1; fi
+APP_NAME=$2
+if [[ -z $APP_NAME ]]; then echo "Missing arg2 APP_NAME" && exit 1; fi
+
+# Set automatically by CircleCI
+: ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
+REPO=$CIRCLE_PROJECT_REPONAME
+
+echo "Error! Not yet implemented"
+return 1

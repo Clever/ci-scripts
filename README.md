@@ -11,7 +11,7 @@ Owned by `#eng-infra`.
 ### Docker
 
 ```
-$ ./circleci-docker [user] [pass] [email] [org]
+$ ./circleci-docker <docker_user> <docker_pass> <docker_email> <org>
 ```
 
 Publishes an image to DockerHub at `<org>/<repo>`.
@@ -19,16 +19,21 @@ Tags the image according to the git short commit sha; this is 7 characters long 
 
 ### Npm
 
+_Not yet implemented._
+
 ```
-$ ./circleci-npm
+$ ./circleci-npm <npm_token> <package_dir>
 ```
 
-Publish package to NPM, according to configuration specified in `package.json`.
+Publish package to NPM, according to configuration specified in `<package_dir>/package.json`.
+Requires `npm_token` to authenticate.
 
 ### Github Release
 
+_Not yet implemented._
+
 ```
-$ ./circleci-gh-release [version] [path_to_artifacts]
+$ ./circleci-gh-release <version> <path_to_artifacts>
 ```
 
 ### Catapult
@@ -36,7 +41,7 @@ $ ./circleci-gh-release [version] [path_to_artifacts]
 Publishes your application and build in [catapult](github.com/clever/catapult).
 
 ```
-$ ./circleci-catapult $catapult_url $catapult_app
+$ ./circleci-catapult <catapult_url> <catapult_app>
 ```
 
 If you need to publish multiple applications, run this command once for each.
@@ -46,5 +51,5 @@ If you need to publish multiple applications, run this command once for each.
 Runs [report-card](github.com/clever/report-card).
 
 ```
-$ ./circleci-report-card
+$ ./circleci-report-card <docker_user> <docker_pass> <docker_email>
 ```
