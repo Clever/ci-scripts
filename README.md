@@ -19,8 +19,6 @@ Tags the image according to the git short commit sha; this is 7 characters long 
 
 ### Npm
 
-_Not yet implemented._
-
 ```
 $ ./circleci-npm <npm_token> <package_dir>
 ```
@@ -37,6 +35,8 @@ $ ./circleci-gh-release <version> <path_to_artifacts>
 ```
 
 ### Catapult
+
+_Not yet implemented._
 
 Publishes your application and build in [catapult](github.com/clever/catapult).
 
