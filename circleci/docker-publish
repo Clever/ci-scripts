@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Logs into Docker registry, then builds and pushes docker image.
+# Docker image is tagged with 7 character git commit SHA.
+#
+# Usage:
+#
+#   circleci-docker [DOCKER_USER] [DOCKER_PASS] [DOCKER_EMAIL] [ORG]
+
+
+set -e
+
+# User supplied args
+DOCKER_USER=$1
+if [[ -z $DOCKER_USER ]]; then echo "Missing arg1 DOCKER_USER" && exit 1; fi
+DOCKER_PASS=$2
+if [[ -z $DOCKER_PASS ]]; then echo "Missing arg2 DOCKER_PASS" && exit 1; fi
+DOCKER_EMAIL=$3
+if [[ -z $DOCKER_EMAIL ]]; then echo "Missing arg3 DOCKER_EMAIL" && exit 1; fi
+ORG=$4
+if [[ -z $ORG ]]; then echo "Missing arg4 ORG" && exit 1; fi
+
+# Set automatically by CircleCI
+: ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
+REPO=$CIRCLE_PROJECT_REPONAME
+: ${CIRCLE_SHA1?"Missing required env var"}
+SHORT_SHA=${CIRCLE_SHA1:0:7}
+
+echo "Logging into DockerHub..."
+docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL"
+
+echo "Building docker image..."
+docker build -t $ORG/$REPO:$SHORT_SHA .
+
+echo "Pushing docker image..."
+docker push $ORG/$REPO:$SHORT_SHA

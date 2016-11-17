@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Publishes content from [artifacts_dir] as a Github Release.
+#
+# Usage:
+#
+#   circleci-gh-release [GITHUB_TOKEN] [ARTIFACTS_DIR]
+
+# TODO: Implement subset of functionality from here that we use at Clever...
+# https://github.com/Clever/drone/blob/master/plugin/publish/github.go
+set -e
+
+# User supplied args
+GITHUB_TOKEN=$1
+if [[ -z $GITHUB_TOKEN ]]; then echo "Missing arg1 GITHUB_TOKEN" && exit 1; fi
+ARTIFACTS_DIR=$2
+if [[ -z $ARTIFACTS_DIR ]]; then echo "Missing arg2 ARTIFACTS_DIR" && exit 1; fi
+
+# Set automatically by CircleCI
+: ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
+REPO=$CIRCLE_PROJECT_REPONAME
+
+echo "Error! Not yet implemented"
+return 1

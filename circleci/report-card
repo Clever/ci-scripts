@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -e
+
+# User supplied args
+DOCKER_USER=$1
+if [[ -z $DOCKER_USER ]]; then echo "Missing arg1 DOCKER_USER" && exit 1; fi
+DOCKER_PASS=$2
+if [[ -z $DOCKER_PASS ]]; then echo "Missing arg2 DOCKER_PASS" && exit 1; fi
+DOCKER_EMAIL=$3
+if [[ -z $DOCKER_EMAIL ]]; then echo "Missing arg3 DOCKER_EMAIL" && exit 1; fi
+
+echo "Logging into DockerHub..."
+docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL"
+
+echo "Running report-card..."
+docker run -t -v `pwd`:/repo/$(basename `pwd`) clever/report-card --repo /repo/$(basename `pwd`)
