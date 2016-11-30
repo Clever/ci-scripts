@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Installs a specific release of golang
+#
+# Usage:
+#
+#   golang-install [GODIST]
+
+set -e
+
+# User supplied args
+GODIST=$1
+if [[ -z $GODIST ]]; then echo "Missing arg1 GODIST" && exit 1; fi
+
+
+INSTALL_ROOT=/usr/local
+
+# Download the golang package if needed
+mkdir -p download
+if [ ! -e download/$GODIST ]; then
+    echo -n "Downloading $GODIST ..."
+    curl -s -o download/$GODIST https://storage.googleapis.com/golang/$GODIST
+    echo "Done"
+fi
+
+# Cleanup any existing versions and install the new one
+sudo rm -rf $INSTALL_ROOT/go
+echo -n "Extracting $GODIST"
+sudo tar -C $INSTALL_ROOT -xzf download/$GODIST
+echo "Done."
+echo "Golang installed successfully"
