@@ -1,17 +1,23 @@
 #!/bin/bash
 
-# Installs a specific release of golang
+# Installs a specific version of golang.
+# Assumes OS is linux-amd64.
 #
 # Usage:
 #
-#   golang-install [GODIST]
+#   golang-install [GO_VERSION]
+#
+#   e.g. `golang-install 1.7.4`
 
 set -e
 
 # User supplied args
-GODIST=$1
-if [[ -z $GODIST ]]; then echo "Missing arg1 GODIST" && exit 1; fi
+GO_VERSION=$1
+if [[ -z $GO_VERSION ]]; then echo "Missing arg1 GO_VERSION" && exit 1; fi
 
+echo "Attempting to download Go version '$GO_VERSION'..."
+
+GODIST=go$(GOVERSION).linux-amd64.tar.gz
 
 INSTALL_ROOT=/usr/local
 
