@@ -17,7 +17,7 @@ if [[ -z $GO_VERSION ]]; then echo "Missing arg1 GO_VERSION" && exit 1; fi
 
 echo "Attempting to download Go version '$GO_VERSION'..."
 
-GODIST=go$(GOVERSION).linux-amd64.tar.gz
+GODIST=go$(GO_VERSION).linux-amd64.tar.gz
 
 INSTALL_ROOT=/usr/local
 
