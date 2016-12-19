@@ -36,12 +36,10 @@ $ ./circleci/github-release <version> <path_to_artifacts>
 
 ### Catapult
 
-_Not yet implemented._
-
 Publishes your application and build in [catapult](github.com/clever/catapult).
 
 ```
-$ ./circleci/catapult <catapult_url> <catapult_app>
+$ ./circleci/catapult <catapult_url> <catapult_auth> <appname>
 ```
 
 If you need to publish multiple applications, run this command once for each.

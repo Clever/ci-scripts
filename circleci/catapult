@@ -4,21 +4,29 @@
 #
 # Usage:
 #
-#   circleci-catapult [CATAPULT_URL] [APP_NAME]
+#   circleci-catapult [CATAPULT_URL] [CATAPULT_AUTH] [APP_NAME]
 
-# TODO: Implement functionality from here...
-# https://github.com/Clever/drone/blob/master/plugin/publish/catapult.go
 set -e
 
 # User supplied args
 CATAPULT_URL=$1
 if [[ -z $CATAPULT_URL ]]; then echo "Missing arg1 CATAPULT_URL" && exit 1; fi
-APP_NAME=$2
-if [[ -z $APP_NAME ]]; then echo "Missing arg2 APP_NAME" && exit 1; fi
+CATAPULT_AUTH=$2
+if [[ -z $CATAPULT_AUTH ]]; then echo "Missing arg2 CATAPULT_AUTH" && exit 1; fi
+APP_NAME=$3
+if [[ -z $APP_NAME ]]; then echo "Missing arg3 APP_NAME" && exit 1; fi
 
 # Set automatically by CircleCI
 : ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
 REPO=$CIRCLE_PROJECT_REPONAME
+: ${CIRCLE_PROJECT_USERNAME?"Missing required env var"}
+USER=$CIRCLE_PROJECT_USERNAME
+: ${CIRCLE_BUILD_NUM?"Missing required env var"}
+BUILD_NUM=$CIRCLE_BUILD_NUM
 
-echo "Error! Not yet implemented"
-return 1
+echo "Publishing to catapult..."
+curl -u $CATAPULT_AUTH \
+  -H "Content-Type: application/json" \
+  -X POST \
+  -d "{\"username\":\"$USER\",\"reponame\":\"$REPO\",\"buildnum\":$BUILD_NUM,\"appname\":\"$APP_NAME\"}" \
+  $CATAPULT_URL
