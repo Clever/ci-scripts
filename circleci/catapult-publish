@@ -4,7 +4,7 @@
 #
 # Usage:
 #
-#   circleci-catapult [CATAPULT_URL] [CATAPULT_AUTH] [APP_NAME]
+#   catapult-publish [CATAPULT_URL] [CATAPULT_AUTH] [APP_NAME]
 
 set -e
 
