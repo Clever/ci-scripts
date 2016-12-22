@@ -1,17 +1,31 @@
 #!/bin/bash
 
+# Publishes build and application objects to Catapult.
+#
+# Usage:
+#
+#   report-card [DOCKER_USER] [DOCKER_PASS] [DOCKER_EMAIL] [GITHUB_TOKEN]
+#
+
 set -e
+
+if [ $# -ne 4 ]; then
+    echo "Incorrect number of arguments given. Expected 4, received $#"
+    echo "Usage: report-card [DOCKER_USER] [DOCKER_PASS] [DOCKER_EMAIL] [GITHUB_TOKEN]"
+    exit 1
+fi
 
 # User supplied args
 DOCKER_USER=$1
-if [[ -z $DOCKER_USER ]]; then echo "Missing arg1 DOCKER_USER" && exit 1; fi
 DOCKER_PASS=$2
-if [[ -z $DOCKER_PASS ]]; then echo "Missing arg2 DOCKER_PASS" && exit 1; fi
 DOCKER_EMAIL=$3
-if [[ -z $DOCKER_EMAIL ]]; then echo "Missing arg3 DOCKER_EMAIL" && exit 1; fi
+GITHUB_TOKEN=$4
 
 echo "Logging into DockerHub..."
 docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL"
 
 echo "Running report-card..."
-docker run -t -v `pwd`:/repo/$(basename `pwd`) clever/report-card --repo /repo/$(basename `pwd`)
+docker run -t \
+    -v `pwd`:/repo/$(basename `pwd`) \
+    -e GITHUB_API_TOKEN=$GITHUB_TOKEN \
+    clever/report-card --repo /repo/$(basename `pwd`) --publish
