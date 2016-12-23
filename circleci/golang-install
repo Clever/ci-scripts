@@ -3,11 +3,13 @@
 # Installs a specific version of golang.
 # Assumes OS is linux-amd64.
 #
+# Go version history is available here: https://golang.org/dl/
+#
 # Usage:
 #
 #   golang-install [GO_VERSION]
 #
-#   e.g. `golang-install 1.7.4`
+# GO_VERSION must be an exact version (such as 1.7.4) or minor version (such as 1.6 or 1.7).
 
 set -e
 
@@ -17,6 +19,8 @@ if [[ -z $GO_VERSION ]]; then echo "Missing arg1 GO_VERSION" && exit 1; fi
 
 echo "Attempting to download Go version '$GO_VERSION'..."
 
+if [ "$GO_VERSION" == "1.4" ]; then GO_VERSION="1.4.4"; fi
+if [ "$GO_VERSION" == "1.5" ]; then GO_VERSION="1.5.4"; fi
 if [ "$GO_VERSION" == "1.6" ]; then GO_VERSION="1.6.4"; fi
 if [ "$GO_VERSION" == "1.7" ]; then GO_VERSION="1.7.4"; fi
 
