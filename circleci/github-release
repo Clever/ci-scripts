@@ -6,8 +6,6 @@
 #
 #   circleci-gh-release [GITHUB_TOKEN] [ARTIFACTS_DIR]
 
-# TODO: Implement subset of functionality from here that we use at Clever...
-# https://github.com/Clever/drone/blob/master/plugin/publish/github.go
 set -e
 
 # User supplied args
@@ -19,6 +17,42 @@ if [[ -z $ARTIFACTS_DIR ]]; then echo "Missing arg2 ARTIFACTS_DIR" && exit 1; fi
 # Set automatically by CircleCI
 : ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
 REPO=$CIRCLE_PROJECT_REPONAME
+: ${CIRCLE_PROJECT_USERNAME?"Missing required env var"}
+USER=$CIRCLE_PROJECT_USERNAME
 
-echo "Error! Not yet implemented"
-return 1
+if [ ! -e VERSION ]; then echo "Missing VERSION file" && exit 1; fi
+
+# Download github-release script
+echo "Downloading github-release tool"
+curl -sSL -o /tmp/github-release.tar.bz2 https://github.com/aktau/github-release/releases/download/v0.5.2/linux-amd64-github-release.tar.bz2
+tar jxf /tmp/github-release.tar.bz2 -C /tmp/ && sudo mv /tmp/bin/linux/amd64/github-release /usr/local/bin/github-release
+
+TAG=$(head -n 1 VERSION)
+DESCRIPTION=$(tail -n +2 VERSION)
+
+result=$(github-release release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" || true)
+if [[ $result == *422* ]]; then
+  echo "Release already exists for this tag.";
+  exit 0
+elif [[ $result == "" ]]; then
+  echo "Release created.";
+else
+  echo "Error creating release: $result"
+  exit 1
+fi
+
+for f in $ARTIFACTS_DIR; do
+    # treat directories and files differently
+    if [ -d $f ]; then
+        for ff in $(ls $f); do
+            echo -e "uploading $ff"
+            github-release upload -u $USER -r $REPO -t $TAG -n $ff -f $f/$ff
+        done
+    elif [ -f $f ]; then
+        echo -e "uploading $f"
+        github-release upload -u $USER -r $REPO -t $TAG -n $f -f $f
+    else
+        echo -e "$f is not a file or directory"
+        exit 1
+    fi
+done
