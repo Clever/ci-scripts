@@ -5,7 +5,7 @@
 #
 # Usage:
 #
-#   circleci-docker [DOCKER_USER] [DOCKER_PASS] [DOCKER_EMAIL] [ORG]
+#   docker-publish [DOCKER_USER] [DOCKER_PASS] [DOCKER_EMAIL] [ORG]
 
 
 set -e

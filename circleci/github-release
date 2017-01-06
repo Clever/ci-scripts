@@ -1,10 +1,11 @@
 #!/bin/bash
 
-# Publishes content from [artifacts_dir] as a Github Release.
+# Publishes content from [ARTIFACTS_DIR] as a Github Release.
+# Repo must have a VERSION file in its base directory.
 #
 # Usage:
 #
-#   circleci-gh-release [GITHUB_TOKEN] [ARTIFACTS_DIR]
+#   github-release [GITHUB_TOKEN] [ARTIFACTS_DIR]
 
 set -e
 

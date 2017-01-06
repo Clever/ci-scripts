@@ -10,28 +10,27 @@ Owned by `#eng-infra`.
 
 ### Docker
 
-```
-$ ./circleci/docker-publish <docker_user> <docker_pass> <docker_email> <org>
-```
-
-Publishes an image to DockerHub at `<org>/<repo>`.
-Tags the image according to the git short commit sha; this is 7 characters long and equal to `$(git rev-parse --short HEAD)`.
-
-### Npm
+Logs into Docker registry, then builds and pushes docker image.
+Docker image is tagged with 7 character git commit SHA.
 
 ```
-$ ./circleci/npm-publish <npm_token> <package_dir>
+$ ./circleci/docker-publish [DOCKER_USER] [DOCKER_PASS] [DOCKER_EMAIL] [ORG]
 ```
 
-Publish package to NPM, according to configuration specified in `<package_dir>/package.json`.
-Requires `npm_token` to authenticate.
+### NPM Publish
+
+Authenticates to NPM and publishes a package.
+
+```
+$ ./circleci/npm-publish [NPM_TOKEN] [PACKAGE_DIR]
+```
 
 ### Github Release
 
-_Not yet implemented._
+Publishes content from `[ARTIFACTS_DIR]` as a Github Release.
 
 ```
-$ ./circleci/github-release <version> <path_to_artifacts>
+$ ./circleci/github-release [GITHUB_TOKEN] [ARTIFACTS_DIR]
 ```
 
 ### Catapult
@@ -39,7 +38,7 @@ $ ./circleci/github-release <version> <path_to_artifacts>
 Publishes your application and build in [catapult](github.com/clever/catapult).
 
 ```
-$ ./circleci/catapult <catapult_url> <catapult_auth> <appname>
+$ ./circleci/catapult-publish [CATAPULT_URL] [CATAPULT_USER] [CATAPULT_PASS] [APP_NAME]
 ```
 
 If you need to publish multiple applications, run this command once for each.
@@ -49,5 +48,5 @@ If you need to publish multiple applications, run this command once for each.
 Runs [report-card](github.com/clever/report-card).
 
 ```
-$ ./circleci/report-card <docker_user> <docker_pass> <docker_email>
+$ ./circleci/report-card [DOCKER_USER] [DOCKER_PASS] [DOCKER_EMAIL] [GITHUB_TOKEN]
 ```
