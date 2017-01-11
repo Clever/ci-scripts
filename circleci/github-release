@@ -30,7 +30,7 @@ tar jxf /tmp/github-release.tar.bz2 -C /tmp/ && sudo mv /tmp/bin/linux/amd64/git
 TAG=$(head -n 1 VERSION)
 DESCRIPTION=$(tail -n +2 VERSION)
 
-result=$(github-release release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" || true)
+result=$(github-release release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" -s $GITHUB_TOKEN || true)
 if [[ $result == *422* ]]; then
   echo "Release already exists for this tag.";
   exit 0
@@ -46,11 +46,11 @@ for f in $ARTIFACTS_DIR; do
     if [ -d $f ]; then
         for ff in $(ls $f); do
             echo -e "uploading $ff"
-            github-release upload -u $USER -r $REPO -t $TAG -n $ff -f $f/$ff
+            github-release upload -u $USER -r $REPO -t $TAG -n $ff -f $f/$ff -s $GITHUB_TOKEN
         done
     elif [ -f $f ]; then
         echo -e "uploading $f"
-        github-release upload -u $USER -r $REPO -t $TAG -n $f -f $f
+        github-release upload -u $USER -r $REPO -t $TAG -n $f -f $f -s $GITHUB_TOKEN
     else
         echo -e "$f is not a file or directory"
         exit 1
