@@ -21,11 +21,22 @@ DOCKER_PASS=$2
 DOCKER_EMAIL=$3
 GITHUB_TOKEN=$4
 
+
+REPORT_CARD_IMAGE="1a90b84"
+
 echo "Logging into DockerHub..."
 docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL"
 
-echo "Running report-card..."
-docker run -t \
-    -v `pwd`:/repo/$(basename `pwd`) \
-    -e GITHUB_API_TOKEN=$GITHUB_TOKEN \
-    clever/report-card --repo /repo/$(basename `pwd`) --publish
+echo "Pulling report-card:$REPORT_CARD_IMAGE ..."
+timeout 5m docker pull clever/report-card:$REPORT_CARD_IMAGE
+if [ $? -ne 0 ]; then
+    echo "ERROR: Timed out while pulling report-card image. A rebuild should fix this."
+    exit 1
+else
+    echo "Running report-card..."
+    docker run -t \
+        -v `pwd`:/repo/$(basename `pwd`) \
+        -e GITHUB_API_TOKEN=$GITHUB_TOKEN \
+        clever/report-card:$REPORT_CARD_IMAGE \
+        --repo /repo/$(basename `pwd`) --publish
+fi
