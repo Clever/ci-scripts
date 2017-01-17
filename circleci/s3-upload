@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Publishes content from source dir to an S3 bucket.
+#
+# - All source dir content is uploaded (recursively).
+# - The target bucket must be in region "us-east-1".
+# - Example s3 bucket URL format: s3://<bucket>/<etc>/
+# - Requires two env vars to be set, with access to the bucket:
+#       * AWS_ACCESS_KEY_ID
+#       * AWS_SECRET_ACCESS_KEY
+#
+# Usage:
+#
+#   s3-upload [SOURCE_DIR] [S3_BUCKET_URL]
+
+set -e
+
+if [ $# -ne 2 ]; then
+    echo "Incorrect number of arguments given. Expected 2, received $#"
+    echo "Usage: s3-upload [SOURCE_DIR] [S3_BUCKET_URL]"
+    exit 1
+fi
+
+# User supplied args
+SOURCE_DIR=$1
+S3_BUCKET_URL=$2
+
+echo "Downloading awscli tool..."
+pip install awscli
+
+echo "Uploading files to s3..."
+echo "\tSource: $SOURCE_DIR"
+echo "\tDesination: $S3_BUCKET_URL"
+aws s3 cp $SOURCE_DIR $S3_BUCKET_URL --recursive --acl "private" --region "us-east-1"
