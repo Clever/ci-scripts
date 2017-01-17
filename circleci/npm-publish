@@ -2,6 +2,10 @@
 
 # Authenticates to NPM and publishes a package.
 #
+# Usage:
+#
+#   npm-publish [NPM_TOKEN] [PACKAGE_DIR]
+#
 # Sets up an npmrc file using NPM_TOKEN.
 # Publish the package in directory PACKAGE_DIR.
 
