@@ -3,5 +3,5 @@ test:
   # do a github release to this repo, using the commit SHA
   - mkdir artifacts
   - echo "foo" > artifacts/foo.txt
-  - echo "v${CIRCLE_SHA1:0:7}" > VERSION
+  - echo "${CIRCLE_SHA1:0:7}" > VERSION
   - ./circleci/github-release $GH_RELEASE_TOKEN artifacts/
