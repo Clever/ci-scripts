@@ -4,4 +4,4 @@ test:
   - mkdir artifacts
   - touch artifacts/release-${CIRCLE_PROJECT_USERNAME}-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_SHA1}
   - echo "v${CIRCLE_SHA1}" > VERSION
-  - ./ci-scripts/circleci/github-release $GH_RELEASE_TOKEN artifacts/
+  - ./circleci/github-release $GH_RELEASE_TOKEN artifacts/
