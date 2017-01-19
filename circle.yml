@@ -2,6 +2,6 @@ test:
   override:
   # do a github release to this repo, using the commit SHA
   - mkdir artifacts
-  - touch artifacts/release-${CIRCLE_PROJECT_USERNAME}-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_SHA1}
-  - echo "v${CIRCLE_SHA1}" > VERSION
+  - echo "foo" > artifacts/foo.txt
+  - echo "v${CIRCLE_SHA1:0:7}" > VERSION
   - ./circleci/github-release $GH_RELEASE_TOKEN artifacts/
