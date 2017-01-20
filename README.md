@@ -35,7 +35,7 @@ $ ./circleci/github-release [GITHUB_TOKEN] [ARTIFACTS_DIR]
 
 ### Catapult
 
-Publishes your application and build in [catapult](github.com/clever/catapult).
+Publishes your application and build in [catapult](https://github.com/clever/catapult).
 
 ```
 $ ./circleci/catapult-publish [CATAPULT_URL] [CATAPULT_USER] [CATAPULT_PASS] [APP_NAME]
@@ -45,7 +45,7 @@ If you need to publish multiple applications, run this command once for each.
 
 ### Report-card
 
-Runs [report-card](github.com/clever/report-card).
+Runs [report-card](https://github.com/clever/report-card).
 
 ```
 $ ./circleci/report-card [DOCKER_USER] [DOCKER_PASS] [DOCKER_EMAIL] [GITHUB_TOKEN]
