@@ -20,7 +20,7 @@ DOCKER_EMAIL=$3
 GITHUB_TOKEN=$4
 
 
-REPORT_CARD_IMAGE="1a90b84"
+REPORT_CARD_IMAGE="0babaab"
 
 echo "Logging into DockerHub..."
 docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL"
