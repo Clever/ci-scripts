@@ -4,7 +4,10 @@
 #
 # Usage:
 #
-#   golang-move-project
+#   golang-move-project <optional:package-path>
+#   
+# Package path defaults to:
+#   github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
 #
 # Note: This script relies on CircleCI specific environment variables:
 #   - HOME
@@ -48,4 +51,9 @@ move_project() {
     mkdir $SRC
 }
 
-move_project $HOME/$CIRCLE_PROJECT_REPONAME $HOME/.go_workspace/src/github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+if [ -z "$1" ]; then
+  move_project $HOME/$CIRCLE_PROJECT_REPONAME $HOME/.go_workspace/src/github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+else
+  echo "Using custom package path $1"
+  move_project $HOME/$CIRCLE_PROJECT_REPONAME $HOME/.go_workspace/src/$1
+fi
