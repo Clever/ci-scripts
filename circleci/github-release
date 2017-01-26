@@ -28,6 +28,7 @@ echo "Downloading github-release tool"
 curl -sSL -o /tmp/github-release.tar.bz2 https://github.com/aktau/github-release/releases/download/v0.5.2/linux-amd64-github-release.tar.bz2
 tar jxf /tmp/github-release.tar.bz2 -C /tmp/ && sudo mv /tmp/bin/linux/amd64/github-release /usr/local/bin/github-release
 
+echo "Publishing github-release"
 TAG=$(head -n 1 VERSION)
 DESCRIPTION=$(tail -n +2 VERSION)
 
