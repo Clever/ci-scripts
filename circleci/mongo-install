@@ -4,7 +4,7 @@
 #
 # Usage:
 #
-#   mongo-install VERSION
+#   mongo-install [VERSION]
 
 set -e
 
