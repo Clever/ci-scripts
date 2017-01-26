@@ -50,3 +50,12 @@ Runs [report-card](github.com/clever/report-card).
 ```
 $ ./circleci/report-card [DOCKER_USER] [DOCKER_PASS] [DOCKER_EMAIL] [GITHUB_TOKEN]
 ```
+
+### Mongo install (version 2.4 only)
+
+Installs Mongo version 2.4, rather than the default version in CircleCI.
+At time of writing, `v3.0.7` was default version in [Ubuntu 14.04 (Trusty) image](https://circleci.com/docs/build-image-trusty/#mongodb).
+
+```
+$ ./circleci/mongo-install-2.4
+```
