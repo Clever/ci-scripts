@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Installs Mongo 2.6, rather than the default version in CircleCI.
+#
+# Usage:
+#
+#   mongo-install-2.6
+
+set -e
+
+VERSION=2.6.12
+
+echo "Stopping and removing currently installed Mongo..."
+sudo service mongod stop # stop Mongo 3.x which is already running
+sudo apt-get purge mongodb-org*
+
+echo "Downloading and installing Mongo ..."
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv 7F0CEB10
+echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' | sudo tee /etc/apt/sources.list.d/mongodb.list
+sudo apt-get update
+sudo apt-get install \
+    mongodb-org=$VERSION \
+    mongodb-org-server=$VERSION \
+    mongodb-org-shell=$VERSION \
+    mongodb-org-mongos=$VERSION \
+    mongodb-org-tools=$VERSION
+
+echo "Checking Mongo version..."
+mongo --version
+
+echo "Mongo installed successfully"

@@ -1,8 +1,11 @@
 test:
   override:
   # do a github release to this repo, using the commit SHA
-  - mkdir artifacts
-  - echo "foo" > artifacts/foo.txt
-  - echo "${CIRCLE_SHA1:0:7}" > VERSION
-  - ./circleci/mongo-install-2.4
-  - ./circleci/github-release $GH_RELEASE_TOKEN artifacts/
+  # - mkdir artifacts
+  # - echo "foo" > artifacts/foo.txt
+  # - echo "${CIRCLE_SHA1:0:7}" > VERSION
+  # - ./circleci/github-release $GH_RELEASE_TOKEN artifacts/
+  # install Mongo2.4
+  # - ./circleci/mongo-install-2.4
+  # install Mongo2.6
+  - ./circleci/mongo-install-2.6
