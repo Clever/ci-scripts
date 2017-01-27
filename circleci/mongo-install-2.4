@@ -10,7 +10,7 @@ set -e
 
 echo "Stopping and removing currently installed Mongodb..."
 # the service running Mongo 3.x is `mongod` vs `mongodb` in 2.4
-sudo service mongod stop
+sudo service mongod stop || echo "mongod was not running"
 sudo apt-get purge mongodb-org*
 
 echo "Attempting to download Mongo version 2.4.14 ..."

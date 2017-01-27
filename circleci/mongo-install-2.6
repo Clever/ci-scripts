@@ -11,7 +11,7 @@ set -e
 VERSION=2.6.12
 
 echo "Stopping and removing currently installed Mongo..."
-sudo service mongod stop # stop Mongo 3.x which is already running
+sudo service mongod stop || echo "mongod was not running"
 sudo apt-get purge mongodb-org*
 
 echo "Downloading and installing Mongo ..."
