@@ -7,7 +7,7 @@ test:
   - ./circleci/github-release $GH_RELEASE_TOKEN artifacts/
 
   # install Mongo2.4
-  - ./circleci/mongo-install-2.4
+  - ./circleci/mongo-install 2.4
 
   # install Mongo2.6
-  - ./circleci/mongo-install-2.6
+  - ./circleci/mongo-install 2.6
