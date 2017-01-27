@@ -16,7 +16,7 @@ set -e
 
 # Get user args
 VERSION=$1
-if [[ -z $VERSION]]; then echo "Missing arg1 VERSION" && exit 1; fi
+if [[ -z $VERSION ]]; then echo "Missing arg1 VERSION" && exit 1; fi
 
 if [ "$VERSION" == "2.4" ]; then VERSION="2.4.12"; fi
 if [ "$VERSION" == "2.6" ]; then VERSION="2.6.12"; fi
