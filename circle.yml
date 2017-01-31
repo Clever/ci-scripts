@@ -11,3 +11,6 @@ test:
 
   # install Mongo2.6
   - ./circleci/mongo-install 2.6
+
+  # install Mongo3.2
+  - ./circleci/mongo-install 3.2
