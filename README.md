@@ -43,6 +43,17 @@ $ ./circleci/catapult-publish [CATAPULT_URL] [CATAPULT_USER] [CATAPULT_PASS] [AP
 
 If you need to publish multiple applications, run this command once for each.
 
+### Dapple
+
+Deploys your application with [dapple](https://github.com/clever/dapple).
+Requires that you've first pushed the Docker image and published the application to Catapult.
+
+```
+$ ./circleci/dapple-deploy [DAPPLE_URL] [DAPPLE_USER] [DAPPLE_PASS] [APP_NAME]
+```
+
+If you need to deploy multiple applications, run this command once for each.
+
 ### Report-card
 
 Runs [report-card](https://github.com/clever/report-card).
