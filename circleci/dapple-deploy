@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# Submits an application to Dapple deployment pipeline
+#
+# Usage:
+#
+#   dapple-deploy [DAPPLE_URL] [DAPPLE_USER] [DAPPLE_PASS] [APP_NAME]
+#
+# Required circleci provided environment variables:
+#
+#  CIRCLE_PROJECT_REPONAME
+#  CIRCLE_PROJECT_USERNAME
+#  CIRCLE_BUILD_NUM
+#
+
+set -e
+
+if [ $# -ne 4 ]; then
+    echo "Incorrect number of arguments given. Expected 4, received $#"
+    echo "Usage: dapple-deploy [DAPPLE_URL] [DAPPLE_USER] [DAPPLE_PASS] [APP_NAME]"
+    exit 1
+fi
+
+# User supplied args
+DAPPLE_URL=$1
+DAPPLE_USER=$2
+DAPPLE_PASS=$3
+APP_NAME=$4
+
+# Set automatically by CircleCI
+: ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
+REPO=$CIRCLE_PROJECT_REPONAME
+: ${CIRCLE_PROJECT_USERNAME?"Missing required env var"}
+USER=$CIRCLE_PROJECT_USERNAME
+: ${CIRCLE_BUILD_NUM?"Missing required env var"}
+BUILD_NUM=$CIRCLE_BUILD_NUM
+
+echo "Publishing to dapple..."
+SC=$(curl -u $DAPPLE_USER:$DAPPLE_PASS \
+  -w "%{http_code}" \
+  --output dapple.out \
+  -H "Content-Type: application/json" \
+  -X POST \
+  -d "{\"username\":\"$USER\",\"reponame\":\"$REPO\",\"buildnum\":$BUILD_NUM,\"appname\":\"$APP_NAME\"}" \
+  $DAPPLE_URL)
+
+if [ "$SC" -eq 200 ]; then
+  echo "Successfully published application to dapple"
+  rm -f dapple.out
+  exit 0
+else
+  echo "Failed to publish application to dapple"
+  echo "------------------------------------------------"
+  cat dapple.out
+  echo ""
+  echo "------------------------------------------------"
+  rm -f dapple.out
+  exit 1
+fi
