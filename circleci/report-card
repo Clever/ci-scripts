@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Publishes build and application objects to Catapult.
+# Runs report-card to analyze a repo's code health.
 #
 # Usage:
 #
