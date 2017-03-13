@@ -31,4 +31,4 @@ pip install awscli
 echo "Uploading files to s3..."
 echo "\tSource: $SOURCE_DIR"
 echo "\tDesination: $S3_BUCKET_URL"
-aws s3 cp $SOURCE_DIR $S3_BUCKET_URL --recursive --acl "private" --region "us-east-1"
+aws s3 cp $SOURCE_DIR $S3_BUCKET_URL --recursive --acl "private" --region "us-east-1" --cache-control "max-age=31536000"
