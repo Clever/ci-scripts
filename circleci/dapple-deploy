@@ -4,7 +4,7 @@
 #
 # Usage:
 #
-#   dapple-deploy [DAPPLE_URL] [DAPPLE_USER] [DAPPLE_PASS] [APP_NAME]
+#   dapple-deploy [DAPPLE_URL] [DAPPLE_USER] [DAPPLE_PASS] [APP_NAME] [[DEPLOY_ENV] [DEPLOY_STRATEGY]]
 #
 # Required circleci provided environment variables:
 #
@@ -15,9 +15,9 @@
 
 set -e
 
-if [ $# -ne 4 ]; then
-    echo "Incorrect number of arguments given. Expected 4, received $#"
-    echo "Usage: dapple-deploy [DAPPLE_URL] [DAPPLE_USER] [DAPPLE_PASS] [APP_NAME]"
+if [ $# -ne 4 ] && [ $# -ne 5 ] && [ $# -ne 6 ]; then
+    echo "Incorrect number of arguments given. Expected at least 4, received $#"
+    echo "Usage: dapple-deploy [DAPPLE_URL] [DAPPLE_USER] [DAPPLE_PASS] [APP_NAME] [[DEPLOY_ENV] [DEPLOY_STRATEGY]]"
     exit 1
 fi
 
@@ -26,6 +26,9 @@ DAPPLE_URL=$1
 DAPPLE_USER=$2
 DAPPLE_PASS=$3
 APP_NAME=$4
+# deploy env and deploy strategy get default values, if not specified
+DEPLOY_ENV=${5:-clever-dev}
+DEPLOY_STRATEGY=${6:-confirm-then-deploy}
 
 # Set automatically by CircleCI
 : ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
@@ -34,6 +37,18 @@ REPO=$CIRCLE_PROJECT_REPONAME
 USER=$CIRCLE_PROJECT_USERNAME
 : ${CIRCLE_BUILD_NUM?"Missing required env var"}
 BUILD_NUM=$CIRCLE_BUILD_NUM
+BRANCH=$CIRCLE_BRANCH
+
+# Safety Checks
+if [ "$DEPLOY_ENV" = "production" -a "$BRANCH" != "master" ]; then
+  echo "ERROR: Cannot publish into production from a non-master branch"
+  exit 1
+fi
+
+if [ "$DEPLOY_ENV" != "production" -a "$DEPLOY_ENV" != "clever-dev" -a "$DEPLOY_ENV" != "dev-infra" ]; then
+  echo "ERROR: Only 'production', 'clever-dev', and 'dev-infra' are supported deployment environments"
+  exit 1
+fi
 
 echo "Publishing to dapple..."
 SC=$(curl -u $DAPPLE_USER:$DAPPLE_PASS \
@@ -41,7 +56,7 @@ SC=$(curl -u $DAPPLE_USER:$DAPPLE_PASS \
   --output dapple.out \
   -H "Content-Type: application/json" \
   -X POST \
-  -d "{\"username\":\"$USER\",\"reponame\":\"$REPO\",\"buildnum\":$BUILD_NUM,\"appname\":\"$APP_NAME\"}" \
+  -d "{\"username\":\"$USER\",\"reponame\":\"$REPO\",\"buildnum\":$BUILD_NUM,\"appname\":\"$APP_NAME\",\"environment\":\"$DEPLOY_ENV\",\"strategy\":\"$DEPLOY_STRATEGY\"}" \
   $DAPPLE_URL)
 
 if [ "$SC" -eq 200 ]; then
