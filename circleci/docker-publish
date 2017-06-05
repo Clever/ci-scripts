@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Logs into Docker registry, then builds and pushes docker image.
-# Docker image is tagged with 7 character git commit SHA.
+# Logs into Docker registry (DockerHub and optionally ECR),
+# then builds and pushes docker image. Docker image is tagged 
+# with 7 character git commit SHA.
 #
 # Usage:
 #
@@ -9,6 +10,12 @@
 
 
 set -e
+
+push_ecr_image(){
+	eval $(AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $AWS_REGION get-login)
+	docker tag $ORG/$REPO:$SHORT_SHA $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:$SHORT_SHA
+	docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:$SHORT_SHA
+}
 
 # User supplied args
 DOCKER_USER=$1
@@ -26,11 +33,19 @@ REPO=$CIRCLE_PROJECT_REPONAME
 : ${CIRCLE_SHA1?"Missing required env var"}
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 
+echo "Building docker image..."
+docker build -t $ORG/$REPO:$SHORT_SHA .
+
+if [ $ECR_PUSH_ID != "" ]; then
+  echo "ECR credentials available. Pushing to ECR..."
+  push_ecr_image
+fi
+
 echo "Logging into DockerHub..."
 docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL"
 
 echo "Building docker image..."
 docker build -t $ORG/$REPO:$SHORT_SHA .
 
-echo "Pushing docker image..."
+echo "Pushing to DockerHub..."
 docker push $ORG/$REPO:$SHORT_SHA
