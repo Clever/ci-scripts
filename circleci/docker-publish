@@ -13,15 +13,15 @@ set -e
 
 check_ecr_vars() {
   # ECR required env vars
-  if [[ -z $AWS_ACCOUNT_ID ]]; then echo "Missing var for ECR: AWS_ACCOUNT_ID" && exit 1; fi
-  if [[ -z $AWS_REGION ]]; then echo "Missing var for ECR: AWS_REGION" && exit 1; fi
+  if [[ -z $ECR_ACCOUNT_ID ]]; then echo "Missing var for ECR: ECR_ACCOUNT_ID" && exit 1; fi
+  if [[ -z $ECR_REGION ]]; then echo "Missing var for ECR: ECR_REGION" && exit 1; fi
   if [[ -z $ECR_PUSH_SECRET ]]; then echo "Missing var for ECR: ECR_PUSH_SECRET" && exit 1; fi
 }
 
 push_ecr_image(){
-	eval $(AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $AWS_REGION get-login)
-	docker tag $ORG/$REPO:$SHORT_SHA $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:$SHORT_SHA
-	docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:$SHORT_SHA
+	eval $(AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $ECR_REGION get-login)
+	docker tag $ORG/$REPO:$SHORT_SHA $ECR_ACCOUNT_ID.dkr.ecr.$ECR_REGION.amazonaws.com/$REPO:$SHORT_SHA
+	docker push $ECR_ACCOUNT_ID.dkr.ecr.$ECR_REGION.amazonaws.com/$REPO:$SHORT_SHA
 }
 
 # User supplied args
@@ -43,14 +43,16 @@ SHORT_SHA=${CIRCLE_SHA1:0:7}
 echo "Building docker image..."
 docker build -t $ORG/$REPO:$SHORT_SHA .
 
-if [ $ECR_PUSH_ID != "" ]; then
-  echo "ECR access_id available. Pushing to ECR..."
-  check_ecr_vars
-  push_ecr_image
-fi
-
 echo "Logging into DockerHub..."
 docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL"
 
 echo "Pushing to DockerHub..."
 docker push $ORG/$REPO:$SHORT_SHA
+
+# TODO: fail if ECR_PUSH_ID is not set;
+# all repos eventually should dual publish (or explicitly opt-out)
+if [ $ECR_PUSH_ID != "" ]; then
+  echo "ECR access_id available. Pushing to ECR..."
+  check_ecr_vars
+  push_ecr_image
+fi
