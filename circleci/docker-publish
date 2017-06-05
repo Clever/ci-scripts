@@ -44,8 +44,5 @@ fi
 echo "Logging into DockerHub..."
 docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL"
 
-echo "Building docker image..."
-docker build -t $ORG/$REPO:$SHORT_SHA .
-
 echo "Pushing to DockerHub..."
 docker push $ORG/$REPO:$SHORT_SHA
