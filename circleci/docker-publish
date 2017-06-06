@@ -13,13 +13,9 @@ set -e
 
 check_hub_vars() {
   # User supplied args
-  DOCKER_USER=$1
   if [[ -z $DOCKER_USER ]]; then echo "Missing arg1 DOCKER_USER" && exit 1; fi
-  DOCKER_PASS=$2
   if [[ -z $DOCKER_PASS ]]; then echo "Missing arg2 DOCKER_PASS" && exit 1; fi
-  DOCKER_EMAIL=$3
   if [[ -z $DOCKER_EMAIL ]]; then echo "Missing arg3 DOCKER_EMAIL" && exit 1; fi
-  ORG=$4
   if [[ -z $ORG ]]; then echo "Missing arg4 ORG" && exit 1; fi
 }
 
@@ -47,6 +43,11 @@ REPO=$CIRCLE_PROJECT_REPONAME
 : ${CIRCLE_SHA1?"Missing required env var"}
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 
+DOCKER_USER=$1
+DOCKER_PASS=$2
+DOCKER_EMAIL=$3
+ORG=$4
+
 # Check CLI + env vars for DockerHub and (conditonally) ECR
 check_hub_vars
 if [ $ECR_PUSH_ID != "" ]; then
@@ -57,7 +58,7 @@ echo "Building docker image..."
 docker build -t $ORG/$REPO:$SHORT_SHA .
 
 echo "Pushing to DockerHub..."
-push_hub_image
+push_hub_image $1 $2 $3 $4
 
 # TODO: fail if ECR_PUSH_ID is not set;
 # all repos eventually should dual publish (or explicitly opt-out)
