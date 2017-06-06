@@ -56,7 +56,6 @@ fi
 echo "Building docker image..."
 docker build -t $ORG/$REPO:$SHORT_SHA .
 
-# push to dockerhub
 echo "Pushing to DockerHub..."
 push_hub_image
 
