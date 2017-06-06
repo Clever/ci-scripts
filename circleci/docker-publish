@@ -50,7 +50,7 @@ ORG=$4
 
 # Check CLI + env vars for DockerHub and (conditonally) ECR
 check_hub_vars
-if [ $ECR_PUSH_ID != "" ]; then
+if [ "$ECR_PUSH_ID" != "" ]; then
   check_ecr_vars
 fi
 
