@@ -11,6 +11,23 @@
 
 set -e
 
+check_hub_vars() {
+  # User supplied args
+  DOCKER_USER=$1
+  if [[ -z $DOCKER_USER ]]; then echo "Missing arg1 DOCKER_USER" && exit 1; fi
+  DOCKER_PASS=$2
+  if [[ -z $DOCKER_PASS ]]; then echo "Missing arg2 DOCKER_PASS" && exit 1; fi
+  DOCKER_EMAIL=$3
+  if [[ -z $DOCKER_EMAIL ]]; then echo "Missing arg3 DOCKER_EMAIL" && exit 1; fi
+  ORG=$4
+  if [[ -z $ORG ]]; then echo "Missing arg4 ORG" && exit 1; fi
+}
+
+push_hub_image() {
+  docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL"
+  docker push $ORG/$REPO:$SHORT_SHA
+}
+
 check_ecr_vars() {
   # ECR required env vars
   if [[ -z $ECR_ACCOUNT_ID ]]; then echo "Missing var for ECR: ECR_ACCOUNT_ID" && exit 1; fi
@@ -24,35 +41,28 @@ push_ecr_image(){
 	docker push $ECR_ACCOUNT_ID.dkr.ecr.$ECR_REGION.amazonaws.com/$REPO:$SHORT_SHA
 }
 
-# User supplied args
-DOCKER_USER=$1
-if [[ -z $DOCKER_USER ]]; then echo "Missing arg1 DOCKER_USER" && exit 1; fi
-DOCKER_PASS=$2
-if [[ -z $DOCKER_PASS ]]; then echo "Missing arg2 DOCKER_PASS" && exit 1; fi
-DOCKER_EMAIL=$3
-if [[ -z $DOCKER_EMAIL ]]; then echo "Missing arg3 DOCKER_EMAIL" && exit 1; fi
-ORG=$4
-if [[ -z $ORG ]]; then echo "Missing arg4 ORG" && exit 1; fi
-
 # Set automatically by CircleCI
 : ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
 REPO=$CIRCLE_PROJECT_REPONAME
 : ${CIRCLE_SHA1?"Missing required env var"}
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 
+# Check CLI + env vars for DockerHub and (conditonally) ECR
+check_hub_vars
+if [ $ECR_PUSH_ID != "" ]; then
+  check_ecr_vars
+fi
+
 echo "Building docker image..."
 docker build -t $ORG/$REPO:$SHORT_SHA .
 
-echo "Logging into DockerHub..."
-docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL"
-
+# push to dockerhub
 echo "Pushing to DockerHub..."
-docker push $ORG/$REPO:$SHORT_SHA
+push_hub_image
 
 # TODO: fail if ECR_PUSH_ID is not set;
 # all repos eventually should dual publish (or explicitly opt-out)
 if [ $ECR_PUSH_ID != "" ]; then
   echo "ECR access_id available. Pushing to ECR..."
-  check_ecr_vars
   push_ecr_image
 fi
