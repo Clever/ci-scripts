@@ -20,7 +20,6 @@ check_hub_vars() {
 }
 
 push_hub_image() {
-  docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL"
   docker push $ORG/$REPO:$SHORT_SHA
 }
 
@@ -53,6 +52,10 @@ check_hub_vars
 if [ "$ECR_PUSH_ID" != "" ]; then
   check_ecr_vars
 fi
+
+# dockerhub login. 
+# `FROM image` in Dockerfile is going to pull from DockerHub
+docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL"
 
 echo "Building docker image..."
 docker build -t $ORG/$REPO:$SHORT_SHA .
