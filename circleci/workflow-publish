@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# Publishes workflows to Workflow Manager, via circle-ci-integrations.
+#
+# Usage:
+#
+#   workflow-publish [WF_URL] [WF_USER] [WF_PASS] [WF_JSON]
+#
+# Required circleci provided environment variables:
+#
+#  CIRCLE_PROJECT_REPONAME
+#  CIRCLE_PROJECT_USERNAME
+#  CIRCLE_BUILD_NUM
+#
+
+set -e
+
+if [ $# -ne 4 ]; then
+    echo "Incorrect number of arguments given. Expected 4, received $#"
+    echo "Usage: workflow-publish [WF_URL] [WF_USER] [WF_PASS] [WF_JSON]"
+    exit 1
+fi
+
+
+# User supplied args
+WF_URL=$1
+if [[ -z $WF_URL ]]; then echo "Missing arg1 WF_URL" && exit 1; fi
+WF_USER=$2
+if [[ -z $WF_USER ]]; then echo "Missing arg2 WF_USER" && exit 1; fi
+WF_PASS=$3
+if [[ -z $WF_PASS ]]; then echo "Missing arg3 WF_PASS" && exit 1; fi
+WF_FILE=$4
+if [[ -z $WF_FILE ]]; then echo "Missing arg4 WF_FILE" && exit 1; fi
+
+# Set automatically by CircleCI
+: ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
+REPO=$CIRCLE_PROJECT_REPONAME
+: ${CIRCLE_PROJECT_USERNAME?"Missing required env var"}
+USER=$CIRCLE_PROJECT_USERNAME
+: ${CIRCLE_BUILD_NUM?"Missing required env var"}
+BUILD_NUM=$CIRCLE_BUILD_NUM
+
+json_escape () {
+    printf '%s' $1 | python -c 'import json,sys; print(json.dumps(sys.stdin.read()))'
+}
+
+WF_JSON=`cat $WF_FILE | tr '\n' ' ' | tr -d '[:space:]'`
+WF_DATA=`json_escape $WF_JSON`
+CURL_DATA="{\"username\":\"$USER\",\"reponame\":\"$REPO\",\"buildnum\":$BUILD_NUM,\"workflow\":$WF_DATA}"
+echo "Publishing to workflow-manager..."
+echo $CURL_DATA | python -m json.tool
+
+exit 1
+
+CURL_OUTPUT="workflow-manager.out"
+SC=$(curl -u $WF_USER:$WF_PASS \
+  -w "%{http_code}" \
+  --output $CURL_OUTPUT \
+  -H "Content-Type: application/json" \
+  -X POST \
+  -d "$CURL_DATA" \
+  $WF_URL)
+
+if [ "$SC" -eq 200 ]; then
+  echo "Successfully published workflow"
+  rm -f $CURL_OUTPUT
+  exit 0
+else
+  echo "Failed to publish workflow"
+  echo "------------------------------------------------"
+  cat $CURL_OUTPUT
+  echo ""
+  echo "------------------------------------------------"
+  rm -f $CURL_OUTPUT
+  exit 1
+fi
