@@ -71,6 +71,14 @@ $ ./circleci/dapple-deploy [DAPPLE_URL] [DAPPLE_USER] [DAPPLE_PASS] [APP_NAME]
 
 If you need to deploy multiple applications, run this command once for each.
 
+#### Workflow
+
+Publishes a workflow to [workflow-manager](https://github.com/clever/workflow-manager).
+
+```
+$ ./circleci/workflow-publish [WF_URL] [WF_USER] [WF_PASS] [WF_JSON]
+```
+
 #### Report-card
 
 Runs [report-card](https://github.com/clever/report-card).
