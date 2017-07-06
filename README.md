@@ -66,8 +66,11 @@ Deploys your application with [dapple](https://github.com/clever/dapple).
 Requires that you've first pushed the Docker image and published the application to Catapult.
 
 ```
-$ ./circleci/dapple-deploy [DAPPLE_URL] [DAPPLE_USER] [DAPPLE_PASS] [APP_NAME]
+$ ./circleci/dapple-deploy <DAPPLE_URL> <DAPPLE_USER> <DAPPLE_PASS> <APP_NAME> [ENVIRONMENT] [DEPLOYMENT_PIPELINE]
 ```
+**Note:** The default environment is `clever-dev` and the default deployment pipeline is `confirm-then-deploy`.
+Additionally you can choose a `no-confirm-deploy` pipeline that does not require confirmation before deploying.
+
 
 If you need to deploy multiple applications, run this command once for each.
 
