@@ -50,8 +50,6 @@ CURL_DATA="{\"username\":\"$USER\",\"reponame\":\"$REPO\",\"buildnum\":$BUILD_NU
 echo "Publishing to workflow-manager..."
 echo $CURL_DATA | python -m json.tool
 
-exit 1
-
 CURL_OUTPUT="workflow-manager.out"
 SC=$(curl -u $WF_USER:$WF_PASS \
   -w "%{http_code}" \
