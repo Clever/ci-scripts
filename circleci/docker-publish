@@ -65,7 +65,7 @@ push_hub_image $1 $2 $3 $4
 
 # TODO: fail if ECR_PUSH_ID is not set;
 # all repos eventually should dual publish (or explicitly opt-out)
-if [ $ECR_PUSH_ID != "" ]; then
+if [ "$ECR_PUSH_ID" != "" ]; then
   echo "ECR access_id available. Pushing to ECR..."
   push_ecr_image
 fi
