@@ -12,8 +12,6 @@ set -e
 # User supplied args
 GITHUB_TOKEN=$1
 if [[ -z $GITHUB_TOKEN ]]; then echo "Missing arg1 GITHUB_TOKEN" && exit 1; fi
-ARTIFACTS_DIR=$2
-if [[ -z $ARTIFACTS_DIR ]]; then echo "Missing arg2 ARTIFACTS_DIR" && exit 1; fi
 
 # Set automatically by CircleCI
 : ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
@@ -43,18 +41,23 @@ else
   exit 1
 fi
 
-for f in $ARTIFACTS_DIR; do
-    # treat directories and files differently
-    if [ -d $f ]; then
-        for ff in $(ls $f); do
-            echo -e "uploading $ff"
-            github-release upload -u $USER -r $REPO -t $TAG -n $ff -f $f/$ff -s $GITHUB_TOKEN
-        done
-    elif [ -f $f ]; then
-        echo -e "uploading $f"
-        github-release upload -u $USER -r $REPO -t $TAG -n $f -f $f -s $GITHUB_TOKEN
-    else
-        echo -e "$f is not a file or directory"
-        exit 1
-    fi
-done
+ARTIFACTS_DIR=$2
+if [[ -z $ARTIFACTS_DIR ]]; then
+  echo "Skipping publishing artifacts. No ARTIFACTS_DIR env var set";
+else
+  for f in $ARTIFACTS_DIR; do
+      # treat directories and files differently
+      if [ -d $f ]; then
+          for ff in $(ls $f); do
+              echo -e "uploading $ff"
+              github-release upload -u $USER -r $REPO -t $TAG -n $ff -f $f/$ff -s $GITHUB_TOKEN
+          done
+      elif [ -f $f ]; then
+          echo -e "uploading $f"
+          github-release upload -u $USER -r $REPO -t $TAG -n $f -f $f -s $GITHUB_TOKEN
+      else
+          echo -e "$f is not a file or directory"
+          exit 1
+      fi
+  done
+fi
