@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Logs into Docker registry (DockerHub and optionally ECR),
-# then builds and pushes docker image. Docker image is tagged
+# then builds and pushes docker image. Docker image is tagged 
 # with 7 character git commit SHA.
 #
 # Usage:
@@ -30,10 +30,8 @@ check_ecr_vars() {
   if [[ -z $ECR_PUSH_SECRET ]]; then echo "Missing var for ECR: ECR_PUSH_SECRET" && exit 1; fi
 }
 
-ecr_get_login="AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $ECR_REGION get-login"
-ecr_get_login_no_email="AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $ECR_REGION get-login --no-include-email"
 push_ecr_image(){
-	eval $ecr_get_login || eval $ecr_get_login_no_email
+	eval $(AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $ECR_REGION get-login)
 	docker tag $ORG/$REPO:$SHORT_SHA $ECR_ACCOUNT_ID.dkr.ecr.$ECR_REGION.amazonaws.com/$REPO:$SHORT_SHA
 	docker push $ECR_ACCOUNT_ID.dkr.ecr.$ECR_REGION.amazonaws.com/$REPO:$SHORT_SHA
 }
