@@ -63,9 +63,9 @@ docker build -t $ORG/$REPO:$SHORT_SHA .
 echo "Pushing to DockerHub..."
 push_hub_image $1 $2 $3 $4
 
-# TODO: fail if ECR_PUSH_ID is not set;
 # all repos eventually should dual publish (or explicitly opt-out)
 if [ "$ECR_PUSH_ID" != "" ]; then
   echo "ECR access_id available. Pushing to ECR..."
-  push_ecr_image
+  # push_ecr_image
+  echo "skipping"
 fi
