@@ -59,20 +59,21 @@ fi
 
 # dockerhub login.
 # `FROM image` in Dockerfile is going to pull from DockerHub
+echo "\nLogging into DockerHub..."
 docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL" || docker login -u $DOCKER_USER -p $DOCKER_PASS
 if [ "$ECR_PUSH_ID" != "" ]; then
-  echo "ECR access_id available. Logging into ECR..."
+  echo "\nECR access_id available. Logging into ECR..."
   ecr_login
 fi
 
-echo "Building docker image..."
+echo "\nBuilding docker image..."
 docker build -t $ORG/$REPO:$SHORT_SHA .
 
-echo "Pushing to DockerHub..."
+echo "\nPushing to DockerHub..."
 push_hub_image $1 $2 $3 $4
 
 # all repos eventually should dual publish (or explicitly opt-out)
 if [ "$ECR_PUSH_ID" != "" ]; then
-  echo "ECR access_id available. Pushing to ECR..."
+  echo "\nECR access_id available. Pushing to ECR..."
   push_ecr_image
 fi
