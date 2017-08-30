@@ -30,7 +30,7 @@ check_ecr_vars() {
 }
 
 ecr_login(){
-	eval $(AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $ECR_REGION get-login --no-include-email)
+	eval $(AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $ECR_REGION get-login --include-email) || eval $(AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $ECR_REGION get-login --no-include-email)
 }
 
 push_ecr_image(){
@@ -56,7 +56,7 @@ fi
 
 # dockerhub login.
 # `FROM image` in Dockerfile is going to pull from DockerHub
-docker login -u $DOCKER_USER -p $DOCKER_PASS
+docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL" || docker login -u $DOCKER_USER -p $DOCKER_PASS
 if [ "$ECR_PUSH_ID" != "" ]; then
   echo "ECR access_id available. Logging into ECR..."
   ecr_login
