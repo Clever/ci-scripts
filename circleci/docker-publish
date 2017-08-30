@@ -59,7 +59,7 @@ fi
 
 # dockerhub login.
 # `FROM image` in Dockerfile is going to pull from DockerHub
-docker login -u $DOCKER_USER -p $DOCKER_PASS --email="" || docker login -u $DOCKER_USER -p $DOCKER_PASS
+docker login -u $DOCKER_USER -p $DOCKER_PASS --email="none" || docker login -u $DOCKER_USER -p $DOCKER_PASS
 if [ "$ECR_PUSH_ID" != "" ]; then
   echo "ECR access_id available. Logging into ECR..."
   ecr_login
