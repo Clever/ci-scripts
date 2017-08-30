@@ -48,6 +48,9 @@ DOCKER_USER=$1
 DOCKER_PASS=$2
 ORG=$4
 
+echo "Docker version..."
+docker version
+
 # Check CLI + env vars for DockerHub and (conditonally) ECR
 check_hub_vars
 if [ "$ECR_PUSH_ID" != "" ]; then
