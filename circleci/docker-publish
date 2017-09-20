@@ -15,6 +15,7 @@ check_hub_vars() {
   # User supplied args
   if [[ -z $DOCKER_USER ]]; then echo "Missing arg1 DOCKER_USER" && exit 1; fi
   if [[ -z $DOCKER_PASS ]]; then echo "Missing arg2 DOCKER_PASS" && exit 1; fi
+  if [[ -z $DOCKER_EMAIL ]]; then echo "Missing arg3 DOCKER_EMAIL" && exit 1; fi
   if [[ -z $ORG ]]; then echo "Missing arg4 ORG" && exit 1; fi
 }
 
@@ -46,6 +47,7 @@ SHORT_SHA=${CIRCLE_SHA1:0:7}
 
 DOCKER_USER=$1
 DOCKER_PASS=$2
+DOCKER_EMAIL=$3 # this arg is unused; TODO: Migration to remove it from other repos which call ci-scripts
 ORG=$4
 
 echo "Docker version..."
