@@ -23,7 +23,7 @@ GITHUB_TOKEN=$4
 REPORT_CARD_IMAGE="0babaab"
 
 echo "Logging into DockerHub..."
-docker login -u $DOCKER_USER -p $DOCKER_PASS --email="none" || docker login -u $DOCKER_USER -p $DOCKER_PASS
+docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL" || docker login -u $DOCKER_USER -p $DOCKER_PASS
 if [ $? -ne 0 ]; then
     echo "ERROR: Failed to login to dockerhub"
     exit 1
