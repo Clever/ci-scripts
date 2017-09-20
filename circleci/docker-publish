@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Logs into Docker registry (DockerHub and optionally ECR),
-# then builds and pushes docker image. Docker image is tagged 
+# then builds and pushes docker image. Docker image is tagged
 # with 7 character git commit SHA.
 #
 # Usage:
@@ -30,8 +30,11 @@ check_ecr_vars() {
   if [[ -z $ECR_PUSH_SECRET ]]; then echo "Missing var for ECR: ECR_PUSH_SECRET" && exit 1; fi
 }
 
+ecr_login(){
+	eval $(AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $ECR_REGION get-login --include-email) || eval $(AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $ECR_REGION get-login --no-include-email)
+}
+
 push_ecr_image(){
-	eval $(AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $ECR_REGION get-login)
 	docker tag $ORG/$REPO:$SHORT_SHA $ECR_ACCOUNT_ID.dkr.ecr.$ECR_REGION.amazonaws.com/$REPO:$SHORT_SHA
 	docker push $ECR_ACCOUNT_ID.dkr.ecr.$ECR_REGION.amazonaws.com/$REPO:$SHORT_SHA
 }
@@ -44,8 +47,11 @@ SHORT_SHA=${CIRCLE_SHA1:0:7}
 
 DOCKER_USER=$1
 DOCKER_PASS=$2
-DOCKER_EMAIL=$3
+DOCKER_EMAIL=$3 # this arg is unused; TODO: Migration to remove it from other repos which call ci-scripts
 ORG=$4
+
+echo "Docker version..."
+docker version
 
 # Check CLI + env vars for DockerHub and (conditonally) ECR
 check_hub_vars
@@ -55,17 +61,20 @@ fi
 
 # dockerhub login.
 # `FROM image` in Dockerfile is going to pull from DockerHub
-docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL" || docker login -u $DOCKER_USER -p $DOCKER_PASS
+docker login -u $DOCKER_USER -p $DOCKER_PASS --email="none" || docker login -u $DOCKER_USER -p $DOCKER_PASS
+if [ "$ECR_PUSH_ID" != "" ]; then
+  echo "ECR access_id available. Logging into ECR..."
+  ecr_login
+fi
 
 echo "Building docker image..."
 docker build -t $ORG/$REPO:$SHORT_SHA .
 
 echo "Pushing to DockerHub..."
-push_hub_image $1 $2 $3 $4
+push_hub_image
 
 # all repos eventually should dual publish (or explicitly opt-out)
 if [ "$ECR_PUSH_ID" != "" ]; then
   echo "ECR access_id available. Pushing to ECR..."
-  # push_ecr_image
-  echo "skipping"
+  push_ecr_image
 fi
