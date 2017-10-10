@@ -43,7 +43,7 @@ export BUILD_NUM=$CIRCLE_BUILD_NUM
 CURL_DATA=$(python -c 'import json, os; print(json.dumps({
   "username": os.getenv("USER"),
   "reponame": os.getenv("REPO"),
-  "buildnum": os.getenv("BUILD_NUM"),
+  "buildnum": int(os.getenv("BUILD_NUM")),
   "workflow": open(os.getenv("WF_FILE"), "r").read(),
 }))')
 echo $CURL_DATA | python -m json.tool
