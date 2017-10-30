@@ -23,7 +23,8 @@ if [ "$GO_VERSION" == "1.4" ]; then GO_VERSION="1.4.3"; fi
 if [ "$GO_VERSION" == "1.5" ]; then GO_VERSION="1.5.4"; fi
 if [ "$GO_VERSION" == "1.6" ]; then GO_VERSION="1.6.4"; fi
 if [ "$GO_VERSION" == "1.7" ]; then GO_VERSION="1.7.6"; fi
-if [ "$GO_VERSION" == "1.8" ]; then GO_VERSION="1.8.3"; fi
+if [ "$GO_VERSION" == "1.8" ]; then GO_VERSION="1.8.5"; fi
+if [ "$GO_VERSION" == "1.9" ]; then GO_VERSION="1.9.2"; fi
 
 GODIST=go$GO_VERSION.linux-amd64.tar.gz
 
