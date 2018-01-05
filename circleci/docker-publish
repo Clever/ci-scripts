@@ -78,6 +78,3 @@ if [ "$ECR_PUSH_ID" != "" ]; then
   echo "ECR access_id available. Pushing to ECR..."
   push_ecr_image
 fi
-
-# Create an artifact with JSON info about the docker image (uses the catapult/models SourcePath data model for convenience)
-echo "{\"Domain\": \"dockerhub\", \"Org\": \"${ORG}\", \"Repo\": \"${REPO}\"}" > $CIRCLE_ARTIFACTS/docker_artifact
