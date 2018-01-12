@@ -13,6 +13,7 @@ APP_NAME=$1
 if [[ -z $APP_NAME ]]; then echo "Missing arg1 APP_NAME" && exit 1; fi
 
 RUN_TYPE=$(grep type launch/${APP_NAME}.yml | cut -d' ' -f4)
+AWS_REGION=$(echo ${RUN_TYPE} | cut -d'/' -f2)
 
 # Set automatically by CircleCI
 : ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
@@ -43,10 +44,10 @@ LAMBDA_AWS_S3_KEY=${REPO}/${SHORT_SHA}/handler.zip
 # upload to s3
 echo "Uploading to S3..."
 # region doesn't really matter for an S3 upload, since the bucket region is fixed
-AWS_REGION=us-west-2 \
+AWS_REGION=$AWS_REGION \
           AWS_ACCESS_KEY_ID=$LAMBDA_AWS_ACCESS_KEY_ID \
           AWS_SECRET_ACCESS_KEY=$LAMBDA_AWS_SECRET_ACCESS_KEY \
-          aws s3 cp bin/handler.zip s3://${LAMBDA_AWS_BUCKET}/${LAMBDA_AWS_S3_KEY}
+          aws s3 cp bin/handler.zip s3://${LAMBDA_AWS_BUCKET}-${AWS_REGION}/${LAMBDA_AWS_S3_KEY}
 
 # publish the application to catapult
 echo "Publishing to catapult..."
