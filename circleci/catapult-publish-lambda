@@ -12,6 +12,8 @@ set -e
 APP_NAME=$1
 if [[ -z $APP_NAME ]]; then echo "Missing arg1 APP_NAME" && exit 1; fi
 
+RUN_TYPE=$(grep type launch/${APP_NAME}.yml | cut -d' ' -f4)
+
 # Set automatically by CircleCI
 : ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
 REPO=$CIRCLE_PROJECT_REPONAME
@@ -53,7 +55,7 @@ SC=$(curl -u $CATAPULT_USER:$CATAPULT_PASS \
           --output catapult.out \
           -H "Content-Type: application/json" \
           -X POST \
-          -d "{\"username\":\"${USER}\",\"reponame\":\"${REPO}\",\"buildnum\":${BUILD_NUM},\"app\":{\"run_type\":\"lambda\",\"id\":\"${APP_NAME}\",\"source\":\"github:Clever/${REPO}@${FULL_SHA}\",\"artifacts\":\"lambda:clever/${REPO}@${SHORT_SHA};S3Bucket=\\\"${LAMBDA_AWS_BUCKET},S3Key=\\\"${LAMBDA_AWS_S3_KEY}\",\"branch\":\"${BRANCH}\"}}" \
+          -d "{\"username\":\"${USER}\",\"reponame\":\"${REPO}\",\"buildnum\":${BUILD_NUM},\"app\":{\"run_type\":\"${RUN_TYPE}\",\"id\":\"${APP_NAME}\",\"source\":\"github:Clever/${REPO}@${FULL_SHA}\",\"artifacts\":\"lambda:clever/${REPO}@${SHORT_SHA};S3Bucket=\\\"${LAMBDA_AWS_BUCKET},S3Key=\\\"${LAMBDA_AWS_S3_KEY}\",\"branch\":\"${BRANCH}\"}}" \
           $CATAPULT_URL)
 
 if [ "$SC" -eq 200 ]; then
