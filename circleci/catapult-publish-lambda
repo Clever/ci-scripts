@@ -41,7 +41,7 @@ BRANCH=$CIRCLE_BRANCH
 # hack to switch from /catapult to /v2/catapult
 # TODO: should probably `ark init` things with an environment variable pointing to base url of circle-ci-integrations
 CATAPULT_URL=$(echo "${CATAPULT_URL}" | sed 's/\/catapult/\/v2\/catapult/')
-LAMBDA_AWS_S3_KEY=${REPO}/${SHORT_SHA}/${APP_NAME}.zip
+LAMBDA_AWS_S3_KEY=${APP_NAME}/${SHORT_SHA}/${APP_NAME}.zip
 
 # upload to s3
 echo "Uploading to S3..."
@@ -58,7 +58,7 @@ SC=$(curl -u $CATAPULT_USER:$CATAPULT_PASS \
           --output catapult.out \
           -H "Content-Type: application/json" \
           -X POST \
-          -d "{\"username\":\"${USER}\",\"reponame\":\"${REPO}\",\"buildnum\":${BUILD_NUM},\"app\":{\"run_type\":\"${RUN_TYPE}\",\"id\":\"${APP_NAME}\",\"source\":\"github:Clever/${REPO}@${FULL_SHA}\",\"artifacts\":\"lambda:clever/${REPO}@${SHORT_SHA};S3Bucket=\\\"${LAMBDA_AWS_BUCKET}-${AWS_REGION},S3Key=\\\"${LAMBDA_AWS_S3_KEY}\",\"branch\":\"${BRANCH}\"}}" \
+          -d "{\"username\":\"${USER}\",\"reponame\":\"${REPO}\",\"buildnum\":${BUILD_NUM},\"app\":{\"run_type\":\"${RUN_TYPE}\",\"id\":\"${APP_NAME}\",\"source\":\"github:Clever/${REPO}@${FULL_SHA}\",\"artifacts\":\"lambda:clever/${APP_NAME}@${SHORT_SHA};S3Bucket=\\\"${LAMBDA_AWS_BUCKET}-${AWS_REGION},S3Key=\\\"${LAMBDA_AWS_S3_KEY}\",\"branch\":\"${BRANCH}\"}}" \
           $CATAPULT_URL)
 
 if [ "$SC" -eq 200 ]; then
