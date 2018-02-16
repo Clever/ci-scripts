@@ -84,9 +84,7 @@ $ ./circleci/workflow-publish [WF_URL] [WF_USER] [WF_PASS] [WF_JSON]
 
 #### Report-card
 
-Runs [report-card](https://github.com/clever/report-card).
+Disabled.
 
-```
-$ ./circleci/report-card [DOCKER_USER] [DOCKER_PASS] [DOCKER_EMAIL] [GITHUB_TOKEN]
-```
-
+We still are keeping the script here so that repos that invoke it can do so safely.
+But it is a no-op.
