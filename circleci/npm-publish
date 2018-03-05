@@ -37,6 +37,7 @@ _EXISTING_NPM_PKG=$(npm info ${_NPM_PACKAGE_NAME} 2> /dev/null || true)
 if [ "${_EXISTING_NPM_PKG}" = "" ] || [ "${_EXISTING_NPM_PKG}" = "undefined" ]
 then
     npm publish $PACKAGE_DIR
+    npm owner add clevereng ${_NPM_PACKAGE_NAME}
     echo "Published successfully."
 else
     echo "Skipped publish, package ${_NPM_PACKAGE_NAME} already published."
