@@ -28,7 +28,8 @@ if [ "$GO_VERSION" == "1.7" ]; then GO_VERSION="1.7.6"; fi
 
 # Active Golang versions
 if [ "$GO_VERSION" == "1.8" ]; then GO_VERSION="1.8.7"; fi
-if [ "$GO_VERSION" == "1.9" ]; then GO_VERSION="1.9.4"; fi
+if [ "$GO_VERSION" == "1.9" ]; then GO_VERSION="1.9.5"; fi
+if [ "$GO_VERSION" == "1.10" ]; then GO_VERSION="1.10.1"; fi
 
 GODIST=go$GO_VERSION.linux-amd64.tar.gz
 
