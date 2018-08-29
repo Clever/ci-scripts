@@ -37,15 +37,6 @@ Publishes content from `[ARTIFACTS_DIR]` as a Github Release.
 $ ./circleci/github-release [GITHUB_TOKEN] [ARTIFACTS_DIR]
 ```
 
-#### Mongo install
-
-Installs a specific Mongo version, rather than the default version in CircleCI.
-At time of writing, `v3.0.7` was default version in CircleCI's [Ubuntu 14.04 (Trusty) image](https://circleci.com/docs/build-image-trusty/#mongodb).
-
-```
-$ ./circleci/mongo-install [VERSION]
-```
-
 ### Clever internal
 
 The following scripts depend on Clever-specific infrastructure and tooling.
