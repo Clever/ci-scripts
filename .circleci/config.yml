@@ -19,8 +19,8 @@ jobs:
     - run: echo "foo" > artifacts/foo.txt
     - run: echo "${CIRCLE_SHA1:0:7}" > VERSION
     - run: ./circleci/github-release $GH_RELEASE_TOKEN artifacts/
-    - run: ./circleci/mongo-install 2.6
-    - run: ./circleci/mongo-install 3.2
+    - run: sudo ./circleci/mongo-install 2.6
+    - run: sudo ./circleci/mongo-install 3.2
     - run:
         command: |-
           cd /tmp/ && wget https://bootstrap.pypa.io/get-pip.py && sudo python get-pip.py
