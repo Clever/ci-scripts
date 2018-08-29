@@ -8,7 +8,6 @@
 #
 # Examples:
 #
-#   mongo-install 2.4
 #   mongo-install 2.6
 #   mongo-install 2.6.12
 
@@ -18,7 +17,6 @@ set -e
 VERSION=$1
 if [[ -z $VERSION ]]; then echo "Missing arg1 VERSION" && exit 1; fi
 
-if [ "$VERSION" == "2.4" ]; then VERSION="2.4.12"; fi
 if [ "$VERSION" == "2.6" ]; then VERSION="2.6.12"; fi
 if [ "$VERSION" == "3.2" ]; then VERSION="3.2.11"; fi
 
@@ -36,16 +34,12 @@ echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' | 
 echo "deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.2.list
 sudo apt-get update
 
-if [ "${VERSION:0:3}" == "2.4" ]; then
-    sudo apt-get install -y mongodb-10gen=$VERSION
-else
-    sudo apt-get install \
-        mongodb-org=$VERSION \
-        mongodb-org-server=$VERSION \
-        mongodb-org-shell=$VERSION \
-        mongodb-org-mongos=$VERSION \
-        mongodb-org-tools=$VERSION
-fi
+sudo apt-get install \
+  mongodb-org=$VERSION \
+  mongodb-org-server=$VERSION \
+  mongodb-org-shell=$VERSION \
+  mongodb-org-mongos=$VERSION \
+  mongodb-org-tools=$VERSION
 
 echo "Checking installed Mongo version..."
 mongo --version
