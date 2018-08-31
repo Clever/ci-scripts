@@ -17,13 +17,9 @@ jobs:
         name: Set up CircleCI artifacts directories
     - run: mkdir artifacts
     - run: echo "foo" > artifacts/foo.txt
-    - run: echo "${CIRCLE_SHA1:0:7}" > VERSION
-    - run: ./circleci/github-release $GH_RELEASE_TOKEN artifacts/
     - run:
+        name: update version
         command: |-
-          cd /tmp/ && wget https://bootstrap.pypa.io/get-pip.py && sudo python get-pip.py
-          sudo apt-get update
-          sudo apt-get install python-dev
-          sudo pip install --upgrade awscli && aws --version
-          pip install --upgrade --user awscli
-        name: Install awscli for ECR publish
+          echo $CIRCLE_SHA1
+          echo "${CIRCLE_SHA1:0:7}" > VERSION
+    - run: ./circleci/github-release $GH_RELEASE_TOKEN artifacts/
