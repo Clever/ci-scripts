@@ -49,6 +49,16 @@ AWS_REGION=$AWS_REGION \
           AWS_SECRET_ACCESS_KEY=$LAMBDA_AWS_SECRET_ACCESS_KEY \
           aws s3 cp bin/${APP_NAME}.zip s3://${LAMBDA_AWS_BUCKET}-${AWS_REGION}/${LAMBDA_AWS_S3_KEY}
 
+if [ -e swagger.yml ]; then
+    echo "Uploading swagger.yml"
+    # api gateway fails to parse on x-nullable
+    sed '/x-nullable/d' ./swagger.yml > ./swagger.lambda.yml
+    AWS_REGION=$AWS_REGION \
+              AWS_ACCESS_KEY_ID=$LAMBDA_AWS_ACCESS_KEY_ID \
+              AWS_SECRET_ACCESS_KEY=$LAMBDA_AWS_SECRET_ACCESS_KEY \
+              aws s3 cp swagger.lambda.yml s3://${LAMBDA_AWS_BUCKET}-${AWS_REGION}/${APP_NAME}/${SHORT_SHA}/swagger.lambda.yml
+fi
+
 # publish the application to catapult
 echo "Publishing to catapult..."
 SC=$(curl -u $CATAPULT_USER:$CATAPULT_PASS \
