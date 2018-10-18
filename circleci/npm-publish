@@ -36,8 +36,12 @@ _NPM_PACKAGE_NAME=$(cd $PACKAGE_DIR && npm list | head -n 1 | cut -d ' ' -f1)
 _EXISTING_NPM_PKG=$(npm info ${_NPM_PACKAGE_NAME} 2> /dev/null || true)
 if [ "${_EXISTING_NPM_PKG}" = "" ] || [ "${_EXISTING_NPM_PKG}" = "undefined" ]
 then
+    dir="$(basename `pwd`)"
     npm publish $PACKAGE_DIR
     echo "Published successfully."
+    npm owner add cleverdrone @clever/$dir
+    npm owner add clevereng @clever/$dir
+    echo "Added clevereng and cleverdrone owners."
 else
     echo "Skipped publish, package ${_NPM_PACKAGE_NAME} already published."
 fi
