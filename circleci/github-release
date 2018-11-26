@@ -19,7 +19,7 @@ REPO=$CIRCLE_PROJECT_REPONAME
 : ${CIRCLE_PROJECT_USERNAME?"Missing required env var"}
 USER=$CIRCLE_PROJECT_USERNAME
 
-if [ ! -e VERSION ]; then echo "Missing VERSION file" && exit 1; fi
+if [[ ! -e VERSION && ! -e swagger.yml ]]; then echo "Missing VERSION & swagger.yml files" && exit 1; fi
 
 # Download github-release script
 echo "Downloading github-release tool"
@@ -28,6 +28,12 @@ tar jxf /tmp/github-release.tar.bz2 -C /tmp/ && sudo mv /tmp/bin/linux/amd64/git
 
 echo "Publishing github-release"
 TAG=$(head -n 1 VERSION)
+if [[ $TAG == "" && -e swagger.yml ]]; then  # fall back on swagger.yml version
+  TAG=$(grep -E 'version: \d+\.\d+\.\d+' swagger.yml  | cut -d: -f2 | sed 's/ //g')
+fi
+if [[ $TAG == "" ]]; then echo "Tag version not inferred from VERSION or swagger.yml files" && exit 1; fi
+
+
 DESCRIPTION=$(tail -n +2 VERSION)
 
 result=$(github-release release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" -s $GITHUB_TOKEN || true)
