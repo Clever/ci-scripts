@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Publishes content from [ARTIFACTS_DIR] as a Github Release.
-# Repo must have a VERSION file in its base directory.
+# Repo must have a VERSION or swagger.yml file in the base directory.
 #
 # Usage:
 #
@@ -19,7 +19,8 @@ REPO=$CIRCLE_PROJECT_REPONAME
 : ${CIRCLE_PROJECT_USERNAME?"Missing required env var"}
 USER=$CIRCLE_PROJECT_USERNAME
 
-if [ ! -e VERSION ]; then echo "Missing VERSION file" && exit 1; fi
+if [[ ! -e VERSION && ! -e swagger.yml ]]; then echo "Missing VERSION & swagger.yml files" && exit 1; fi
+if [[ -e VERSION && -e swagger.yml ]]; then echo "Tag version will not be inferred when both VERSION & swagger.yml files exist" && exit 1; fi
 
 # Download github-release script
 echo "Downloading github-release tool"
@@ -27,7 +28,15 @@ curl -sSL -o /tmp/github-release.tar.bz2 https://github.com/aktau/github-release
 tar jxf /tmp/github-release.tar.bz2 -C /tmp/ && sudo mv /tmp/bin/linux/amd64/github-release /usr/local/bin/github-release
 
 echo "Publishing github-release"
-TAG=$(head -n 1 VERSION)
+if [[ -e VERSION ]]; then
+  TAG=$(head -n 1 VERSION)
+else
+  # extracts a version from the swagger file in format N.N.N
+  TAG=$(grep -E 'version: \d+\.\d+\.\d+$' swagger.yml  | cut -d: -f2 | sed 's/ //g')
+fi
+if [[ $TAG == "" ]]; then echo "Tag version not inferred from VERSION or swagger.yml files" && exit 1; fi
+
+
 DESCRIPTION=$(tail -n +2 VERSION)
 
 result=$(github-release release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" -s $GITHUB_TOKEN || true)
