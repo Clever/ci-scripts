@@ -8,6 +8,8 @@
 
 set -e
 
+. ./utils
+
 # User supplied arg
 APP_NAME=$1
 if [[ -z $APP_NAME ]]; then echo "Missing arg1 APP_NAME" && exit 1; fi
@@ -35,6 +37,8 @@ BRANCH=$CIRCLE_BRANCH
 : ${CATAPULT_URL?"Missing required env var"}
 : ${CATAPULT_USER?"Missing required env var"}
 : ${CATAPULT_PASS?"Missing required env var"}
+
+install_awscli
 
 # hack to switch from /catapult to /v2/catapult
 # TODO: should probably `ark init` things with an environment variable pointing to base url of circle-ci-integrations

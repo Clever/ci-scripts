@@ -11,6 +11,8 @@
 
 set -e
 
+. ./utils
+
 check_hub_vars() {
   # User supplied args
   if [[ -z $DOCKER_USER ]]; then echo "Missing arg1 DOCKER_USER" && exit 1; fi
@@ -31,6 +33,7 @@ check_ecr_vars() {
 }
 
 ecr_login(){
+	install_awscli
 	eval $(AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $ECR_REGION get-login --include-email) || eval $(AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $ECR_REGION get-login --no-include-email)
 }
 

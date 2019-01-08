@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Common functions used by more than on ci-script
+#
+# Usage:
+#
+#   . ./utils
+
+set -e
+
+install_awscli(){
+  if type aws > /dev/null; then
+    echo "AWS cli already installed"
+    return
+  fi
+
+  echo "Installing AWS cli..."
+  wget --directory-prefix=/tmp/ https://bootstrap.pypa.io/get-pip.py
+  sudo python /tmp/get-pip.py
+
+  sudo apt-get update
+  sudo apt-get install python-dev
+  sudo pip install --upgrade awscli && aws --version
+
+  pip install --upgrade --user awscli
+  echo "Completed AWS cli install"
+}
