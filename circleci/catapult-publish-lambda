@@ -8,7 +8,8 @@
 
 set -e
 
-. ./utils
+DIR=$(dirname "$0")
+. $DIR/utils
 
 # User supplied arg
 APP_NAME=$1

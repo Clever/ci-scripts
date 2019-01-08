@@ -15,7 +15,8 @@
 
 set -e
 
-. ./utils
+DIR=$(dirname "$0")
+. $DIR/utils
 
 if [ $# -ne 2 ]; then
     echo "Incorrect number of arguments given. Expected 2, received $#"

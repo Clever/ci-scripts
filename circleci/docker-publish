@@ -11,7 +11,8 @@
 
 set -e
 
-. ./utils
+DIR=$(dirname "$0")
+. $DIR/utils
 
 check_hub_vars() {
   # User supplied args
