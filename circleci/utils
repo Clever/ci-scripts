@@ -15,6 +15,7 @@ install_awscli(){
   fi
 
   echo "Installing AWS cli..."
+  rm -rf ~/.local
   wget --directory-prefix=/tmp/ https://bootstrap.pypa.io/get-pip.py
   sudo python /tmp/get-pip.py
 
