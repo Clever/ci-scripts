@@ -14,6 +14,11 @@ set -e
 DIR=$(dirname "$0")
 . $DIR/utils
 
+# enable experimental cli features for 'docker manifest'
+export tmp=$(mktemp)
+jq '. + {"experimental":"enabled"}' ~/.docker/config.json > "$tmp"
+mv $tmp ~/.docker/config.json
+
 check_hub_vars() {
   # User supplied args
   if [[ -z $DOCKER_USER ]]; then echo "Missing arg1 DOCKER_USER" && exit 1; fi
@@ -22,8 +27,23 @@ check_hub_vars() {
   if [[ -z $ORG ]]; then echo "Missing arg4 ORG" && exit 1; fi
 }
 
+image_exists() {
+    docker manifest inspect "$1" > /dev/null
+    status=$?
+    if $(exit $status); then
+        true
+    else
+        false
+    fi
+}
+
 push_hub_image() {
-  docker push $ORG/$REPO:$SHORT_SHA
+  HUB_URI=$ORG/$REPO:$SHORT_SHA
+  if image_exists $HUB_URI > /dev/null; then
+    echo "dockerhub image exists, refusing to overwrite"
+    exit 1
+  fi
+  docker push $HUB_URI
 }
 
 check_ecr_vars() {
@@ -39,8 +59,13 @@ ecr_login(){
 }
 
 push_ecr_image(){
-	docker tag $ORG/$REPO:$SHORT_SHA $ECR_ACCOUNT_ID.dkr.ecr.$ECR_REGION.amazonaws.com/$REPO:$SHORT_SHA
-	docker push $ECR_ACCOUNT_ID.dkr.ecr.$ECR_REGION.amazonaws.com/$REPO:$SHORT_SHA
+  ECR_URI=$ECR_ACCOUNT_ID.dkr.ecr.$ECR_REGION.amazonaws.com/$REPO:$SHORT_SHA
+  if image_exists $ECR_URI > /dev/null; then
+      echo "ECR image exists, refusing to overwrite"
+      exit 1
+  fi
+  docker tag $ORG/$REPO:$SHORT_SHA $ECR_URI
+  docker push $ECR_URI
 }
 
 # Set automatically by CircleCI
@@ -81,4 +106,7 @@ push_hub_image
 if [ "$ECR_PUSH_ID" != "" ]; then
   echo "ECR access_id available. Pushing to ECR..."
   push_ecr_image
+else
+  echo "ECR not configured correctly, please ping #oncall-infra"
+  exit 1;
 fi
