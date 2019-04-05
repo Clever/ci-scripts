@@ -15,9 +15,14 @@ DIR=$(dirname "$0")
 . $DIR/utils
 
 # enable experimental cli features for 'docker manifest'
-export tmp=$(mktemp)
-jq '. + {"experimental":"enabled"}' ~/.docker/config.json > "$tmp"
-mv $tmp ~/.docker/config.json
+if [ -f "~/.docker/config.json" ]; then
+    tmp=$(mktemp)
+    jq '. + {"experimental":"enabled"}' ~/.docker/config.json > "$tmp"
+    mv $tmp ~/.docker/config.json
+else
+    mkdir ~/.docker
+    echo '{"experimental":"enabled"}' > ~/.docker/config.json
+fi
 
 check_hub_vars() {
   # User supplied args
