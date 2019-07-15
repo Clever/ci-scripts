@@ -54,17 +54,18 @@ push_hub_image() {
 check_ecr_vars() {
   # ECR required env vars
   if [[ -z $ECR_ACCOUNT_ID ]]; then echo "Missing var for ECR: ECR_ACCOUNT_ID" && exit 1; fi
-  if [[ -z $ECR_REGION ]]; then echo "Missing var for ECR: ECR_REGION" && exit 1; fi
   if [[ -z $ECR_PUSH_SECRET ]]; then echo "Missing var for ECR: ECR_PUSH_SECRET" && exit 1; fi
 }
 
 ecr_login(){
-	install_awscli
-	eval $(AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $ECR_REGION get-login --include-email) || eval $(AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $ECR_REGION get-login --no-include-email)
+  REGION=$1
+  install_awscli
+  eval $(AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $REGION get-login --include-email) || eval $(AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $REGION get-login --no-include-email)
 }
 
 push_ecr_image(){
-  ECR_URI=$ECR_ACCOUNT_ID.dkr.ecr.$ECR_REGION.amazonaws.com/$REPO:$SHORT_SHA
+  REGION=$1
+  ECR_URI=$ECR_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO:$SHORT_SHA
   if image_exists $ECR_URI > /dev/null; then
       echo "ECR image exists, refusing to overwrite"
       exit 1
@@ -84,6 +85,9 @@ DOCKER_PASS=$2
 DOCKER_EMAIL=$3 # this arg is unused; TODO: Migration to remove it from other repos which call ci-scripts
 ORG=$4
 
+ECR_REGION_PRIMARY=us-west-1
+ECR_REGION_SECONDARY=us-west-2
+
 echo "Docker version..."
 docker version
 
@@ -98,7 +102,8 @@ fi
 docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL" || docker login -u $DOCKER_USER -p $DOCKER_PASS
 if [ "$ECR_PUSH_ID" != "" ]; then
   echo "ECR access_id available. Logging into ECR..."
-  ecr_login
+  ecr_login $ECR_REGION_PRIMARY
+  ecr_login $ECR_REGION_SECONDARY
 fi
 
 echo "Building docker image..."
@@ -110,7 +115,8 @@ push_hub_image
 # all repos eventually should dual publish (or explicitly opt-out)
 if [ "$ECR_PUSH_ID" != "" ]; then
   echo "ECR access_id available. Pushing to ECR..."
-  push_ecr_image
+  push_ecr_image $ECR_REGION_PRIMARY
+  push_ecr_image $ECR_REGION_SECONDARY
 else
   echo "ECR not configured correctly, please ping #oncall-infra"
   exit 1;
