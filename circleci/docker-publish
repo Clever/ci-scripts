@@ -74,7 +74,7 @@ docker version
 check_ecr_vars
 
 # ECR login.
-echo "ECR access_id available. Logging into ECR..."
+echo "Logging into ECR..."
 ecr_login $ECR_REGION_PRIMARY
 ecr_login $ECR_REGION_SECONDARY
 
