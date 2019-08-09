@@ -1,12 +1,11 @@
 #!/bin/bash
 
-# Logs into Docker registry (DockerHub and optionally ECR),
-# then builds and pushes docker image. Docker image is tagged
-# with 7 character git commit SHA.
+# Logs into ECR, then builds and pushes docker image. Docker 
+# image is tagged with 7 character git commit SHA.
 #
 # Usage:
 #
-#   docker-publish [DOCKER_USER] [DOCKER_PASS] [DOCKER_EMAIL] [ORG]
+#   docker-publish
 
 
 set -e
@@ -24,14 +23,6 @@ else
     echo '{"experimental":"enabled"}' > ~/.docker/config.json
 fi
 
-check_hub_vars() {
-  # User supplied args
-  if [[ -z $DOCKER_USER ]]; then echo "Missing arg1 DOCKER_USER" && exit 1; fi
-  if [[ -z $DOCKER_PASS ]]; then echo "Missing arg2 DOCKER_PASS" && exit 1; fi
-  if [[ -z $DOCKER_EMAIL ]]; then echo "Missing arg3 DOCKER_EMAIL" && exit 1; fi
-  if [[ -z $ORG ]]; then echo "Missing arg4 ORG" && exit 1; fi
-}
-
 image_exists() {
     docker manifest inspect "$1" > /dev/null
     status=$?
@@ -40,15 +31,6 @@ image_exists() {
     else
         false
     fi
-}
-
-push_hub_image() {
-  HUB_URI=$ORG/$REPO:$SHORT_SHA
-  if image_exists $HUB_URI > /dev/null; then
-    echo "dockerhub image exists, refusing to overwrite"
-    exit 1
-  fi
-  docker push $HUB_URI
 }
 
 check_ecr_vars() {
@@ -80,10 +62,7 @@ REPO=$CIRCLE_PROJECT_REPONAME
 : ${CIRCLE_SHA1?"Missing required env var"}
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 
-DOCKER_USER=$1
-DOCKER_PASS=$2
-DOCKER_EMAIL=$3 # this arg is unused; TODO: Migration to remove it from other repos which call ci-scripts
-ORG=$4
+ORG=clever
 
 ECR_REGION_PRIMARY=us-west-1
 ECR_REGION_SECONDARY=us-west-2
@@ -91,33 +70,17 @@ ECR_REGION_SECONDARY=us-west-2
 echo "Docker version..."
 docker version
 
-# Check CLI + env vars for DockerHub and (conditonally) ECR
-check_hub_vars
-if [ "$ECR_PUSH_ID" != "" ]; then
-  check_ecr_vars
-fi
+# Check CLI + env vars for ECR
+check_ecr_vars
 
-# dockerhub login.
-# `FROM image` in Dockerfile is going to pull from DockerHub
-docker login -u $DOCKER_USER -p $DOCKER_PASS --email="$DOCKER_EMAIL" || docker login -u $DOCKER_USER -p $DOCKER_PASS
-if [ "$ECR_PUSH_ID" != "" ]; then
-  echo "ECR access_id available. Logging into ECR..."
-  ecr_login $ECR_REGION_PRIMARY
-  ecr_login $ECR_REGION_SECONDARY
-fi
+# ECR login.
+echo "Logging into ECR..."
+ecr_login $ECR_REGION_PRIMARY
+ecr_login $ECR_REGION_SECONDARY
 
 echo "Building docker image..."
 docker build -t $ORG/$REPO:$SHORT_SHA .
 
-echo "Pushing to DockerHub..."
-push_hub_image
-
-# all repos eventually should dual publish (or explicitly opt-out)
-if [ "$ECR_PUSH_ID" != "" ]; then
-  echo "ECR access_id available. Pushing to ECR..."
-  push_ecr_image $ECR_REGION_PRIMARY
-  push_ecr_image $ECR_REGION_SECONDARY
-else
-  echo "ECR not configured correctly, please ping #oncall-infra"
-  exit 1;
-fi
+echo "Pushing to ECR..."
+push_ecr_image $ECR_REGION_PRIMARY
+push_ecr_image $ECR_REGION_SECONDARY
