@@ -5,7 +5,7 @@
 #
 # Usage:
 #
-#   docker-publish [ORG]
+#   docker-publish
 
 
 set -e
@@ -62,7 +62,7 @@ REPO=$CIRCLE_PROJECT_REPONAME
 : ${CIRCLE_SHA1?"Missing required env var"}
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 
-ORG=$1
+ORG=clever
 
 ECR_REGION_PRIMARY=us-west-1
 ECR_REGION_SECONDARY=us-west-2
