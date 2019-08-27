@@ -19,7 +19,7 @@ if [ -f "~/.docker/config.json" ]; then
     jq '. + {"experimental":"enabled"}' ~/.docker/config.json > "$tmp"
     mv $tmp ~/.docker/config.json
 else
-    mkdir ~/.docker
+    mkdir -p ~/.docker
     echo '{"experimental":"enabled"}' > ~/.docker/config.json
 fi
 
