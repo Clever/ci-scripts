@@ -41,8 +41,7 @@ check_ecr_vars() {
 
 ecr_login(){
   REGION=$1
-  install_awscli
-  eval $(AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $REGION get-login --include-email) || eval $(AWS_ACCESS_KEY_ID=$ECR_PUSH_ID AWS_SECRET_ACCESS_KEY=$ECR_PUSH_SECRET aws ecr --region $REGION get-login --no-include-email)
+  eval $(AWS_ACCESS_KEY_ID=$2 AWS_SECRET_ACCESS_KEY=$3 aws ecr --region $REGION get-login --include-email) || eval $(AWS_ACCESS_KEY_ID=$2 AWS_SECRET_ACCESS_KEY=$3 aws ecr --region $REGION get-login --no-include-email)
 }
 
 push_ecr_image(){
@@ -73,13 +72,19 @@ docker version
 # Check CLI + env vars for ECR
 check_ecr_vars
 
-# ECR login.
-echo "Logging into ECR..."
-ecr_login $ECR_REGION_PRIMARY
-ecr_login $ECR_REGION_SECONDARY
+install_awscli
 
+# Some Dockerfiles for private repos depend on public images (and vice versa) in us-west-1
+if [[ -n $ECR_BUILD_ID ]]; then
+  ecr_login us-west-1 $ECR_BUILD_ID $ECR_BUILD_SECRET
+fi
 echo "Building docker image..."
 docker build -t $ORG/$REPO:$SHORT_SHA .
+
+# ECR login.
+echo "Logging into ECR..."
+ecr_login $ECR_REGION_PRIMARY $ECR_PUSH_ID $ECR_PUSH_SECRET
+ecr_login $ECR_REGION_SECONDARY $ECR_PUSH_ID $ECR_PUSH_SECRET
 
 echo "Pushing to ECR..."
 push_ecr_image $ECR_REGION_PRIMARY
