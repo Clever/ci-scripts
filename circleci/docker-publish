@@ -73,13 +73,13 @@ docker version
 # Check CLI + env vars for ECR
 check_ecr_vars
 
+echo "Building docker image..."
+docker build -t $ORG/$REPO:$SHORT_SHA .
+
 # ECR login.
 echo "Logging into ECR..."
 ecr_login $ECR_REGION_PRIMARY
 ecr_login $ECR_REGION_SECONDARY
-
-echo "Building docker image..."
-docker build -t $ORG/$REPO:$SHORT_SHA .
 
 echo "Pushing to ECR..."
 push_ecr_image $ECR_REGION_PRIMARY
