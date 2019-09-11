@@ -34,7 +34,7 @@ $ ./circleci/npm-publish [NPM_TOKEN] [PACKAGE_DIR]
 Publishes content from `[ARTIFACTS_DIR]` as a Github Release.
 
 ```
-$ ./circleci/github-release [GITHUB_TOKEN] [ARTIFACTS_DIR]
+$ ./circleci/github-release [--pre-release] <GITHUB_TOKEN> [ARTIFACTS_DIR]
 ```
 
 ### Clever internal

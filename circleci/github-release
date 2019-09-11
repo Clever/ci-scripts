@@ -5,12 +5,21 @@
 #
 # Usage:
 #
-#   github-release [GITHUB_TOKEN] [ARTIFACTS_DIR]
+#   github-release [--pre-release] <GITHUB_TOKEN> [ARTIFACTS_DIR]
 
 set -e
 
+if [[ $1 == "--pre-release" ]]; then
+  PRE_RELEASE="--pre-release"
+  GITHUB_TOKEN=$2
+  ARTIFACTS_DIR=$3
+else
+  PRE_RELEASE=""
+  GITHUB_TOKEN=$1
+  ARTIFACTS_DIR=$2
+fi
+
 # User supplied args
-GITHUB_TOKEN=$1
 if [[ -z $GITHUB_TOKEN ]]; then echo "Missing arg1 GITHUB_TOKEN" && exit 1; fi
 
 # Set automatically by CircleCI
@@ -35,7 +44,7 @@ echo "Publishing github-release"
 TAG=$(head -n 1 VERSION)
 DESCRIPTION=$(tail -n +2 VERSION)
 
-result=$(github-release release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" -s $GITHUB_TOKEN || true)
+result=$(github-release release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" -s $GITHUB_TOKEN $PRE_RELEASE || true)
 if [[ $result == *422* ]]; then
   echo "Release already exists for this tag.";
   exit 0
@@ -46,9 +55,8 @@ else
   exit 1
 fi
 
-ARTIFACTS_DIR=$2
 if [[ -z $ARTIFACTS_DIR ]]; then
-  echo "Skipping publishing artifacts. No ARTIFACTS_DIR env var set";
+  echo "Skipping publishing artifacts. No ARTIFACTS_DIR set";
 else
   for f in $ARTIFACTS_DIR; do
       # treat directories and files differently
