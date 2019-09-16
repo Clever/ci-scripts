@@ -75,6 +75,8 @@ check_ecr_vars
 install_awscli
 
 # Some Dockerfiles for private repos depend on public images (and vice versa) in us-west-1
+echo "If necessary, add the ECR_BUILD_ID and ECR_BUILD_SECRET env vars to circle manually."
+echo "They can be found in init-service as CI_ECR_XXX_KEY and CI_ECR_XXX_SECRET."
 if [[ -n $ECR_BUILD_ID ]]; then
   ecr_login us-west-1 $ECR_BUILD_ID $ECR_BUILD_SECRET
 fi
