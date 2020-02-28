@@ -49,7 +49,7 @@ push_ecr_image(){
   ECR_URI=$ECR_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO:$SHORT_SHA
   if image_exists $ECR_URI > /dev/null; then
       echo "ECR image exists, refusing to overwrite"
-      exit 1
+      return
   fi
   docker tag $ORG/$REPO:$SHORT_SHA $ECR_URI
   docker push $ECR_URI
