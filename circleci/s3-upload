@@ -7,7 +7,7 @@
 # - Requires two env vars to be set, with access to the bucket:
 #       * AWS_ACCESS_KEY_ID
 #       * AWS_SECRET_ACCESS_KEY
-# - If not set, check the associated IAM user for the id, and `ark secrets read production.[APP] ci-aws-secret` for the secret
+# - If not set, import them from another app that uploads to the same bucket https://circleci.com/gh/Clever/[APP_NAME]/edit#env-vars
 #
 # Usage:
 #
