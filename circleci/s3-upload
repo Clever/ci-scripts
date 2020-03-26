@@ -7,6 +7,7 @@
 # - Requires two env vars to be set, with access to the bucket:
 #       * AWS_ACCESS_KEY_ID
 #       * AWS_SECRET_ACCESS_KEY
+# - If not set, check the associated IAM user for the id, and `ark secrets read production.[APP] ci-aws-secret` for the secret
 #
 # Usage:
 #
