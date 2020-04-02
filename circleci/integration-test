@@ -48,7 +48,7 @@ SC=$(curl -u $TESTING_SERVICE_USER:$TESTING_SERVICE_PASS \
 
 if [[ $SC -eq 200 ]]; then
   echo "Successfully submitted to integration-testing-service"
-  JOB_ID=$(cat integration-tests.out | jq '.jobId')
+  JOB_ID=$(cat integration-tests.out | jq -r '.jobId')
   rm -f integration-tests.out
 else
   echo "Failed to submit tests to integration-testing-service"
@@ -63,11 +63,13 @@ fi
 echo "Job ID: $JOB_ID"
 
 echo "Waiting 1 minute before polling"
-sleep 2m
+sleep 1m
 
 echo "Polling for test completion"
 
-MAX_POLLS=10
+# Polling 20 times at 30 seconds each (10 minutes) for now, while integration-testing-service is not fully optimized
+# Should be tuned and lowered once jobs run more quickly.
+MAX_POLLS=20
 for ((i=1;i<=MAX_POLLS;i++))
 do
   sleep 30s
