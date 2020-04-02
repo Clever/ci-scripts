@@ -78,6 +78,7 @@ do
     --output integration-tests.out \
     -H "Content-Type: application/json" \
     -X GET \
+    -s -S \
     "$TESTING_SERVICE_URL?JobID=$JOB_ID")
   if [[ $SC -eq 200 ]]; then
     echo "------------------------------------------------"
@@ -86,7 +87,15 @@ do
     if [[ $STATUS == '"succeeded"' ]]; then
       rm -f integration-tests.out
       exit 0
-    elif [[ $STATUS == '"systemError"' || $STATUS == '"testsFailed"' ]]; then
+    elif [[ $STATUS == '"testsFailed"' ]]; then
+      # in this case, .message is a single JSON string encoding a JSON blob of the test output
+      echo "------------------------------------------------"
+      echo "Test output:"
+      cat integration-tests.out | jq -r '.message' | jq
+      echo "------------------------------------------------"
+      rm -f integration-tests.out
+      exit 1
+    elif [[ $STATUS == '"systemError"' ]]; then
       echo "------------------------------------------------"
       cat integration-tests.out
       echo ""
