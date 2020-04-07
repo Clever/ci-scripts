@@ -54,7 +54,7 @@ if [[ $CONTENT_ENCODING == "gzip" ]]; then
     rm -rf $WORK_DIR
     mkdir -p $WORK_DIR
     cp -r $SOURCE_DIR $WORK_DIR
-    find $WORK_DIR -type f -exec gzip {} \; -exec mv {}.gz {} \;
+    find $WORK_DIR -type f -exec gzip --best {} \; -exec mv {}.gz {} \;
 
     DIR_TO_UPLOAD="$WORK_DIR/$(basename $SOURCE_DIR)"
     ADDITIONAL_S3_FLAGS='--content-encoding gzip'
