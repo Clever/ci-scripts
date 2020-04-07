@@ -5,32 +5,64 @@
 # - All source dir content is uploaded (recursively).
 # - Example s3 bucket URL format: s3://<bucket>/<etc>/
 # - Requires two env vars to be set, with access to the bucket:
-#       * AWS_ACCESS_KEY_ID
-#       * AWS_SECRET_ACCESS_KEY
+#     * AWS_ACCESS_KEY_ID
+#     * AWS_SECRET_ACCESS_KEY
 # - If not set, import them from another app that uploads to the same bucket https://circleci.com/gh/Clever/[APP_NAME]/edit#env-vars
+# - If `--content-encoding gzip` is specified:
+#     * Files will be individually gzipped.
+#     * File names will not be changed (i.e. they will not be extended with .gz).
+#     * Files will all be tagged with `Content-Encoding: gzip` metadata in S3.
+#     * The original source dir content will be left unchanged.
 #
 # Usage:
 #
-#   s3-upload [SOURCE_DIR] [S3_BUCKET_URL]
+#   s3-upload [--content-encoding gzip] SOURCE_DIR S3_BUCKET_URL
 
 set -e
 
 DIR=$(dirname "$0")
 . $DIR/utils
 
-if [ $# -ne 2 ]; then
-    echo "Incorrect number of arguments given. Expected 2, received $#"
-    echo "Usage: s3-upload [SOURCE_DIR] [S3_BUCKET_URL]"
+USAGE="Usage: s3-upload [--content-encoding gzip] SOURCE_DIR S3_BUCKET_URL"
+WORK_DIR="/tmp/s3-upload/work-dir"
+
+if [[ $# -eq 4 ]]; then
+    if [[ $1 != "--content-encoding" ]]; then
+        echo "$USAGE"
+        exit 1
+    fi
+    if [[ $2 != "gzip" ]]; then
+        echo "Valid values for --content-encoding are: gzip"
+        echo "$USAGE"
+        exit 1
+    fi
+    CONTENT_ENCODING=$2
+    SOURCE_DIR=$3
+    S3_BUCKET_URL=$4
+elif [[ $# -eq 2 ]]; then
+    SOURCE_DIR=$1
+    S3_BUCKET_URL=$2
+else
+    echo "$USAGE"
     exit 1
 fi
 
-# User supplied args
-SOURCE_DIR=$1
-S3_BUCKET_URL=$2
+DIR_TO_UPLOAD="$SOURCE_DIR"
+ADDITIONAL_S3_FLAGS=""
+
+if [[ $CONTENT_ENCODING == "gzip" ]]; then
+    rm -rf $WORK_DIR
+    mkdir -p $WORK_DIR
+    cp -r $SOURCE_DIR $WORK_DIR
+    find $WORK_DIR -type f -exec gzip --best {} \; -exec mv {}.gz {} \;
+
+    DIR_TO_UPLOAD="$WORK_DIR/$(basename $SOURCE_DIR)"
+    ADDITIONAL_S3_FLAGS='--content-encoding gzip'
+fi
 
 install_awscli
 
-echo "Uploading files to s3..."
-echo "\tSource: $SOURCE_DIR"
-echo "\tDesination: $S3_BUCKET_URL"
-aws s3 cp $SOURCE_DIR $S3_BUCKET_URL --recursive --acl "private" --cache-control "max-age=31536000"
+echo "Uploading files to S3..."
+echo "  Source: $SOURCE_DIR"
+echo "  Desination: $S3_BUCKET_URL"
+aws s3 cp $DIR_TO_UPLOAD $S3_BUCKET_URL --recursive --acl "private" --cache-control "max-age=31536000" $ADDITIONAL_S3_FLAGS
