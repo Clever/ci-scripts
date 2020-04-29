@@ -42,7 +42,7 @@ fi
 
 echo "Publishing github-release"
 TAG=$(head -n 1 VERSION)
-if [[ ${str:0:1} != "v" ]]; then TAG=v$TAG; fi
+if [[ ${TAG:0:1} != "v" ]]; then TAG=v$TAG; fi
 DESCRIPTION=$(tail -n +2 VERSION)
 
 result=$(github-release release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" -s $GITHUB_TOKEN $PRE_RELEASE || true)
