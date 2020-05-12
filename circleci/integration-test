@@ -67,9 +67,10 @@ sleep 1m
 
 echo "Polling for test completion"
 
-# Polling 20 times at 30 seconds each (10 minutes) for now, while integration-testing-service is not fully optimized
-# Should be tuned and lowered once jobs run more quickly.
-MAX_POLLS=20
+# Polling 60 times at 30 seconds each (30 minutes)
+# The timeout for the workflow is at 30 minutes, minus reserved time for cleanup.
+# Since we aren't planning on canceling the workflow on any shorter timeout, we should poll for that long.
+MAX_POLLS=60
 for ((i=1;i<=MAX_POLLS;i++))
 do
   sleep 30s
