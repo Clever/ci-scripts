@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# Uploads script (and libraries if applicable) to s3 and publishes a catapult app.
+#
+# Usage:
+#
+#   catapult-publish-spark [APP NAME]
+
+set -e
+
+DIR=$(dirname "$0")
+. $DIR/utils
+
+# User supplied arg
+APP_NAME=$1
+if [[ -z $APP_NAME ]]; then echo "Missing arg1 APP_NAME" && exit 1; fi
+
+RUN_TYPE=$(grep type launch/${APP_NAME}.yml | cut -d' ' -f4)
+AWS_REGION=$(echo ${RUN_TYPE} | cut -d'/' -f2)
+
+# Set automatically by CircleCI
+: ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
+REPO=$CIRCLE_PROJECT_REPONAME
+: ${CIRCLE_SHA1?"Missing required env var"}
+FULL_SHA=${CIRCLE_SHA1}
+SHORT_SHA=${CIRCLE_SHA1:0:7}
+: ${CIRCLE_PROJECT_USERNAME?"Missing required env var"}
+USER=$CIRCLE_PROJECT_USERNAME
+: ${CIRCLE_BUILD_NUM?"Missing required env var"}
+BUILD_NUM=$CIRCLE_BUILD_NUM
+: ${CIRCLE_BRANCH?"Missing required env var"}
+BRANCH=$CIRCLE_BRANCH
+
+# Set by init service
+: ${GLUE_AWS_ACCESS_KEY_ID?"Missing required env var"}
+: ${GLUE_AWS_SECRET_ACCESS_KEY?"Missing required env var"}
+: ${GLUE_AWS_BUCKET?"Missing required env var"}
+: ${CATAPULT_URL?"Missing required env var"}
+: ${CATAPULT_USER?"Missing required env var"}
+: ${CATAPULT_PASS?"Missing required env var"}
+
+install_awscli
+
+# hack to switch from /catapult to /v2/catapult
+CATAPULT_URL=$(echo "${CATAPULT_URL}" | sed 's/\/catapult/\/v2\/catapult/')
+GLUE_AWS_S3_KEY=${APP_NAME}/${SHORT_SHA}
+
+# upload to s3
+echo "Uploading to S3..."
+# region doesn't really matter for an S3 upload, since the bucket region is fixed
+AWS_REGION=$AWS_REGION \
+          AWS_ACCESS_KEY_ID=$GLUE_AWS_ACCESS_KEY_ID \
+          AWS_SECRET_ACCESS_KEY=$GLUE_AWS_SECRET_ACCESS_KEY \
+          aws s3 cp --recursive bin/${APP_NAME} s3://${GLUE_AWS_BUCKET}-${AWS_REGION}/${GLUE_AWS_S3_KEY}
+
+# publish the application to catapult
+echo "Publishing to catapult..."
+SC=$(curl -u $CATAPULT_USER:$CATAPULT_PASS \
+          -w "%{http_code}" \
+          --output catapult.out \
+          -H "Content-Type: application/json" \
+          -X POST \
+          -d "{\"username\":\"${USER}\",\"reponame\":\"${REPO}\",\"buildnum\":${BUILD_NUM},\"app\":{\"run_type\":\"${RUN_TYPE}\",\"id\":\"${APP_NAME}\",\"source\":\"github:Clever/${REPO}@${FULL_SHA}\",\"artifacts\":\"glue:clever/${APP_NAME}@${SHORT_SHA};S3Bucket=\\\"${GLUE_AWS_BUCKET}-${AWS_REGION},S3Prefix=\\\"${GLUE_AWS_S3_KEY}\",\"branch\":\"${BRANCH}\"}}" \
+          $CATAPULT_URL)
+
+if [ "$SC" -eq 200 ]; then
+    echo "Successfully published catapult application"
+    rm -f catapult.out
+    exit 0
+else
+    echo "Failed to publish catapult application"
+    echo "------------------------------------------------"
+    cat catapult.out
+    echo ""
+    echo "------------------------------------------------"
+    rm -f catapult.out
+    exit 1
+fi
