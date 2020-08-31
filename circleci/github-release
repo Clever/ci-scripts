@@ -32,20 +32,23 @@ if [ ! -e VERSION ]; then echo "Missing VERSION file" && exit 1; fi
 
 # Download github-release script
 echo "Downloading github-release tool"
+GITHUB_RELEASE=/usr/local/bin/github-release
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  curl -sSL -o /tmp/github-release.tar.bz2 https://github.com/aktau/github-release/releases/download/v0.7.2/darwin-amd64-github-release.tar.bz2
-  tar jxf /tmp/github-release.tar.bz2 -C /tmp/ && sudo mv /tmp/bin/darwin/amd64/github-release /usr/local/bin/github-release
+  curl -sSL -o /tmp/github-release.bz2 https://github.com/github-release/github-release/releases/download/v0.8.1/darwin-amd64-github-release.bz2
+  bunzip2 /tmp/github-release.bz2 && sudo mv /tmp/github-release $GITHUB_RELEASE
 else
-  curl -sSL -o /tmp/github-release.tar.bz2 https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2
-  tar jxf /tmp/github-release.tar.bz2 -C /tmp/ && sudo mv /tmp/bin/linux/amd64/github-release /usr/local/bin/github-release
+ curl -sSL -o /tmp/github-release.bz2 https://github.com/github-release/github-release/releases/download/v0.8.1/linux-amd64-github-release.bz2
+ bunzip2 /tmp/github-release.bz2 && sudo mv /tmp/github-release $GITHUB_RELEASE
 fi
+
+chmod +x $GITHUB_RELEASE
 
 echo "Publishing github-release"
 TAG=$(head -n 1 VERSION)
 if [[ ${TAG:0:1} != "v" ]]; then TAG=v$TAG; fi
 DESCRIPTION=$(tail -n +2 VERSION)
 
-result=$(github-release release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" -s $GITHUB_TOKEN $PRE_RELEASE || true)
+result=$($GITHUB_RELEASE release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" -s $GITHUB_TOKEN $PRE_RELEASE || true)
 if [[ $result == *422* ]]; then
   echo "Release already exists for this tag.";
   exit 0
@@ -64,11 +67,11 @@ else
       if [ -d $f ]; then
           for ff in $(ls $f); do
               echo -e "uploading $ff"
-              github-release upload -u $USER -r $REPO -t $TAG -n $ff -f $f/$ff -s $GITHUB_TOKEN
+              $GITHUB_RELEASE upload -u $USER -r $REPO -t $TAG -n $ff -f $f/$ff -s $GITHUB_TOKEN
           done
       elif [ -f $f ]; then
           echo -e "uploading $f"
-          github-release upload -u $USER -r $REPO -t $TAG -n $f -f $f -s $GITHUB_TOKEN
+          $GITHUB_RELEASE upload -u $USER -r $REPO -t $TAG -n $f -f $f -s $GITHUB_TOKEN
       else
           echo -e "$f is not a file or directory"
           exit 1
