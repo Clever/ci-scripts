@@ -67,6 +67,7 @@ fi
 # publish the application to catapult
 echo "Publishing to catapult..."
 SC=$(curl -u $CATAPULT_USER:$CATAPULT_PASS \
+          --retry 5 \
           -w "%{http_code}" \
           --output catapult.out \
           -H "Content-Type: application/json" \
