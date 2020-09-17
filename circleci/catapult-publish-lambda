@@ -15,9 +15,6 @@ DIR=$(dirname "$0")
 APP_NAME=$1
 if [[ -z $APP_NAME ]]; then echo "Missing arg1 APP_NAME" && exit 1; fi
 
-RUN_TYPE=$(grep type launch/${APP_NAME}.yml | cut -d' ' -f4)
-AWS_REGION=$(echo ${RUN_TYPE} | cut -d'/' -f2)
-
 # Set automatically by CircleCI
 : ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
 REPO=$CIRCLE_PROJECT_REPONAME
@@ -41,6 +38,25 @@ BRANCH=$CIRCLE_BRANCH
 
 install_awscli
 
+# Set RUN_TYPE, AWS_REGIONS, and S3_ARTIFACTS
+# If application's run type is lambda/<region>; AWS_REGIONS will be just that regions
+#    and S3_ARTIFACTS will set the S3Bucket source variable
+# If it is lambda (i.e. no region), AWS_REGIONS will be all four main US regions,
+#    and S3_ARTIFACTS will set the S3Buckets source variable
+RUN_TYPE=$(grep type "launch/${APP_NAME}.yml" | cut -d' ' -f4)
+if [[ $RUN_TYPE == "lambda/"* ]]; then
+    AWS_REGIONS=$(echo "${RUN_TYPE}" | cut -d'/' -f2)
+    S3_ARTIFACTS=",S3Bucket=\\\"${LAMBDA_AWS_BUCKET}-${AWS_REGIONS}"
+elif [[ $RUN_TYPE == "lambda" ]]; then
+    AWS_REGIONS=${AWS_REGIONS:-"us-east-1 us-east-2 us-west-1 us-west-2"}
+    for REGION in ${AWS_REGIONS}; do
+        S3_ARTIFACTS=${S3_ARTIFACTS},"S3Buckets={${REGION}=\\\"${LAMBDA_AWS_BUCKET}-${AWS_REGIONS}"
+    done
+else
+    echo "Can only publish applications with run type lambda or lambda/<region>; got ${RUN_TYPE}"
+    exit 1
+fi
+
 # hack to switch from /catapult to /v2/catapult
 # TODO: should probably `ark init` things with an environment variable pointing to base url of circle-ci-integrations
 CATAPULT_URL=$(echo "${CATAPULT_URL}" | sed 's/\/catapult/\/v2\/catapult/')
@@ -48,21 +64,23 @@ LAMBDA_AWS_S3_KEY=${APP_NAME}/${SHORT_SHA}/${APP_NAME}.zip
 
 # upload to s3
 echo "Uploading to S3..."
-# region doesn't really matter for an S3 upload, since the bucket region is fixed
-AWS_REGION=$AWS_REGION \
-          AWS_ACCESS_KEY_ID=$LAMBDA_AWS_ACCESS_KEY_ID \
-          AWS_SECRET_ACCESS_KEY=$LAMBDA_AWS_SECRET_ACCESS_KEY \
-          aws s3 cp bin/${APP_NAME}.zip s3://${LAMBDA_AWS_BUCKET}-${AWS_REGION}/${LAMBDA_AWS_S3_KEY}
-
-if [ -e swagger.yml ]; then
-    echo "Uploading swagger.yml"
-    # api gateway fails to parse on x-nullable
-    sed '/x-nullable/d' ./swagger.yml > ./swagger.lambda.yml
+for AWS_REGION in ${AWS_REGIONS}; do
+    # region doesn't really matter for an S3 upload, since the bucket region is fixed
     AWS_REGION=$AWS_REGION \
               AWS_ACCESS_KEY_ID=$LAMBDA_AWS_ACCESS_KEY_ID \
               AWS_SECRET_ACCESS_KEY=$LAMBDA_AWS_SECRET_ACCESS_KEY \
-              aws s3 cp swagger.lambda.yml s3://${LAMBDA_AWS_BUCKET}-${AWS_REGION}/${APP_NAME}/${SHORT_SHA}/swagger.lambda.yml
-fi
+              aws s3 cp bin/${APP_NAME}.zip s3://${LAMBDA_AWS_BUCKET}-${AWS_REGION}/${LAMBDA_AWS_S3_KEY}
+
+    if [ -e swagger.yml ]; then
+        echo "Uploading swagger.yml"
+        # api gateway fails to parse on x-nullable
+        sed '/x-nullable/d' ./swagger.yml > ./swagger.lambda.yml
+        AWS_REGION=$AWS_REGION \
+                  AWS_ACCESS_KEY_ID=$LAMBDA_AWS_ACCESS_KEY_ID \
+                  AWS_SECRET_ACCESS_KEY=$LAMBDA_AWS_SECRET_ACCESS_KEY \
+                  aws s3 cp swagger.lambda.yml s3://${LAMBDA_AWS_BUCKET}-${AWS_REGION}/${APP_NAME}/${SHORT_SHA}/swagger.lambda.yml
+    fi
+done;
 
 # publish the application to catapult
 echo "Publishing to catapult..."
@@ -72,7 +90,7 @@ SC=$(curl -u $CATAPULT_USER:$CATAPULT_PASS \
           --output catapult.out \
           -H "Content-Type: application/json" \
           -X POST \
-          -d "{\"username\":\"${USER}\",\"reponame\":\"${REPO}\",\"buildnum\":${BUILD_NUM},\"app\":{\"run_type\":\"${RUN_TYPE}\",\"id\":\"${APP_NAME}\",\"source\":\"github:Clever/${REPO}@${FULL_SHA}\",\"artifacts\":\"lambda:clever/${APP_NAME}@${SHORT_SHA};S3Bucket=\\\"${LAMBDA_AWS_BUCKET}-${AWS_REGION},S3Key=\\\"${LAMBDA_AWS_S3_KEY}\",\"branch\":\"${BRANCH}\"}}" \
+          -d "{\"username\":\"${USER}\",\"reponame\":\"${REPO}\",\"buildnum\":${BUILD_NUM},\"app\":{\"run_type\":\"${RUN_TYPE}\",\"id\":\"${APP_NAME}\",\"source\":\"github:Clever/${REPO}@${FULL_SHA}\",\"artifacts\":\"lambda:clever/${APP_NAME}@${SHORT_SHA};S3Key=\\\"${LAMBDA_AWS_S3_KEY}\"${S3_ARTIFACTS},\"branch\":\"${BRANCH}\"}}" \
           $CATAPULT_URL)
 
 if [ "$SC" -eq 200 ]; then
