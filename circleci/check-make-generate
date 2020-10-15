@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Checks that 'make generate' has been run by running it and checking for diffs.
+#
+# Usage:
+#
+#   check-make-generate
+
+set -e
+
+USAGE="Usage: check-make-generate"
+
+if [[ "$#" -ne 0 ]]; then
+  echo "$USAGE"
+  exit 1
+fi
+
+echo "Running 'make generate' and checking for diffs..."
+
+make generate > /dev/null
+
+if git diff --quiet --exit-code ; then
+  echo "Found no diffs. 'make generate' has been run."
+  exit 0;
+else
+  echo "Found diffs. Please run 'make generate'."
+  exit 1;
+fi
