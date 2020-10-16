@@ -4,23 +4,24 @@
 #
 # Usage:
 #
-#   check-make-generate
+#   check-make-generate --files-to-ignore file1,file2,...,fileN
 
 set -e
 
-USAGE="Usage: check-make-generate"
+USAGE="Usage: check-make-generate --files-to-ignore file1,file2,...,fileN"
 
-# Files to ignore when checking for diffs
-# TODO: Consider allowing consumers to specify additional files
-FILES_TO_IGNORE=(
-  ".npmrc"
-  ".npmrc_docker"
-  ".npmrc_docker.bak"
-)
-
-if [[ "$#" -ne 0 ]]; then
+if [[ "$#" -ne 0 && "$#" -ne 2 ]]; then
   echo "$USAGE"
   exit 1
+fi
+
+declare -a FILES_TO_IGNORE
+if [[ "$#" -eq 2 ]]; then
+  if [[ "$1" != "--files-to-ignore" ]]; then
+    echo "$USAGE"
+    exit 1
+  fi
+  IFS="," read -a FILES_TO_IGNORE <<< "$2"
 fi
 
 echo "Running 'make generate' and checking for diffs..."
