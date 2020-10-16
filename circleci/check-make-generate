@@ -10,6 +10,14 @@ set -e
 
 USAGE="Usage: check-make-generate"
 
+# Files to ignore when checking for diffs
+# TODO: Consider allowing consumers to specify additional files
+FILES_TO_IGNORE=(
+  ".npmrc"
+  ".npmrc_docker"
+  ".npmrc_docker.bak"
+)
+
 if [[ "$#" -ne 0 ]]; then
   echo "$USAGE"
   exit 1
@@ -19,10 +27,26 @@ echo "Running 'make generate' and checking for diffs..."
 
 make generate > /dev/null
 
-if git diff --quiet --exit-code; then
+# 'git status --porcelain' lists modified files as well as untracked (i.e. newly created) files in
+# a format that is guaranteed to be consistent, making the command ideal for scripting. File names
+# always begin at the fourth character of each line, hence the 'cut -c 4-'.
+diffFiles=$(git status --porcelain | cut -c 4-)
+for fileToIgnore in "${FILES_TO_IGNORE[@]}"; do
+  # Remove each fileToIgnore from the list. Use -F and -x to perform exact line matching rather
+  # than regex matching. Add an '|| echo ""' fallback because grep returns with an error when no
+  # lines are matched, causing the script to fail without the fallback.
+  diffFiles=$(echo "$diffFiles" | grep -Fvx "$fileToIgnore" || echo "")
+done
+
+if [[ -n "$diffFiles" ]]; then
+  echo ""
+  echo "Found diffs involving the following files:"
+  echo ""
+  echo "$diffFiles"
+  echo ""
+  echo "Please run 'make generate'."
+  exit 1
+else
   echo "Found no diffs. 'make generate' has been run."
   exit 0
-else
-  echo "Found diffs. Please run 'make generate'."
-  exit 1
 fi
