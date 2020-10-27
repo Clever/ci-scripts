@@ -50,7 +50,7 @@ if [[ $RUN_TYPE == "lambda/"* ]]; then
 elif [[ $RUN_TYPE == "lambda" ]]; then
     AWS_REGIONS=${AWS_REGIONS:-"us-east-1 us-east-2 us-west-1 us-west-2"}
     for REGION in ${AWS_REGIONS}; do
-        S3_ARTIFACTS=${S3_ARTIFACTS},"S3Buckets={${REGION}=\\\"${LAMBDA_AWS_BUCKET}-${AWS_REGIONS}"
+        S3_ARTIFACTS=${S3_ARTIFACTS},"S3Buckets={${REGION}=\\\"${LAMBDA_AWS_BUCKET}-${REGION}"
     done
 else
     echo "Can only publish applications with run type lambda or lambda/<region>; got ${RUN_TYPE}"
@@ -84,13 +84,17 @@ done;
 
 # publish the application to catapult
 echo "Publishing to catapult..."
+echo "Using data:"
+DATA="{\"username\":\"${USER}\",\"reponame\":\"${REPO}\",\"buildnum\":${BUILD_NUM},\"app\":{\"run_type\":\"${RUN_TYPE}\",\"id\":\"${APP_NAME}\",\"source\":\"github:Clever/${REPO}@${FULL_SHA}\",\"artifacts\":\"lambda:clever/${APP_NAME}@${SHORT_SHA};S3Key=\\\"${LAMBDA_AWS_S3_KEY}${S3_ARTIFACTS}\",\"branch\":\"${BRANCH}\"}}"
+echo "${DATA}"
+echo "================================================================================"
 SC=$(curl -u $CATAPULT_USER:$CATAPULT_PASS \
           --retry 5 \
           -w "%{http_code}" \
           --output catapult.out \
           -H "Content-Type: application/json" \
           -X POST \
-          -d "{\"username\":\"${USER}\",\"reponame\":\"${REPO}\",\"buildnum\":${BUILD_NUM},\"app\":{\"run_type\":\"${RUN_TYPE}\",\"id\":\"${APP_NAME}\",\"source\":\"github:Clever/${REPO}@${FULL_SHA}\",\"artifacts\":\"lambda:clever/${APP_NAME}@${SHORT_SHA};S3Key=\\\"${LAMBDA_AWS_S3_KEY}\"${S3_ARTIFACTS},\"branch\":\"${BRANCH}\"}}" \
+          -d "${DATA}" \
           $CATAPULT_URL)
 
 if [ "$SC" -eq 200 ]; then
