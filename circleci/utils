@@ -15,14 +15,8 @@ install_awscli(){
   fi
 
   echo "Installing AWS cli..."
-  rm -rf ~/.local
-  wget --directory-prefix=/tmp/ https://bootstrap.pypa.io/get-pip.py
-  sudo python /tmp/get-pip.py
-
-  sudo apt-get update
-  sudo apt-get install python-dev
-  sudo pip install --upgrade awscli && aws --version
-
-  pip install --upgrade --user awscli
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+  unzip -q /tmp/awscliv2.zip -d /tmp
+  sudo /tmp/aws/install
   echo "Completed AWS cli install"
 }
