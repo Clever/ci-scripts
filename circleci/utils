@@ -16,7 +16,10 @@ install_awscli(){
 
   echo "Installing AWS cli..."
   rm -rf ~/.local
-  wget --directory-prefix=/tmp/ https://bootstrap.pypa.io/get-pip.py
+  
+  # Download the versioned pip installer which works with Python 2.7 (https://github.com/pypa/pip/issues/9500)
+  # TODO: Replace in favor of installing AWS CLI v2 directly
+  wget --directory-prefix=/tmp/ https://bootstrap.pypa.io/2.7/get-pip.py
   sudo python /tmp/get-pip.py
 
   sudo apt-get update
