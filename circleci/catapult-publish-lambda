@@ -110,3 +110,8 @@ else
     rm -f catapult.out
     exit 1
 fi
+
+# publish catalog app config
+CATALOG_SYNC_SCRIPT="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )/catalog-sync"
+CIRCLE_CI_INTEGRATIONS_URL=$(dirname $CATAPULT_URL)
+"${CATALOG_SYNC_SCRIPT}" $CIRCLE_CI_INTEGRATIONS_URL $CATAPULT_USER $CATAPULT_PASS $APP_NAME
