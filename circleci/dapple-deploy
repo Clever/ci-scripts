@@ -26,6 +26,7 @@ DAPPLE_URL=$1
 DAPPLE_USER=$2
 DAPPLE_PASS=$3
 APP_NAME=$4
+# TODO: as part of INFRANG-4341 we would like to get rid of these 2 values. In the interim they will be ignored if the new launch config format is used.
 # deploy env and deploy strategy get default values, if not specified
 DEPLOY_ENV=${5:-clever-dev}
 DEPLOY_STRATEGY=${6:-confirm-then-deploy}
