@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Results in catalog-sync-service generating and publishing an updated 
+# app config for the given app.
+#
+# Usage:
+#
+#   catalog-sync [CIRCLE_CI_INTEGRATIONS_URL] [USER] [PASS] [APP_NAME]
+#
+
+set -e
+
+# User supplied args
+CIRCLE_CI_INTEGRATIONS_URL=$1
+if [[ -z $CIRCLE_CI_INTEGRATIONS_URL ]]; then echo "Missing arg1 CIRCLE_CI_INTEGRATIONS_URL" && exit 1; fi
+USER=$2
+if [[ -z $USER ]]; then echo "Missing arg2 USER" && exit 1; fi
+PASS=$3
+if [[ -z $PASS ]]; then echo "Missing arg3 PASS" && exit 1; fi
+APP_NAME=$4
+if [[ -z $APP_NAME ]]; then echo "Missing arg4 APP_NAME" && exit 1; fi
+
+echo "Posting to catalog sync service..."
+SC=$(curl -u $USER:$PASS \
+  --retry 5 \
+  -w "%{http_code}" \
+  -H "Content-Type: application/json" \
+  -X POST \
+  $CIRCLE_CI_INTEGRATIONS_URL/serviceCatalog?app=$APP_NAME)
+
+if [ "$SC" -eq 200 ]; then
+  echo "Successfully published app catalog config"
+  exit 0
+else
+  echo "Failed to publish app catalog config"
+  exit 1
+fi
