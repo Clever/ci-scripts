@@ -67,7 +67,6 @@ SC=$(curl -u $CATAPULT_USER:$CATAPULT_PASS \
 if [ "$SC" -eq 200 ]; then
     echo "Successfully published catapult application"
     rm -f catapult.out
-    exit 0
 else
     echo "Failed to publish catapult application"
     echo "------------------------------------------------"
