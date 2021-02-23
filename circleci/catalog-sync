@@ -10,6 +10,13 @@
 
 set -e
 
+: ${CIRCLE_BRANCH?"Missing required env var"}
+BRANCH=$CIRCLE_BRANCH
+if [[ $BRANCH != "master" ]]; then
+  echo "Skipping sync for non-master branch"
+  exit 0
+fi
+
 # User supplied args
 CIRCLE_CI_INTEGRATIONS_URL=$1
 if [[ -z $CIRCLE_CI_INTEGRATIONS_URL ]]; then echo "Missing arg1 CIRCLE_CI_INTEGRATIONS_URL" && exit 1; fi
