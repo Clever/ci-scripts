@@ -40,5 +40,5 @@ if [ "$SC" -eq 200 ]; then
   exit 0
 else
   echo "Failed to publish app catalog config"
-  exit 0
+  exit 1
 fi
