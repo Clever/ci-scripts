@@ -94,6 +94,8 @@ do
       echo "Test output:"
       cat integration-tests.out | jq -r '.message' | jq
       echo "------------------------------------------------"
+      ENV=$(jq .environment < integration-tests.out)
+      echo "Tests ran in staging environment: ${ENV:-<not sure>}"
       rm -f integration-tests.out
       exit 1
     elif [[ $STATUS == '"systemError"' ]]; then
