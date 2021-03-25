@@ -48,7 +48,8 @@ TAG=$(head -n 1 VERSION)
 if [[ ${TAG:0:1} != "v" ]]; then TAG=v$TAG; fi
 DESCRIPTION=$(tail -n +2 VERSION)
 
-result=$($GITHUB_RELEASE release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" -s $GITHUB_TOKEN $PRE_RELEASE || true)
+export GITHUB_TOKEN=$GITHUB_TOKEN
+result=$($GITHUB_RELEASE release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" $PRE_RELEASE || true)
 if [[ $result == *422* ]]; then
   echo "Release already exists for this tag.";
   exit 0
@@ -67,11 +68,11 @@ else
       if [ -d $f ]; then
           for ff in $(ls $f); do
               echo -e "uploading $ff"
-              $GITHUB_RELEASE upload -u $USER -r $REPO -t $TAG -n $ff -f $f/$ff -s $GITHUB_TOKEN
+              $GITHUB_RELEASE upload -u $USER -r $REPO -t $TAG -n $ff -f $f/$ff
           done
       elif [ -f $f ]; then
           echo -e "uploading $f"
-          $GITHUB_RELEASE upload -u $USER -r $REPO -t $TAG -n $f -f $f -s $GITHUB_TOKEN
+          $GITHUB_RELEASE upload -u $USER -r $REPO -t $TAG -n $f -f $f
       else
           echo -e "$f is not a file or directory"
           exit 1
