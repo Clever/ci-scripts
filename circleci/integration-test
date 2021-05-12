@@ -28,7 +28,7 @@ TESTING_SERVICE_PASS=$3
 APP_NAME=$4
 # TESTS_TO_RUN gets a default value, if not specified
 # It is a JSON value whose schema corresponds with our internal testing spec schema.
-TESTS_TO_RUN=${5:-'[{\"type\": \"launchpad\"}]'}
+TESTS_TO_RUN=${5:-'[{"type": "launchpad"}]'}
 
 # Set automatically by CircleCI
 : ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
@@ -44,7 +44,7 @@ SC=$(curl -u $TESTING_SERVICE_USER:$TESTING_SERVICE_PASS \
   --output integration-tests.out \
   -H "Content-Type: application/json" \
   -X POST \
-  -d "{\"username\":\"$USER\",\"reponame\":\"$REPO\",\"buildnum\":$BUILD_NUM,\"appname\":\"$APP_NAME\",\"tests\":\"$TESTS_TO_RUN\"}" \
+  -d "{\"username\":\"$USER\",\"reponame\":\"$REPO\",\"buildnum\":$BUILD_NUM,\"appname\":\"$APP_NAME\",\"tests\":${TESTS_TO_RUN}}" \
   $TESTING_SERVICE_URL)
 
 if [[ $SC -eq 200 ]]; then
