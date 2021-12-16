@@ -5,7 +5,8 @@
 #
 # Usage:
 #
-#   docker-publish -r private-repos
+#   docker-publish 
+#   optional flag "-r private-repos" enables Docker Build Kit to allow ssh socket mounting to pull private modules/repos
 
 
 set -e
