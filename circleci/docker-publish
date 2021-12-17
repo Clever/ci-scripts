@@ -5,7 +5,8 @@
 #
 # Usage:
 #
-#   docker-publish
+#   docker-publish 
+#   optional flag "-r private-repos" enables Docker Build Kit to allow ssh socket mounting to pull private modules/repos
 
 
 set -e
@@ -22,6 +23,13 @@ else
     mkdir -p ~/.docker
     echo '{"experimental":"enabled"}' > ~/.docker/config.json
 fi
+
+readopt='none'
+while getopts 'r:' flag; do
+    case "${flag}" in
+        r) readopt=${OPTARG};;
+    esac
+done
 
 image_exists() {
     docker manifest inspect "$1" > /dev/null
@@ -83,8 +91,14 @@ echo "They can be found in init-service as CI_ECR_XXX_KEY and CI_ECR_XXX_SECRET.
 if [[ -n $ECR_BUILD_ID ]]; then
   ecr_login us-west-1 $ECR_BUILD_ID $ECR_BUILD_SECRET
 fi
-echo "Building docker image..."
-docker build -t $ORG/$REPO:$SHORT_SHA .
+
+echo "Building docker image..." 
+if [ $readopt == "private-repos" ]; then
+  echo "With Private Repos..."
+  DOCKER_BUILDKIT=1 docker build --ssh default -t $ORG/$REPO:$SHORT_SHA . 
+else
+  docker build -t $ORG/$REPO:$SHORT_SHA .
+fi
 
 # ECR login.
 echo "Logging into ECR..."
