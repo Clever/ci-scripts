@@ -1,0 +1,25 @@
+# Basic workflow that approves and enables auto merge for PRs. Currently only does this for dependabot PRs
+# https://app.getguru.com/card/cbjEdoAi/Dependabot-and-auto-merging
+
+name: Enable auto merge and then approve
+
+on: workflow_call
+
+jobs:
+  auto-approve-merge-dependency-updates:
+    name: Approve and Enable auto merge on dependabot PRs
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+    # Use github cli to enable auto approve. Only works on repos which have auto merge enabled and branch protections setup which is currently blocking a merge
+    # for example still requires 1 review or a required ci step has not succeeded.
+    - name: Enable Automerge
+      run: gh pr merge --auto --merge "$PR_URL"
+      env:
+        PR_URL: ${{ github.event.pull_request.html_url }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # v2.1.0 as of 02/23/2022, reviewed by eng-security.
+    - name: Approve
+      uses: hmarr/auto-approve-action@5d04a5ca6da9aeb8ca9f31a5239b96fc3e003029
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
