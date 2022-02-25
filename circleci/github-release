@@ -34,10 +34,10 @@ if [ ! -e VERSION ]; then echo "Missing VERSION file" && exit 1; fi
 echo "Downloading github-release tool"
 GITHUB_RELEASE=/usr/local/bin/github-release
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  curl -sSL -o /tmp/github-release.bz2 https://github.com/github-release/github-release/releases/download/v0.8.1/darwin-amd64-github-release.bz2
+  curl -sSL -o /tmp/github-release.bz2 https://github.com/github-release/github-release/releases/download/v0.10.0/darwin-amd64-github-release.bz2
   bunzip2 /tmp/github-release.bz2 && sudo mv /tmp/github-release $GITHUB_RELEASE
 else
- curl -sSL -o /tmp/github-release.bz2 https://github.com/github-release/github-release/releases/download/v0.8.1/linux-amd64-github-release.bz2
+ curl -sSL -o /tmp/github-release.bz2 https://github.com/github-release/github-release/releases/download/v0.10.0/linux-amd64-github-release.bz2
  bunzip2 /tmp/github-release.bz2 && sudo mv /tmp/github-release $GITHUB_RELEASE
 fi
 
@@ -48,15 +48,36 @@ TAG=$(head -n 1 VERSION)
 if [[ ${TAG:0:1} != "v" ]]; then TAG=v$TAG; fi
 DESCRIPTION=$(tail -n +2 VERSION)
 
+# create a release and wait at most 60 seconds for it to be created
 export GITHUB_TOKEN=$GITHUB_TOKEN
-result=$($GITHUB_RELEASE release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" $PRE_RELEASE || true)
+result=$($GITHUB_RELEASE release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" $PRE_RELEASE 2>&1 || true)
+now=$SECONDS
+end=$((now+60))
 if [[ $result == *422* ]]; then
   echo "Release already exists for this tag.";
   exit 0
 elif [[ $result == "" ]]; then
-  echo "Release created.";
+  echo "Create release request submitted successfully.";
 else
   echo "Error creating release: $result"
+  exit 1
+fi
+
+release_created=false
+while [ $SECONDS -lt $end ]; do
+    check_release=$($GITHUB_RELEASE info -u $USER -r $REPO -t $TAG 2>&1 || true)
+    if [[ $check_release =~ "could not find the release" ]]; then
+      echo -e "Release not yet created at $((SECONDS-now)) seconds since submitting request: \n$check_release\n***"
+      sleep 5
+      continue
+    fi
+    echo -e "Release found at $((SECONDS-now)) seconds after submitting request \n$check_release\n***"
+    release_created=true
+    break
+done
+
+if [ release_created = "false" ]; then
+  echo "error: $SECONDS seconds have passed since we submitted request to create release but it is not yet created"
   exit 1
 fi
 
