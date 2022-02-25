@@ -34,10 +34,10 @@ if [ ! -e VERSION ]; then echo "Missing VERSION file" && exit 1; fi
 echo "Downloading github-release tool"
 GITHUB_RELEASE=/usr/local/bin/github-release
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  curl -sSL -o /tmp/github-release.bz2 https://github.com/github-release/github-release/releases/download/v0.8.1/darwin-amd64-github-release.bz2
+  curl -sSL -o /tmp/github-release.bz2 https://github.com/github-release/github-release/releases/download/v0.10.0/darwin-amd64-github-release.bz2
   bunzip2 /tmp/github-release.bz2 && sudo mv /tmp/github-release $GITHUB_RELEASE
 else
- curl -sSL -o /tmp/github-release.bz2 https://github.com/github-release/github-release/releases/download/v0.8.1/linux-amd64-github-release.bz2
+ curl -sSL -o /tmp/github-release.bz2 https://github.com/github-release/github-release/releases/download/v0.10.0/linux-amd64-github-release.bz2
  bunzip2 /tmp/github-release.bz2 && sudo mv /tmp/github-release $GITHUB_RELEASE
 fi
 
