@@ -53,8 +53,8 @@ export GITHUB_TOKEN=$GITHUB_TOKEN
 result=$($GITHUB_RELEASE release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" $PRE_RELEASE 2>&1 || true)
 now=$SECONDS
 end=$((now+60))
-if [[ $result == *422* ]]; then
-  echo "Release already exists for this tag.";
+if [[ $result =~ "already_exists" ]]; then
+  echo "Release already exists for this tag: $TAG";
   exit 0
 elif [[ $result == "" ]]; then
   echo "Create release request submitted successfully.";
