@@ -71,7 +71,7 @@ while [ $SECONDS -lt $end ]; do
       sleep 5
       continue
     fi
-    echo -e "Check release response at $((SECONDS-now)) seconds after submitting request \n$check_release\n***"
+    echo -e "Release found at $((SECONDS-now)) seconds after submitting request \n$check_release\n***"
     release_created=true
     break
 done
