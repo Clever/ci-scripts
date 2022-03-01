@@ -1,0 +1,18 @@
+{
+  "name": "notify-ci-status-action",
+  "version": "0.1.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build index.js"
+  },
+  "keywords": [],
+  "author": "nikhil.bhatia@clever.com",
+  "license": "ISC",
+  "dependencies": {
+    "@actions/core": "^1.6.0",
+    "@actions/github": "^5.0.0",
+    "@slack/web-api": "^6.7.0",
+    "axios": "^0.26.0"
+  }
+}

@@ -1,0 +1,41 @@
+
+# Workflow that notifies on CI status updates
+# Currently it is used notify on CI failures
+# Repos must have access to organizational secrets listed below in order to use this workflow
+
+name: Notify via Slack on CI status update
+
+on:
+  workflow_call:
+    secrets:
+      CIRCLE_CI_INTEGRATIONS_USERNAME:
+        required: true
+      CIRCLE_CI_INTEGRATIONS_PASSWORD:
+        required: true
+      CIRCLE_CI_INTEGRATIONS_URL:
+        required: true
+      SLACK_BOT_TOKEN:
+        required: true
+
+
+jobs:
+  notify_ci_status_update:
+    name: Notify via Slack on CI status update
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+    - name: Notify
+      uses: Clever/ci-scripts/.github/actions/notify-ci-status-action@master
+      env:
+        CIRCLE_CI_INTEGRATIONS_USERNAME: ${{ secrets.CIRCLE_CI_INTEGRATIONS_USERNAME }}
+        CIRCLE_CI_INTEGRATIONS_PASSWORD: ${{ secrets.CIRCLE_CI_INTEGRATIONS_PASSWORD }}
+        CIRCLE_CI_INTEGRATIONS_URL: ${{ secrets.CIRCLE_CI_INTEGRATIONS_URL }}
+        SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      with:
+        branch: ${{ github.event.branches[0].name }}
+        description: ${{ github.event.description }}
+        failedStep: ${{ github.event.context }}
+        githubUsername: ${{ github.event.commit.author.login }}
+        repo: ${{ github.event.repository.name }}
+        state: ${{ github.event.state }}
+        targetURL: ${{ github.event.target_url }}
