@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# Usage:
+# ./detect-updated-apps GIT_COMPARE_RANGE ex. ./detect-updated-apps master...current-branch-name
+
+set -euo pipefail
+
+git_compare_range=$1
+
+# list of filename patterns to ignore when determining updated apps
+ignore_filename_patterns=('README.md' '.gitignore' '.github/' 'mock')
+
+# all apps must have a top level directory in ./cmd/
+all_app_names=($([ -d "./cmd" ] && ls ./cmd/))
+
+updated_filenames=($(git diff --name-only "$git_compare_range"))
+updated_apps=()
+
+# note: syntax ${list[@]+"${list[@]}"} allows for safely looping through a list
+# that may be empty as it doesn't try to unroll the list unless there is at least one item
+
+# process each filename to see if it should be ignored, belongs to a single app,
+# or is global file that indicates all apps should be marked as updated
+for filename in ${updated_filenames[@]+"${updated_filenames[@]}"}
+do
+    # check if file should be skipped
+    should_skip_file="false"
+    for pattern in ${ignore_filename_patterns[@]+"${ignore_filename_patterns[@]}"}
+    do
+        if [[ $filename =~ $pattern ]]; then
+            should_skip_file="true"
+            break
+        fi
+    done
+    if [ $should_skip_file == "true" ]; then
+        continue
+    fi
+    
+    # default to true, flips to false if it has a specific app's name in it's path
+    is_global_file="true"
+    
+    # if the file has any app's name in the path, mark that app as updated
+    for app_name in ${all_app_names[@]+"${all_app_names[@]}"}
+    do
+        if [[ $filename =~ $app_name ]]; then
+            updated_apps+=("$app_name")
+            is_global_file="false"
+            break
+        fi
+    done
+    
+    # if the file is global, mark all apps as updated. the assumption is that any file that is not ignored
+    # AND doesn't contain a specific app's name in the path is a global file.
+    # this intentionally leans on the side of marking more apps as updated rather than less
+    if [ $is_global_file == "true" ]; then
+        # mark all apps as updated and exit loop
+        updated_apps=(${all_app_names[@]+"${all_app_names[@]}"})
+        break
+    fi
+done
+
+# remove duplicates
+unique_updated_apps=$(echo ${updated_apps[@]+"${updated_apps[@]}"} | tr ' ' '\n' | sort -u | tr '\n' ' ')
+echo "$unique_updated_apps"
