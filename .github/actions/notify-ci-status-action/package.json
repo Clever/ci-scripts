@@ -14,5 +14,8 @@
     "@actions/github": "^5.0.0",
     "@slack/web-api": "^6.7.0",
     "axios": "^0.26.0"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.33.3"
   }
 }
