@@ -1,0 +1,13 @@
+
+# osx / sshfs
+._*
+.DS_Store
+
+# emacs / vim / vscode
+*~
+\#*\#
+.\#*
+.vscode
+
+# js
+node_modules

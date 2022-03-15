@@ -1,0 +1,30 @@
+name: 'Notify on CI status'
+description: 'Notify on CI status'
+inputs:
+  branch:  
+    description: 'Branch that triggered the workflow'
+    required: true
+  description:
+    description: 'Description of CI status'
+    required: true
+  githubUsername:
+    description: 'Github username of the commit author'
+    required: true
+  failedStep:
+    description: 'Failed step of CI, if applicable'
+    required: false
+  repo:
+    description: 'Repo that triggers the workflow'
+    required: true
+  state:
+    description: 'State of CI status'
+    required: true
+  targetURL:
+    description: 'Link to failed step'
+    required: true
+outputs:
+  messageTS:
+    description: 'The slack message TS'
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
