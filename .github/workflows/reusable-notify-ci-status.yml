@@ -23,6 +23,12 @@ jobs:
     name: Notify via Slack on CI status update
     runs-on: ubuntu-latest
     environment: production
+    # only run if this event is associated with a single branch, otherwise we aren't sure the branches[0].name is the one that triggered the event.
+    # this workflow is only fired from the calling repo when the branches[0].name is master, but if someone creates a new branch off master
+    # and pushes to origin without adding additional commits, master will be included in the array even though it wasn't the triggering branch.
+    # since merge/squash commits are almost always used upon merging to master, and are thus only associated with master at the time of
+    # merging, we should still capture all intended situation since len(branches) will == 1
+    if: github.event.branches[1] == null
     steps:
     - name: Notify
       uses: Clever/ci-scripts/.github/actions/notify-ci-status-action@master
