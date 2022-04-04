@@ -55,13 +55,19 @@ ecr_login(){
 
 push_ecr_image(){
   REGION=$1
-  ECR_URI=$ECR_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO:$SHORT_SHA
+  ECR_ROOT=$ECR_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO
+  ECR_URI=$ECR_ROOT:$SHORT_SHA
   if image_exists $ECR_URI > /dev/null; then
       echo "ECR image exists, refusing to overwrite"
       return
   fi
   docker tag $ORG/$REPO:$SHORT_SHA $ECR_URI
   docker push $ECR_URI
+  if [ "$#" -eq 5 ]; then
+    echo "Found 5-th parameter as additional tag"
+    docker tag $ORG/$REPO:$SHORT_SHA $ECR_ROOT:$4 
+    docker push $ECR_ROOT:$4 
+  fi
 }
 
 # Set automatically by CircleCI
