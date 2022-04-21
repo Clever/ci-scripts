@@ -15,9 +15,6 @@ DIR=$(dirname "$0")
 APP_NAME=$1
 if [[ -z $APP_NAME ]]; then echo "Missing arg1 APP_NAME" && exit 1; fi
 
-RUN_TYPE=$(grep type launch/${APP_NAME}.yml | cut -d' ' -f4)
-AWS_REGION=$(echo ${RUN_TYPE} | cut -d'/' -f2)
-
 # Set automatically by CircleCI
 : ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
 REPO=$CIRCLE_PROJECT_REPONAME
@@ -41,6 +38,16 @@ BRANCH=$CIRCLE_BRANCH
 
 install_awscli
 
+RUN_TYPE=$(grep type "launch/${APP_NAME}.yml" | cut -d' ' -f4)
+if [[ $RUN_TYPE != "glue" ]]; then
+    echo "Can only publish applications with run type 'glue' using this script; got ${RUN_TYPE}"
+    exit 1
+fi
+
+# glue is only supported in us-west-2
+AWS_REGION="us-west-2"
+S3_ARTIFACTS=",S3Bucket=\\\"${GLUE_AWS_BUCKET}-${AWS_REGION}"
+
 CIRCLE_CI_INTEGRATIONS_URL=$(dirname $CATAPULT_URL)
 
 # hack to switch from /catapult to /v2/catapult
@@ -49,21 +56,24 @@ GLUE_AWS_S3_KEY=${APP_NAME}/${SHORT_SHA}
 
 # upload to s3
 echo "Uploading to S3..."
-# region doesn't really matter for an S3 upload, since the bucket region is fixed
 AWS_REGION=$AWS_REGION \
-          AWS_ACCESS_KEY_ID=$GLUE_AWS_ACCESS_KEY_ID \
-          AWS_SECRET_ACCESS_KEY=$GLUE_AWS_SECRET_ACCESS_KEY \
-          aws s3 cp --recursive bin/${APP_NAME} s3://${GLUE_AWS_BUCKET}-${AWS_REGION}/${GLUE_AWS_S3_KEY}
+        AWS_ACCESS_KEY_ID=$GLUE_AWS_ACCESS_KEY_ID \
+        AWS_SECRET_ACCESS_KEY=$GLUE_AWS_SECRET_ACCESS_KEY \
+        aws s3 cp --recursive bin/${APP_NAME} s3://${GLUE_AWS_BUCKET}-${AWS_REGION}/${GLUE_AWS_S3_KEY}
 
 # publish the application to catapult
 echo "Publishing to catapult..."
+echo "Using data:"
+DATA="{\"username\":\"${USER}\",\"reponame\":\"${REPO}\",\"buildnum\":${BUILD_NUM},\"app\":{\"run_type\":\"${RUN_TYPE}\",\"id\":\"${APP_NAME}\",\"source\":\"github:Clever/${REPO}@${FULL_SHA}\",\"artifacts\":\"glue:clever/${APP_NAME}@${SHORT_SHA};S3Key=\\\"${GLUE_AWS_S3_KEY}${S3_ARTIFACTS}\",\"branch\":\"${BRANCH}\"}}"
+echo "${DATA}"
+echo "================================================================================"
 SC=$(curl -u $CATAPULT_USER:$CATAPULT_PASS \
           --retry 5 \
           -w "%{http_code}" \
           --output catapult.out \
           -H "Content-Type: application/json" \
           -X POST \
-          -d "{\"username\":\"${USER}\",\"reponame\":\"${REPO}\",\"buildnum\":${BUILD_NUM},\"app\":{\"run_type\":\"${RUN_TYPE}\",\"id\":\"${APP_NAME}\",\"source\":\"github:Clever/${REPO}@${FULL_SHA}\",\"artifacts\":\"glue:clever/${APP_NAME}@${SHORT_SHA};S3Bucket=\\\"${GLUE_AWS_BUCKET}-${AWS_REGION},S3Prefix=\\\"${GLUE_AWS_S3_KEY}\",\"branch\":\"${BRANCH}\"}}" \
+          -d "${DATA}" \
           $CATAPULT_URL)
 
 if [ "$SC" -eq 200 ]; then

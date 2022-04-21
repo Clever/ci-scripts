@@ -33,14 +33,24 @@ USER=$CIRCLE_PROJECT_USERNAME
 : ${CIRCLE_BUILD_NUM?"Missing required env var"}
 BUILD_NUM=$CIRCLE_BUILD_NUM
 
+RUN_TYPE=$(grep type "launch/${APP_NAME}.yml" | cut -d' ' -f4)
+if [[ $RUN_TYPE != "docker" ]]; then
+    echo "Can only publish applications with run type 'docker' using this script; got ${RUN_TYPE}"
+    exit 1
+fi
+
 echo "Publishing to catapult..."
+echo "Using data:"
+DATA="{\"username\":\"$USER\",\"reponame\":\"$REPO\",\"buildnum\":$BUILD_NUM,\"appname\":\"$APP_NAME\"}"
+echo "${DATA}"
+echo "================================================================================"
 SC=$(curl -u $CATAPULT_USER:$CATAPULT_PASS \
   --retry 5 \
   -w "%{http_code}" \
   --output catapult.out \
   -H "Content-Type: application/json" \
   -X POST \
-  -d "{\"username\":\"$USER\",\"reponame\":\"$REPO\",\"buildnum\":$BUILD_NUM,\"appname\":\"$APP_NAME\"}" \
+  -d "${DATA}" \
   $CATAPULT_URL)
 
 if [ "$SC" -eq 200 ]; then
