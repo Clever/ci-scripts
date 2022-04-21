@@ -15,6 +15,9 @@
 
 set -e
 
+DIR=$(dirname "$0")
+. $DIR/utils
+
 # User supplied args
 CATAPULT_URL=$1
 if [[ -z $CATAPULT_URL ]]; then echo "Missing arg1 CATAPULT_URL" && exit 1; fi
@@ -33,8 +36,10 @@ USER=$CIRCLE_PROJECT_USERNAME
 : ${CIRCLE_BUILD_NUM?"Missing required env var"}
 BUILD_NUM=$CIRCLE_BUILD_NUM
 
-RUN_TYPE=$(grep type "launch/${APP_NAME}.yml" | cut -d' ' -f4)
-if [[ $RUN_TYPE != "docker" ]]; then
+install_yq
+
+RUN_TYPE=$(yq '.run.type' "launch/${APP_NAME}.yml")
+if [[ $RUN_TYPE != "docker" && $RUN_TYPE != "null" ]]; then
     echo "Can only publish applications with run type 'docker' using this script; got ${RUN_TYPE}"
     exit 1
 fi

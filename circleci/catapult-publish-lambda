@@ -37,8 +37,9 @@ BRANCH=$CIRCLE_BRANCH
 : ${CATAPULT_PASS?"Missing required env var"}
 
 install_awscli
+install_yq
 
-RUN_TYPE=$(grep type "launch/${APP_NAME}.yml" | cut -d' ' -f4)
+RUN_TYPE=$(yq '.run.type' "launch/${APP_NAME}.yml")
 if [[ $RUN_TYPE != "lambda" ]]; then
     echo "Can only publish applications with run type 'lambda' using this script; got ${RUN_TYPE}"
     exit 1
