@@ -37,25 +37,18 @@ BRANCH=$CIRCLE_BRANCH
 : ${CATAPULT_PASS?"Missing required env var"}
 
 install_awscli
+install_yq
 
-# Set RUN_TYPE, AWS_REGIONS, and S3_ARTIFACTS
-# If application's run type is lambda/<region>; AWS_REGIONS will be just that regions
-#    and S3_ARTIFACTS will set the S3Bucket source variable
-# If it is lambda (i.e. no region), AWS_REGIONS will be all four main US regions,
-#    and S3_ARTIFACTS will set the S3Buckets source variable
-RUN_TYPE=$(grep type "launch/${APP_NAME}.yml" | cut -d' ' -f4)
-if [[ $RUN_TYPE == "lambda/"* ]]; then
-    AWS_REGIONS=$(echo "${RUN_TYPE}" | cut -d'/' -f2)
-    S3_ARTIFACTS=",S3Bucket=\\\"${LAMBDA_AWS_BUCKET}-${AWS_REGIONS}"
-elif [[ $RUN_TYPE == "lambda" ]]; then
-    AWS_REGIONS=${AWS_REGIONS:-"us-east-1 us-east-2 us-west-1 us-west-2"}
-    for REGION in ${AWS_REGIONS}; do
-        S3_ARTIFACTS=${S3_ARTIFACTS},"S3Buckets={${REGION}=\\\"${LAMBDA_AWS_BUCKET}-${REGION}"
-    done
-else
-    echo "Can only publish applications with run type lambda or lambda/<region>; got ${RUN_TYPE}"
+RUN_TYPE=$(yq '.run.type' "launch/${APP_NAME}.yml")
+if [[ $RUN_TYPE != "lambda" ]]; then
+    echo "Can only publish applications with run type 'lambda' using this script; got ${RUN_TYPE}"
     exit 1
 fi
+
+AWS_REGIONS="us-east-1 us-east-2 us-west-1 us-west-2"
+for REGION in ${AWS_REGIONS}; do
+    S3_ARTIFACTS=${S3_ARTIFACTS},"S3Buckets={${REGION}=\\\"${LAMBDA_AWS_BUCKET}-${REGION}"
+done
 
 CIRCLE_CI_INTEGRATIONS_URL=$(dirname $CATAPULT_URL)
 
