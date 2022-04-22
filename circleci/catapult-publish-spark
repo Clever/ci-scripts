@@ -37,9 +37,8 @@ BRANCH=$CIRCLE_BRANCH
 : ${CATAPULT_PASS?"Missing required env var"}
 
 install_awscli
-install_yq
 
-RUN_TYPE=$(yq '.run.type' "launch/${APP_NAME}.yml")
+RUN_TYPE=$(grep type "launch/${APP_NAME}.yml" | cut -d' ' -f4)
 if [[ $RUN_TYPE != "glue" ]]; then
     echo "Can only publish applications with run type 'glue' using this script; got ${RUN_TYPE}"
     exit 1
@@ -58,9 +57,9 @@ GLUE_AWS_S3_KEY=${APP_NAME}/${SHORT_SHA}
 # upload to s3
 echo "Uploading to S3..."
 AWS_REGION=$AWS_REGION \
-        AWS_ACCESS_KEY_ID=$GLUE_AWS_ACCESS_KEY_ID \
-        AWS_SECRET_ACCESS_KEY=$GLUE_AWS_SECRET_ACCESS_KEY \
-        aws s3 cp --recursive bin/${APP_NAME} s3://${GLUE_AWS_BUCKET}-${AWS_REGION}/${GLUE_AWS_S3_KEY}
+          AWS_ACCESS_KEY_ID=$GLUE_AWS_ACCESS_KEY_ID \
+          AWS_SECRET_ACCESS_KEY=$GLUE_AWS_SECRET_ACCESS_KEY \
+          aws s3 cp --recursive bin/${APP_NAME} s3://${GLUE_AWS_BUCKET}-${AWS_REGION}/${GLUE_AWS_S3_KEY}
 
 # publish the application to catapult
 echo "Publishing to catapult..."
