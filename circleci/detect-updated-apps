@@ -36,13 +36,13 @@ do
         continue
     fi
     
-    # default to true, flips to false if it has a specific app's name in it's path
+    # default to true, flips to false if it the file belongs to a specific app
     is_global_file="true"
     
-    # if the file has any app's name in the path, mark that app as updated
+    # if the file in an app's cmd/app directory or if the file is the launch/app.yml file, update the app
     for app_name in ${all_app_names[@]+"${all_app_names[@]}"}
     do
-        if [[ $filename =~ $app_name ]]; then
+        if [[ $filename = cmd/$app_name/* ]] || [[ $filename = launch/$app_name.yml ]]; then
             updated_apps+=("$app_name")
             is_global_file="false"
             break
