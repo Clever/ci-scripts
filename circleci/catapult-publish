@@ -42,6 +42,8 @@ FULL_SHA=${CIRCLE_SHA1}
 
 RUN_TYPE=$(grep type "launch/${APP_NAME}.yml" | cut -d' ' -f4)
 
+CIRCLE_CI_INTEGRATIONS_URL=$(dirname $CATAPULT_URL)
+
 # Update Catapult URL to v2 if not already
 if [[ ! $CATAPULT_URL = *"/v2/catapult"* ]]; then 
   CATAPULT_URL=${CATAPULT_URL/catapult/v2/catapult}
@@ -76,5 +78,4 @@ fi
 
 # publish catalog app config
 CATALOG_SYNC_SCRIPT="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )/catalog-sync"
-CIRCLE_CI_INTEGRATIONS_URL=$(dirname $CATAPULT_URL)
 "${CATALOG_SYNC_SCRIPT}" $CIRCLE_CI_INTEGRATIONS_URL $CATAPULT_USER $CATAPULT_PASS $APP_NAME
