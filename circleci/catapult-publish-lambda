@@ -51,9 +51,11 @@ done
 
 CIRCLE_CI_INTEGRATIONS_URL=$(dirname $CATAPULT_URL)
 
-# hack to switch from /catapult to /v2/catapult
 # TODO: should probably `ark init` things with an environment variable pointing to base url of circle-ci-integrations
-CATAPULT_URL=$(echo "${CATAPULT_URL}" | sed 's/\/catapult/\/v2\/catapult/')
+# Update Catapult URL to v2 if not already
+if [[ ! $CATAPULT_URL = *"/v2/catapult"* ]]; then 
+  CATAPULT_URL=${CATAPULT_URL/catapult/v2/catapult}
+fi
 LAMBDA_AWS_S3_KEY=${APP_NAME}/${SHORT_SHA}/${APP_NAME}.zip
 
 # upload to s3
