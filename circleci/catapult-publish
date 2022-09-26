@@ -15,6 +15,9 @@
 
 set -e
 
+DIR=$(dirname "$0")
+. $DIR/utils
+
 # User supplied args
 CATAPULT_URL=$1
 if [[ -z $CATAPULT_URL ]]; then echo "Missing arg1 CATAPULT_URL" && exit 1; fi
@@ -40,7 +43,9 @@ REPO=$CIRCLE_PROJECT_REPONAME
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 FULL_SHA=${CIRCLE_SHA1}
 
-RUN_TYPE=$(grep type "launch/${APP_NAME}.yml" | cut -d' ' -f4)
+install_yq
+
+RUN_TYPE=$(yq e '.run.type // "docker"' "launch/${APP_NAME}.yml")
 
 CIRCLE_CI_INTEGRATIONS_URL=$(dirname $CATAPULT_URL)
 
