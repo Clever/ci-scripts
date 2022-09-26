@@ -20,3 +20,17 @@ install_awscli(){
   sudo /tmp/aws/install
   echo "Completed AWS cli install"
 }
+
+install_yq(){
+  if type yq > /dev/null; then
+    echo "yq already installed"
+    return
+  fi
+
+  echo "Installing yq..."
+  mkdir -p "/tmp/bin"
+  wget -O "/tmp/bin/yq" "https://github.com/mikefarah/yq/releases/download/v4.27.5/yq_linux_amd64"
+  chmod +x "/tmp/bin/yq"
+  export PATH="/tmp/bin:$PATH"
+  echo "Completed yq install"
+}
