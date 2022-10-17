@@ -1,22 +1,27 @@
 #!/bin/bash
 
-# Publishes content from [ARTIFACTS_DIR] as a Github Release.
+# Publishes content from [MODULE_PATH] as a Github Release.
 # Repo must have a VERSION file in its base directory.
 #
 # Usage:
 #
-#   github-release [--pre-release] <GITHUB_TOKEN> [ARTIFACTS_DIR] 
+#   github-release [--pre-release] <GITHUB_TOKEN> [MODULE_PATH] 
 
 set -e
 
 if [[ $1 == "--pre-release" ]]; then
   PRE_RELEASE="--pre-release"
   GITHUB_TOKEN=$2
-  ARTIFACTS_DIR=$3
+  MODULE_PATH=$3
 else
   PRE_RELEASE=""
   GITHUB_TOKEN=$1
-  ARTIFACTS_DIR=$2
+  MODULE_PATH=$2
+fi
+
+if [[ $MODULE_PATH != */ ]]
+then 
+  MODULE_PATH="$MODULE_PATH/"
 fi
 
 # User supplied args
@@ -44,10 +49,12 @@ fi
 chmod +x $GITHUB_RELEASE
 
 echo "Publishing github-release"
-TAG=$(head -n 1 VERSION)
+TAG="$(head -n 1 VERSION)"
 if [[ ${TAG:0:1} != "v" ]]; then TAG=v$TAG; fi
+if  [[ $MODULE_PATH != "/" ]]; then TAG="$MODULE_PATH$TAG"; fi 
 DESCRIPTION=$(tail -n +2 VERSION)
-
+echo "$MODULE_PATH"
+echo "$TAG"
 # create a release and wait at most 60 seconds for it to be created
 export GITHUB_TOKEN=$GITHUB_TOKEN
 result=$($GITHUB_RELEASE release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" $PRE_RELEASE 2>&1 || true)
@@ -79,24 +86,4 @@ done
 if [ release_created = "false" ]; then
   echo "error: $SECONDS seconds have passed since we submitted request to create release but it is not yet created"
   exit 1
-fi
-
-if [[ -z $ARTIFACTS_DIR ]]; then
-  echo "Skipping publishing artifacts. No ARTIFACTS_DIR set";
-else
-  for f in $ARTIFACTS_DIR; do
-      # treat directories and files differently
-      if [ -d $f ]; then
-          for ff in $(ls $f); do
-              echo -e "uploading $ff"
-              $GITHUB_RELEASE upload -u $USER -r $REPO -t $TAG -n $ff -f $f/$ff
-          done
-      elif [ -f $f ]; then
-          echo -e "uploading $f"
-          $GITHUB_RELEASE upload -u $USER -r $REPO -t $TAG -n $f -f $f
-      else
-          echo -e "$f is not a file or directory"
-          exit 1
-      fi
-  done
 fi
