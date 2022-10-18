@@ -1,10 +1,14 @@
 #!/bin/bash
 
-# Publishes content from [MODULE_PATH] as a Github Release.
+# Publishes content from [MODULE_PATH] as a Github Release. (Modified from github-release)
 # Repo must have a VERSION file in its base directory.
+#
+# Expected VERSION format: 
+# semver on first line, then a blank line, then release notes. 
 #
 # Usage:
 #
+# MODULE_PATH here is the relative path to the submodule. 
 #   github-release [--pre-release] <GITHUB_TOKEN> [MODULE_PATH] 
 
 set -e
@@ -51,10 +55,12 @@ chmod +x $GITHUB_RELEASE
 echo "Publishing github-release"
 TAG="$(head -n 1 VERSION)"
 if [[ ${TAG:0:1} != "v" ]]; then TAG=v$TAG; fi
+
+# Prepending module path to version for tag. 
 if  [[ $MODULE_PATH != "/" ]]; then TAG="$MODULE_PATH$TAG"; fi 
+
 DESCRIPTION=$(tail -n +2 VERSION)
-echo "$MODULE_PATH"
-echo "$TAG"
+echo "Creating tag $TAG"
 # create a release and wait at most 60 seconds for it to be created
 export GITHUB_TOKEN=$GITHUB_TOKEN
 result=$($GITHUB_RELEASE release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" $PRE_RELEASE 2>&1 || true)
@@ -83,7 +89,7 @@ while [ $SECONDS -lt $end ]; do
     break
 done
 
-if [ release_created = "false" ]; then
+if [ $release_created == "false" ]; then
   echo "error: $SECONDS seconds have passed since we submitted request to create release but it is not yet created"
   exit 1
 fi

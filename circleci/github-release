@@ -76,7 +76,7 @@ while [ $SECONDS -lt $end ]; do
     break
 done
 
-if [ release_created = "false" ]; then
+if [ $release_created == "false" ]; then
   echo "error: $SECONDS seconds have passed since we submitted request to create release but it is not yet created"
   exit 1
 fi
