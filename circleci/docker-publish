@@ -58,7 +58,7 @@ check_ecr_vars() {
 ecr_login(){
   REGION=$1
   ECR_REPO=$ECR_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
-  AWS_ACCESS_KEY_ID=$2 AWS_SECRET_ACCESS_KEY=$3 aws ecr --region $REGION get-login-password | docker login --username AWS --password-stdin $ECR_REPO
+  AWS_ACCESS_KEY_ID=$2 AWS_SECRET_ACCESS_KEY=$3 aws ecr --region $REGION get-login-password | docker login --username AWS --password-stdin $ECR_REPO &
 }
 
 ecr_login_with_profile(){
@@ -75,7 +75,7 @@ push_ecr_image(){
       return
   fi
   docker tag $ORG/$REPO:$SHORT_SHA $ECR_URI
-  docker push $ECR_URI
+  docker push $ECR_URI &
 }
 
 # Set automatically by CircleCI
@@ -126,20 +126,24 @@ else
   ecr_login_with_profile $ECR_REGION_US_EAST_2
 fi
 
+wait
+
 echo "Building docker image..." 
 if [ $readopt == "private-repos" ]; then
   echo "With Private Repos..."
   DOCKER_BUILDKIT=1 docker build --ssh default -t $ORG/$REPO:$SHORT_SHA . 
 else
-  # docker build -t $ORG/$REPO:$SHORT_SHA .
-  docker context create tls-env 
-  docker buildx create --use --driver=docker-container tls-env
-  CACHE_SHA=$CACHE_SHA ECR_ACCOUNT_ID=$ECR_ACCOUNT_ID ORG=$ORG REPO=$REPO SHORT_SHA=$SHORT_SHA docker buildx bake -f $DIR/docker-bake.hcl image --push
+  docker buildx build --cache-from=type=registry,ref=$ECR_ACCOUNT_ID.dkr.ecr.us-west-1.amazonaws.com/$REPO:$CACHE_SHA --cache-to=type=inline -t $ORG/$REPO:$SHORT_SHA .
+  # docker context create tls-env 
+  # docker buildx create --use --driver=docker-container tls-env
+  # CACHE_SHA=$CACHE_SHA ECR_ACCOUNT_ID=$ECR_ACCOUNT_ID ORG=$ORG REPO=$REPO SHORT_SHA=$SHORT_SHA docker buildx bake -f $DIR/docker-bake.hcl image --push
 fi
 
 
 # echo "Pushing to ECR..."
-# push_ecr_image $ECR_REGION_US_WEST_1
-# push_ecr_image $ECR_REGION_US_WEST_2
-# push_ecr_image $ECR_REGION_US_EAST_1
-# push_ecr_image $ECR_REGION_US_EAST_2
+push_ecr_image $ECR_REGION_US_WEST_1
+push_ecr_image $ECR_REGION_US_WEST_2
+push_ecr_image $ECR_REGION_US_EAST_1
+push_ecr_image $ECR_REGION_US_EAST_2
+
+wait
