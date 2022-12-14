@@ -1,10 +1,8 @@
-variable "SHORT_SHA" {
-  default = "latest"
-}
+variable "SHORT_SHA" {}
 
-variable "ECR_ACCOUNT_ID"
+variable "ECR_ACCOUNT_ID" {}
 
-variable "REPO"
+variable "REPO" {}
 
 target "image" {
   dockerfile = "Dockerfile"
