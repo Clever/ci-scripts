@@ -134,7 +134,7 @@ else
   # docker build -t $ORG/$REPO:$SHORT_SHA .
   docker context create tls-env 
   docker buildx create --use --driver=docker-container tls-env
-  ECR_ACCOUNT_ID=$ECR_ACCOUNT_ID ORG=$ORG REPO=$REPO SHORT_SHA=$SHORT_SHA docker buildx bake -f $DIR/docker-bake.hcl image --push
+  CACHE_SHA=$CACHE_SHA ECR_ACCOUNT_ID=$ECR_ACCOUNT_ID ORG=$ORG REPO=$REPO SHORT_SHA=$SHORT_SHA docker buildx bake -f $DIR/docker-bake.hcl image --push
 fi
 
 
