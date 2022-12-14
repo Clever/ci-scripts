@@ -84,6 +84,9 @@ REPO=$CIRCLE_PROJECT_REPONAME
 : ${CIRCLE_SHA1?"Missing required env var"}
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 
+PREV_SHA=$(git rev-list -n 1 $CIRCLE_BRANCH)
+CACHE_SHA=${PREV_SHA:0:7}
+
 ORG=clever
 
 ECR_REGION_US_WEST_1=us-west-1
