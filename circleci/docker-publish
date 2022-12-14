@@ -129,7 +129,8 @@ if [ $readopt == "private-repos" ]; then
   DOCKER_BUILDKIT=1 docker build --ssh default -t $ORG/$REPO:$SHORT_SHA . 
 else
   # docker build -t $ORG/$REPO:$SHORT_SHA .
-  docker buildx create --use --driver=docker-container
+  docker context create tls-env 
+  docker buildx create --use --driver=docker-container tls-env
   ECR_ACCOUNT_ID=$ECR_ACCOUNT_ID ORG=$ORG REPO=$REPO SHORT_SHA=$SHORT_SHA docker buildx bake -f $DIR/docker-bake.hcl image --push
 fi
 
