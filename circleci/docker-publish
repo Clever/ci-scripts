@@ -129,7 +129,7 @@ if [ $readopt == "private-repos" ]; then
   DOCKER_BUILDKIT=1 docker build --ssh default -t $ORG/$REPO:$SHORT_SHA . 
 else
   # docker build -t $ORG/$REPO:$SHORT_SHA .
-  docker buildx bake -f $DIR/docker-bake.hcl --push
+  ORG=$ORG REPO=$REPO SHORT_SHA=$SHORT_SHA docker buildx bake -f $DIR/docker-bake.hcl --push
 fi
 
 
