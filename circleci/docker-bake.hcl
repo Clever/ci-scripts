@@ -2,6 +2,10 @@ variable "SHORT_SHA" {
   default = "latest"
 }
 
+variable "ECR_ACCOUNT_ID"
+
+variable "REPO"
+
 target "image" {
   dockerfile = "Dockerfile"
   tags = [
