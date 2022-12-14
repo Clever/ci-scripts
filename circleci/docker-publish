@@ -58,7 +58,7 @@ check_ecr_vars() {
 ecr_login(){
   REGION=$1
   ECR_REPO=$ECR_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
-  AWS_ACCESS_KEY_ID=$2 AWS_SECRET_ACCESS_KEY=$3 aws ecr --region $REGION get-login-password | docker login --username AWS --password-stdin $ECR_REPO &
+  AWS_ACCESS_KEY_ID=$2 AWS_SECRET_ACCESS_KEY=$3 aws ecr --region $REGION get-login-password | docker login --username AWS --password-stdin $ECR_REPO
 }
 
 ecr_login_with_profile(){
@@ -125,8 +125,6 @@ else
   ecr_login_with_profile $ECR_REGION_US_EAST_1
   ecr_login_with_profile $ECR_REGION_US_EAST_2
 fi
-
-wait
 
 echo "Building docker image..." 
 if [ $readopt == "private-repos" ]; then
