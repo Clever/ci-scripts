@@ -75,12 +75,12 @@ echo "Job ID: $JOB_ID"
 echo "Waiting 1 minute before polling"
 sleep 1m
 
-echo "Polling for test completion"
+echo "Polling every 30 seconds for test completion"
 
-# Polling 60 times at 30 seconds each (30 minutes)
-# The timeout for the workflow is at 30 minutes, minus reserved time for cleanup.
+# Polling 90 times at 30 seconds each (45 minutes)
+# The timeout for the workflow is at 45 minutes, minus reserved time for cleanup.
 # Since we aren't planning on canceling the workflow on any shorter timeout, we should poll for that long.
-MAX_POLLS=60
+MAX_POLLS=90
 for ((i=1;i<=MAX_POLLS;i++))
 do
   sleep 30s
@@ -124,5 +124,8 @@ done
 
 echo "------------------------------------------------"
 echo "Tests still not finished, timing out"
+echo "If last test status was queued then test timed out trying to acquire a lock of staging env. This can happen when a lot of tests are triggered around the same time. A retry after few minutes should resolve it."
+echo "If last test status was preparing then test timed out deploying your build to staging env. This can happen if your build is bugged and timing out when deploying or if the app was stuck in queued for a long time. Verify that your build can actually deploy by running it locally or deploying to some dev environment. If that works then reach out to #oncall-infra."
+echo "If last test status was testing then your tests timed out. This can happen if the test is actually timing out because of a bad build or because it took a lot of time to queue and prepare the test. If a retry fails then reach out to #oncall-infra."
 rm -f integration-tests.out
 exit 1
