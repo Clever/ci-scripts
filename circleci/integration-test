@@ -29,6 +29,7 @@ TESTING_SERVICE_PASS=$3
 APP_NAMES=$4
 # TESTS_TO_RUN gets a default value, if not specified
 # It is a JSON value whose schema corresponds with our internal testing spec schema.
+# NOTE: if setting TESTS_TO_RUN via CircleCI env var, do not include a space after the colon - ex. [{"type":"launchpad"}]
 TESTS_TO_RUN=${5:-'[{"type": "launchpad"}]'}
 
 # Set automatically by CircleCI
