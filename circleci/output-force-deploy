@@ -14,7 +14,7 @@ echo "2) Run the following command, replacing CIRCLE_API_TOKEN with the token fr
 echo "curl -u CIRCLE_API_TOKEN: \\
 -X POST \\
 --header \"Content-Type: application/json\" -d '{
-  \"branch\": "master",
+  \"branch\": \"master\",
   \"parameters\": {
     \"force_deploy\": true
     }
