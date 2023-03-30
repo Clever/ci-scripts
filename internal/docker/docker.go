@@ -31,9 +31,9 @@ import (
 // Docker is a wrapper around the docker Go client which wraps
 // complexity in a simple API.
 type Docker struct {
-	cli    *client.Client
-	auths  map[string]types.AuthConfig
-	awsCfg aws.Config
+	cli      *client.Client
+	ecrCreds map[string]types.AuthConfig
+	awsCfg   aws.Config
 }
 
 // New initializes a new docker daemon client and caches ecr credentials
@@ -46,12 +46,10 @@ func New(ctx context.Context, cfg aws.Config) (*Docker, error) {
 	d := &Docker{cli: cl, awsCfg: cfg}
 
 	grp, ctx := errgroup.WithContext(ctx)
-	d.auths = map[string]types.AuthConfig{}
+	d.ecrCreds = map[string]types.AuthConfig{}
 	for _, r := range environment.AWSRegions {
 		r := r
-		grp.Go(func() error {
-			return d.ecrCredentials(ctx, r)
-		})
+		grp.Go(func() error { return d.ecrCredentials(ctx, r) })
 	}
 
 	if err := grp.Wait(); err != nil {
@@ -98,7 +96,7 @@ func (d *Docker) Push(ctx context.Context, tag string) error {
 	// TODO: check if the repository exists, if it doesnt this just
 	// non-descriptly endlessly retries.
 	res, err := d.cli.ImagePush(ctx, tag, types.ImagePushOptions{
-		RegistryAuth: encodeCreds(d.auths[region]),
+		RegistryAuth: encodeCreds(d.ecrCreds[region]),
 	})
 	if err != nil {
 		return fmt.Errorf("unable to push image: %v", err)
@@ -137,7 +135,7 @@ func (d *Docker) ecrCredentials(ctx context.Context, region string) error {
 		return fmt.Errorf("invalid token: expected two parts, got %d", len(parts))
 	}
 
-	d.auths[region] = types.AuthConfig{
+	d.ecrCreds[region] = types.AuthConfig{
 		Username:      parts[0],
 		Password:      parts[1],
 		ServerAddress: *auth.ProxyEndpoint,
