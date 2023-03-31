@@ -17,29 +17,28 @@ import (
 func BuildTargets(apps map[string]*models.LaunchConfig) map[string][]string {
 	targets := map[string][]string{}
 	done := map[string]struct{}{}
-loop:
+
 	for name, launch := range apps {
 		if !repo.IsDockerRunType(launch) {
 			continue
 		}
 
+		artifact := repo.ArtifactName(name, launch)
+		// Any apps with a shared artifact only need to be built and
+		// tagged once.
+		if _, ok := done[artifact]; ok {
+			fmt.Println("shared artifact", artifact)
+			continue
+		}
+		done[artifact] = struct{}{}
+
 		tags := []string{}
 		for _, region := range environment.AWSRegions {
 			tag := fmt.Sprintf(
 				"%s.dkr.ecr.%s.amazonaws.com/%s:%s",
-				environment.ECRAccountID, region, repo.ArtifactName(name, launch), environment.ShortSHA1,
+				environment.ECRAccountID, region, artifact, environment.ShortSHA1,
 			)
-
-			// Any apps with a shared artifact will have the same
-			// set of tags. If we find just one of the tags in this
-			// map that means we have already built and pushed this
-			// app and can skip it.
-			if _, ok := done[tag]; ok {
-				fmt.Println("shared tag", tag)
-				continue loop
-			}
 			tags = append(tags, tag)
-			done[tag] = struct{}{}
 		}
 		targets[repo.Dockerfile(launch)] = tags
 	}
