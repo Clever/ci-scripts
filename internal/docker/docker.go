@@ -63,6 +63,9 @@ func New(ctx context.Context, cfg aws.Config) (*Docker, error) {
 // be a full filepath. If dockerfile is an empty string, then the
 // default 'Dockerfile' name is used in the context dir.
 func (d *Docker) Build(ctx context.Context, contextDir, dockerfile string, tags []string) error {
+	if dockerfile == "" {
+		dockerfile = "Dockerfile"
+	}
 	fmt.Println("building", tags, "from", dockerfile, "...")
 	excludes, err := readDockerignore(contextDir)
 	if err != nil {
