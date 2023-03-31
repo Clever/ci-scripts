@@ -73,7 +73,11 @@ func run() error {
 		for artifact, binary := range lambdaTargets {
 			artifact := artifact
 			binary := binary
-			grp.Go(func() error { return lmda.Publish(grpCtx, binary, artifact) })
+
+			for _, region := range environment.AWSRegions {
+				region := region
+				grp.Go(func() error { return lmda.Publish(grpCtx, binary, artifact, region) })
+			}
 		}
 
 		if err := grp.Wait(); err != nil {
