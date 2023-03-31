@@ -63,6 +63,7 @@ func New(ctx context.Context, cfg aws.Config) (*Docker, error) {
 // be a full filepath. If dockerfile is an empty string, then the
 // default 'Dockerfile' name is used in the context dir.
 func (d *Docker) Build(ctx context.Context, contextDir, dockerfile string, tags []string) error {
+	fmt.Println("building", tags, "from", dockerfile, "...")
 	excludes, err := readDockerignore(contextDir)
 	if err != nil {
 		return fmt.Errorf("failed to read docker ignore: %v", err)
@@ -91,6 +92,7 @@ func (d *Docker) Build(ctx context.Context, contextDir, dockerfile string, tags 
 // Push the tag to it's private ecr repository. If the tag is not for a
 // private ecr repository, Push will panic.
 func (d *Docker) Push(ctx context.Context, tag string) error {
+	fmt.Println("pushing", tag)
 	parts := strings.Split(tag, ".")
 	region := parts[3]
 	// TODO: check if the repository exists, if it doesnt this just

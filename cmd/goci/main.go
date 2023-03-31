@@ -13,6 +13,7 @@ import (
 
 	"github.com/Clever/ci-scripts/internal/docker"
 	"github.com/Clever/ci-scripts/internal/environment"
+	"github.com/Clever/ci-scripts/internal/lambda"
 	"github.com/Clever/ci-scripts/internal/repo"
 )
 
@@ -46,7 +47,6 @@ func run() error {
 		}
 
 		for dockerfile, tags := range dockerTargets {
-			fmt.Println("building", tags, "from", dockerfile, "...")
 			if err := dkr.Build(ctx, ".", dockerfile, tags); err != nil {
 				return err
 			}
@@ -56,7 +56,6 @@ func run() error {
 			grp, grpCtx := errgroup.WithContext(ctx)
 			for _, tag := range tags {
 				tag := tag
-				fmt.Println("pushing", tag)
 				grp.Go(func() error { return dkr.Push(grpCtx, tag) })
 			}
 
