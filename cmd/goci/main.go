@@ -66,7 +66,22 @@ func run() error {
 		}
 	}
 
-	// TODO: handle lambdas
+	lambdaTargets := lambda.BuildTargets(apps)
+	if len(lambdaTargets) > 0 {
+		lmda := lambda.New(cfg)
+
+		grp, grpCtx := errgroup.WithContext(ctx)
+		for artifact, binary := range lambdaTargets {
+			artifact := artifact
+			binary := binary
+			grp.Go(func() error { return lmda.Publish(grpCtx, binary, artifact) })
+		}
+
+		if err := grp.Wait(); err != nil {
+			return err
+		}
+	}
+
 	// TODO: publish catapult
 	return nil
 }
