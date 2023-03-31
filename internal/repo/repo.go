@@ -81,6 +81,20 @@ func IsDockerRunType(lc *models.LaunchConfig) bool {
 	return true
 }
 
+// IsLambdaRunType returns true if the launch config specifies a run
+// type of lambda.
+func IsLambdaRunType(lc *models.LaunchConfig) bool {
+	if r := lc.Run; r != nil {
+		switch r.Type {
+		case models.RunTypeLambda:
+			return true
+		default:
+			return false
+		}
+	}
+	return false
+}
+
 // ArtifactName returns the correct artifact name for the application.
 // The default pattern is the app name. There is an optional launch
 // config override in order to enable sharing one artifact between
