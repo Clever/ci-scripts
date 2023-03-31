@@ -22,7 +22,7 @@ func BuildTargets(apps map[string]*models.LaunchConfig) map[string]string {
 
 		artifact := repo.ArtifactName(name, launch)
 		if _, ok := done[artifact]; ok {
-			fmt.Println("shared artifact", artifact)
+			fmt.Println(name, "shares artifact with", artifact)
 			continue
 		}
 		done[artifact] = struct{}{}

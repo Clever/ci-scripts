@@ -27,7 +27,7 @@ func BuildTargets(apps map[string]*models.LaunchConfig) map[string][]string {
 		// Any apps with a shared artifact only need to be built and
 		// tagged once.
 		if _, ok := done[artifact]; ok {
-			fmt.Println("shared artifact", artifact)
+			fmt.Println(name, "shares artifact with", artifact)
 			continue
 		}
 		done[artifact] = struct{}{}
