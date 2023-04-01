@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/Clever/catapult/gen-go/models v1.154.0
 	github.com/Clever/circle-ci-integrations/gen-go/client v0.0.0-20230317164210-4d554db10fa0
+	github.com/Clever/circle-ci-integrations/gen-go/models v0.0.0-20230317164210-4d554db10fa0
 	github.com/Clever/kayvee-go/v7 v7.7.0
 	github.com/aws/aws-sdk-go-v2 v1.17.7
 	github.com/aws/aws-sdk-go-v2/config v1.15.5
@@ -18,7 +19,6 @@ require (
 )
 
 require (
-	github.com/Clever/circle-ci-integrations/gen-go/models v0.0.0-20230317164210-4d554db10fa0 // indirect
 	github.com/Clever/discovery-go v1.8.1 // indirect
 	github.com/Clever/wag/logging/wagclientlogger v0.0.0-20230227191614-7aa97ba44ab1 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
