@@ -7,7 +7,7 @@ import (
 	"github.com/Clever/ci-scripts/internal/environment"
 	"github.com/Clever/circle-ci-integrations/gen-go/client"
 	"github.com/Clever/circle-ci-integrations/gen-go/models"
-	"github.com/Clever/kayvee-go/v7/logger"
+	"github.com/Clever/wag/logging/wagclientlogger"
 )
 
 // Artifact aliases a catapult models.CatapultApplication, and contains
@@ -23,7 +23,7 @@ type Catapult struct {
 
 // New initializes Catapult.
 func New() (*Catapult, error) {
-	cli, err := client.NewFromDiscovery(logger.NewConcreteLogger("goci"), nil)
+	cli, err := client.NewFromDiscovery(nopLogger{}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize circle-ci-integrations client: %v", err)
 	}
@@ -44,4 +44,11 @@ func (c *Catapult) Publish(ctx context.Context, artifacts []*Artifact) error {
 		}
 	}
 	return nil
+}
+
+// not ideal but we dont really need logging here and importing kayvee
+// was causing otel dependency hell.
+type nopLogger struct{}
+
+func (nopLogger) Log(wagclientlogger.LogLevel, string, map[string]interface{}) {
 }
