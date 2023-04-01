@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"os"
-
-	"golang.org/x/sync/errgroup"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 
+	"github.com/Clever/catapult/gen-go/models"
+	"github.com/Clever/ci-scripts/internal/catapult"
 	"github.com/Clever/ci-scripts/internal/docker"
 	"github.com/Clever/ci-scripts/internal/environment"
 	"github.com/Clever/ci-scripts/internal/lambda"
@@ -33,8 +34,13 @@ func run() error {
 		return err
 	}
 
-	ctx := context.Background()
-	cfg, err := awsCfg(ctx)
+	var (
+		ctx       = context.Background()
+		cfg       aws.Config
+		artifacts []*catapult.Artifact
+	)
+
+	cfg, err = awsCfg(ctx)
 	if err != nil {
 		return err
 	}
@@ -48,19 +54,10 @@ func run() error {
 		}
 
 		for dockerfile, tags := range dockerTargets {
-			if err := dkr.Build(ctx, ".", dockerfile, tags); err != nil {
+			if err = dkr.Build(ctx, ".", dockerfile, tags); err != nil {
 				return err
 			}
-
-			// Take advantage of concurrency to speed up this multi-push
-			// until we enable replication.
-			grp, grpCtx := errgroup.WithContext(ctx)
-			for _, tag := range tags {
-				tag := tag
-				grp.Go(func() error { return dkr.Push(grpCtx, tag) })
-			}
-
-			if err := grp.Wait(); err != nil {
+			if err = dkr.Push(ctx, tags); err != nil {
 				return err
 			}
 		}
@@ -71,16 +68,15 @@ func run() error {
 	if len(lambdaTargets) > 0 {
 		lmda := lambda.New(cfg)
 
-		grp, grpCtx := errgroup.WithContext(ctx)
 		for artifact, binary := range lambdaTargets {
-			artifact := artifact
-			binary := binary
-
-			for _, region := range environment.AWSRegions {
-				region := region
-				grp.Go(func() error { return lmda.Publish(grpCtx, binary, artifact, region) })
-			}
+			lmda.Publish(ctx, binary, artifact)
 		}
+	}
+	// We don't handle all application types yet (spark), so error out
+	// instead of silently not building everything.
+	if err = allAppsBuilt(apps, artifacts); err != nil {
+		return err
+	}
 
 	cat, err := catapult.New()
 	if err != nil {
@@ -90,8 +86,26 @@ func run() error {
 	return cat.Publish(ctx, artifacts)
 }
 
-	// TODO: publish catapult
-	return nil
+// allAppsBuilt returns an error if any apps are missing a build artifact.
+func allAppsBuilt(discoveredApps map[string]*models.LaunchConfig, builtApps []*catapult.Artifact) error {
+	if len(discoveredApps) == len(builtApps) {
+		return nil
+	}
+
+	missing := []string{}
+	for name := range discoveredApps {
+		found := false
+		for _, b := range builtApps {
+			if name == b.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			missing = append(missing, name)
+		}
+	}
+	return fmt.Errorf("applications %s not built", strings.Join(missing, ", "))
 }
 
 func awsCfg(ctx context.Context) (aws.Config, error) {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/Clever/ci-scripts/internal/environment"
 )
@@ -21,31 +22,38 @@ func New(cfg aws.Config) *Lambda {
 	return &Lambda{awsCfg: cfg}
 }
 
-// Publish an already built binary archive to s3 using the artifact
-// names as the key.
-func (l *Lambda) Publish(ctx context.Context, binaryPath, artifactName, region string) error {
-	bucket := fmt.Sprintf("%s-%s", environment.LambdaArtifactBucket, region)
-	key := fmt.Sprintf("%[1]s/%[2]s/%[1]s.zip", artifactName, environment.ShortSHA1)
-	s3uri := fmt.Sprintf("s3://%s/%s", bucket, key)
+// Publish an already built lambda artifact archive to s3 using the
+// artifact name as the key. The archive is pushed to each of the 4 aws
+// regions. Each region is pushed in it's own goroutine.
+func (l *Lambda) Publish(ctx context.Context, binaryPath, artifactName string) error {
+	grp, grpCtx := errgroup.WithContext(ctx)
+	for _, region := range environment.Regions {
+		region := region
+		bucket := fmt.Sprintf("%s-%s", environment.LambdaArtifactBucketPrefix, region)
+		key := s3Key(artifactName)
+		s3uri := fmt.Sprintf("s3://%s/%s", bucket, key)
 
-	fmt.Println("uploading lambda binary", binaryPath, "to", s3uri, "...")
+		fmt.Println("uploading lambda artifact", binaryPath, "to", s3uri, "...")
 
-	f, err := os.Open(binaryPath)
-	if err != nil {
-		return fmt.Errorf("unable to open binary file %s: %v", binaryPath, err)
+		grp.Go(func() error {
+			f, err := os.Open(binaryPath)
+			if err != nil {
+				return fmt.Errorf("unable to open lambda artifact archive %s: %v", binaryPath, err)
+			}
+			cfg := l.awsCfg.Copy()
+			cfg.Region = region
+
+			_, err = s3.NewFromConfig(cfg).PutObject(grpCtx, &s3.PutObjectInput{
+				Bucket: aws.String(bucket),
+				Key:    aws.String(key),
+				Body:   f,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to upload %s to %s: %v", binaryPath, s3uri, err)
+			}
+			return nil
+		})
 	}
 
-	cfg := l.awsCfg.Copy()
-	cfg.Region = region
-
-	_, err = s3.NewFromConfig(cfg).PutObject(ctx, &s3.PutObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-		Body:   f,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to upload %s to %s: %v", binaryPath, s3uri, err)
-	}
-
-	return nil
+	return grp.Wait()
 }
