@@ -39,7 +39,8 @@ func run() error {
 		return err
 	}
 
-	dockerTargets := docker.BuildTargets(apps)
+	dockerTargets, dockerArtifacts := docker.BuildTargets(apps)
+	artifacts = append(artifacts, dockerArtifacts...)
 	if len(dockerTargets) > 0 {
 		dkr, err := docker.New(ctx, cfg)
 		if err != nil {
@@ -65,7 +66,8 @@ func run() error {
 		}
 	}
 
-	lambdaTargets := lambda.BuildTargets(apps)
+	lambdaTargets, lambdaArtifacts := lambda.BuildTargets(apps)
+	artifacts = append(artifacts, lambdaArtifacts...)
 	if len(lambdaTargets) > 0 {
 		lmda := lambda.New(cfg)
 
@@ -80,10 +82,13 @@ func run() error {
 			}
 		}
 
-		if err := grp.Wait(); err != nil {
-			return err
-		}
+	cat, err := catapult.New()
+	if err != nil {
+		return err
 	}
+
+	return cat.Publish(ctx, artifacts)
+}
 
 	// TODO: publish catapult
 	return nil
