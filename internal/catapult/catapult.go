@@ -2,7 +2,10 @@ package catapult
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"strings"
 
 	"github.com/Clever/ci-scripts/internal/environment"
 	"github.com/Clever/circle-ci-integrations/gen-go/client"
@@ -21,13 +24,17 @@ type Catapult struct {
 	client client.Client
 }
 
-// New initializes Catapult.
-func New() (*Catapult, error) {
-	cli, err := client.NewFromDiscovery(nopLogger{}, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize circle-ci-integrations client: %v", err)
-	}
-	return &Catapult{client: cli}, nil
+// New initializes Catapult with a circle-ci-integrations client that
+// handles basic auth and discovers it's url via ci environment variables.
+func New() *Catapult {
+	// circle-ci-integrations up until this app was requested against in
+	// ci via curl. Because of this the url environment variable was the
+	// full protocol, hostname and path. This cleans up the variable so
+	// we only have the proto and hostname
+	url := strings.TrimSuffix(environment.CatapultURL, "/catapult/v2/catapult")
+	var rt http.RoundTripper = &basicAuthTransport{}
+	cli := client.New(url, fmtPrinlnLogger{}, &rt)
+	return &Catapult{client: cli}
 }
 
 // Publish a list of build artifacts to catapult.
@@ -46,9 +53,41 @@ func (c *Catapult) Publish(ctx context.Context, artifacts []*Artifact) error {
 	return nil
 }
 
-// not ideal but we dont really need logging here and importing kayvee
-// was causing otel dependency hell.
-type nopLogger struct{}
+// Wraps the default http transport in a very thin wrapper which just
+// adds basic auth to all of the requests. The auth params are pulled
+// from the ci environment.
+type basicAuthTransport struct{}
 
-func (nopLogger) Log(wagclientlogger.LogLevel, string, map[string]interface{}) {
+func (ba *basicAuthTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	r.SetBasicAuth(environment.CatapultUser, environment.CatapultPassword)
+	return http.DefaultTransport.RoundTrip(r)
+}
+
+// A lightweight logger which prints the wag client logs to standard out.
+type fmtPrinlnLogger struct{}
+
+func (fmtPrinlnLogger) Log(level wagclientlogger.LogLevel, title string, data map[string]interface{}) {
+	bs, _ := json.Marshal(data)
+	fmt.Printf("%s - %s %s\n", levelString(level), title, string(bs))
+}
+
+func levelString(l wagclientlogger.LogLevel) string {
+	switch l {
+	case 0:
+		return "TRACE"
+	case 1:
+		return "DEBUG"
+	case 2:
+		return "INFO"
+	case 3:
+		return "WARNING"
+	case 4:
+		return "ERROR"
+	case 5:
+		return "CRITICAL"
+	case 6:
+		return "FROM_ENV"
+	default:
+		return "INFO"
+	}
 }
