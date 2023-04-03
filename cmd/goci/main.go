@@ -46,7 +46,15 @@ func run() error {
 	}
 
 	dockerTargets, dockerArtifacts := docker.BuildTargets(apps)
+	lambdaTargets, lambdaArtifacts := lambda.BuildTargets(apps)
 	artifacts = append(artifacts, dockerArtifacts...)
+	artifacts = append(artifacts, lambdaArtifacts...)
+	// We don't handle all application types yet (e.g. spark), so error out
+	// instead of silently not building everything.
+	if err = allAppsBuilt(apps, artifacts); err != nil {
+		return err
+	}
+
 	if len(dockerTargets) > 0 {
 		dkr, err := docker.New(ctx, cfg)
 		if err != nil {
@@ -63,8 +71,6 @@ func run() error {
 		}
 	}
 
-	lambdaTargets, lambdaArtifacts := lambda.BuildTargets(apps)
-	artifacts = append(artifacts, lambdaArtifacts...)
 	if len(lambdaTargets) > 0 {
 		lmda := lambda.New(cfg)
 
@@ -72,18 +78,7 @@ func run() error {
 			lmda.Publish(ctx, binary, artifact)
 		}
 	}
-	// We don't handle all application types yet (spark), so error out
-	// instead of silently not building everything.
-	if err = allAppsBuilt(apps, artifacts); err != nil {
-		return err
-	}
-
-	cat, err := catapult.New()
-	if err != nil {
-		return err
-	}
-
-	return cat.Publish(ctx, artifacts)
+	return catapult.New().Publish(ctx, artifacts)
 }
 
 // allAppsBuilt returns an error if any apps are missing a build artifact.
