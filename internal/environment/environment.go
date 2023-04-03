@@ -27,6 +27,12 @@ var (
 	// CatapultURL is the dns of the circle-ci-integrations ALB
 	// including the protocol.
 	CatapultURL = envMustString("CATAPULT_URL", true)
+	// CatapultUser is the username to access circle-ci-integrations via
+	// basic auth.
+	CatapultUser = envMustString("CATAPULT_USER", true)
+	// CatapultPassword is the password to access circle-ci-integrations
+	// via basic auth.
+	CatapultPassword = envMustString("CATAPULT_PASS", true)
 	// User the name of the GitHub user who triggered
 	// the CI build
 	User = envMustString("CIRCLE_PROJECT_USERNAME", true)
