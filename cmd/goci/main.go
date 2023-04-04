@@ -6,14 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
-
 	"github.com/Clever/catapult/gen-go/models"
 	"github.com/Clever/ci-scripts/internal/catapult"
 	"github.com/Clever/ci-scripts/internal/docker"
-	"github.com/Clever/ci-scripts/internal/environment"
 	"github.com/Clever/ci-scripts/internal/lambda"
 	"github.com/Clever/ci-scripts/internal/repo"
 )
@@ -36,14 +31,8 @@ func run() error {
 
 	var (
 		ctx       = context.Background()
-		cfg       aws.Config
 		artifacts []*catapult.Artifact
 	)
-
-	cfg, err = awsCfg(ctx)
-	if err != nil {
-		return err
-	}
 
 	dockerTargets, dockerArtifacts := docker.BuildTargets(apps)
 	lambdaTargets, lambdaArtifacts := lambda.BuildTargets(apps)
@@ -56,7 +45,7 @@ func run() error {
 	}
 
 	if len(dockerTargets) > 0 {
-		dkr, err := docker.New(ctx, cfg)
+		dkr, err := docker.New(ctx)
 		if err != nil {
 			return err
 		}
@@ -72,7 +61,7 @@ func run() error {
 	}
 
 	if len(lambdaTargets) > 0 {
-		lmda := lambda.New(cfg)
+		lmda := lambda.New(ctx)
 
 		for artifact, binary := range lambdaTargets {
 			if err := lmda.Publish(ctx, binary, artifact); err != nil {
@@ -103,25 +92,4 @@ func allAppsBuilt(discoveredApps map[string]*models.LaunchConfig, builtApps []*c
 		}
 	}
 	return fmt.Errorf("applications %s not built", strings.Join(missing, ", "))
-}
-
-func awsCfg(ctx context.Context) (aws.Config, error) {
-	opts := []func(*config.LoadOptions) error{
-		config.WithRegion("us-west-1"),
-	}
-
-	// In local environment we use the default credentials chain that
-	// will automatically pull creds from saml2aws,
-	if !environment.Local {
-		opts = append(opts, config.WithCredentialsProvider(
-			credentials.NewStaticCredentialsProvider(environment.ECRAccessKeyID, environment.ECRSecretAccessKey, ""),
-		))
-	}
-
-	cfg, err := config.LoadDefaultConfig(ctx, opts...)
-	if err != nil {
-		return aws.Config{}, fmt.Errorf("failed to load aws config: %v", err)
-	}
-
-	return cfg, nil
 }

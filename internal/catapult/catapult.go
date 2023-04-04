@@ -44,7 +44,7 @@ func New() *Catapult {
 func (c *Catapult) Publish(ctx context.Context, artifacts []*Artifact) error {
 	for _, art := range artifacts {
 		err := c.client.PostCatapultV2(ctx, &models.CatapultPublishRequest{
-			Username: environment.User,
+			Username: environment.CircleUser,
 			Reponame: environment.Repo,
 			Buildnum: environment.CircleBuildNum,
 			App:      art,

@@ -38,12 +38,15 @@ type Docker struct {
 
 // New initializes a new docker daemon client and caches ecr credentials
 // for all 4 regions.
-func New(ctx context.Context, cfg aws.Config) (*Docker, error) {
+func New(ctx context.Context) (*Docker, error) {
 	cl, err := client.NewClientWithOpts(client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize client: %v", err)
 	}
-	d := &Docker{cli: cl, awsCfg: cfg}
+	d := &Docker{
+		cli:    cl,
+		awsCfg: environment.AWSCfg(ctx, environment.ECRAccessKeyID, environment.ECRSecretAccessKey),
+	}
 
 	grp, ctx := errgroup.WithContext(ctx)
 	d.ecrCreds = map[string]types.AuthConfig{}

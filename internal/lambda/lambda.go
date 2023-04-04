@@ -18,8 +18,10 @@ type Lambda struct {
 }
 
 // New initializes a new Lambda handling wrapper with it's s3 client.
-func New(cfg aws.Config) *Lambda {
-	return &Lambda{awsCfg: cfg}
+func New(ctx context.Context) *Lambda {
+	return &Lambda{
+		awsCfg: environment.AWSCfg(ctx, environment.LambdaAccessKeyID, environment.LambdaSecretAccessKey),
+	}
 }
 
 // Publish an already built lambda artifact archive to s3 using the

@@ -1,9 +1,14 @@
 package environment
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 )
 
 var (
@@ -27,15 +32,21 @@ var (
 	// CatapultURL is the dns of the circle-ci-integrations ALB
 	// including the protocol.
 	CatapultURL = envMustString("CATAPULT_URL", true)
+	// LambdaAccessKeyID is the AWS access key ID which has correct
+	// permissions to upload to S3 lambda artifact buckets.
+	LambdaAccessKeyID = envMustString("LAMBDA_AWS_ACCESS_KEY_ID", true)
+	// LambdaSecretAccessKey is the AWS secret key which has correct
+	// permissions to upload to S3 lambda artifact buckets.
+	LambdaSecretAccessKey = envMustString("LAMBDA_AWS_SECRET_ACCESS_KEY", true)
 	// CatapultUser is the username to access circle-ci-integrations via
 	// basic auth.
 	CatapultUser = envMustString("CATAPULT_USER", true)
 	// CatapultPassword is the password to access circle-ci-integrations
 	// via basic auth.
 	CatapultPassword = envMustString("CATAPULT_PASS", true)
-	// User the name of the GitHub user who triggered
-	// the CI build
-	User = envMustString("CIRCLE_PROJECT_USERNAME", true)
+	// CircleUser is the name of the ci user assigned by our ci
+	// environment.
+	CircleUser = envMustString("CIRCLE_PROJECT_USERNAME", true)
 	// Repo is the name of the repo being built in this
 	// CI run.
 	Repo = envMustString("CIRCLE_PROJECT_REPONAME", true)
@@ -52,6 +63,33 @@ var (
 	// locally on a developers machine.
 	Local = os.Getenv("LOCAL") == "true"
 )
+
+// AWSCfg initializes an AWS config or exits with code 0 on failure. If
+// this app is run locally, then this function automatically pulls
+// config from the default credential chain which can be populated with
+// saml2aws. If not run locally, then the passed in id and secret key
+// are used with a static credentials provider.
+func AWSCfg(ctx context.Context, accessKeyID, secretKey string) aws.Config {
+	opts := []func(*config.LoadOptions) error{
+		config.WithRegion("us-west-1"),
+	}
+
+	// In local environment we use the default credentials chain that
+	// will automatically pull creds from saml2aws,
+	if !Local {
+		opts = append(opts, config.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider(accessKeyID, secretKey, ""),
+		))
+	}
+
+	cfg, err := config.LoadDefaultConfig(ctx, opts...)
+	if err != nil {
+		fmt.Println("failed to load aws config:", err)
+		os.Exit(1)
+	}
+
+	return cfg
+}
 
 func envMustString(key string, localRequired bool) string {
 	v := os.Getenv(key)
