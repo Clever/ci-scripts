@@ -30,8 +30,12 @@ func New() *Catapult {
 	// circle-ci-integrations up until this app was requested against in
 	// ci via curl. Because of this the url environment variable was the
 	// full protocol, hostname and path. This cleans up the variable so
-	// we only have the proto and hostname
-	url := strings.TrimSuffix(environment.CatapultURL, "/catapult/v2/catapult")
+	// we only have the proto and hostname. There are two separate
+	// variables provided to provide legacy support so clean up both
+	// possibilities
+	url := strings.TrimSuffix(environment.CatapultURL, "/v2/catapult")
+	url = strings.TrimSuffix(url, "/catapult")
+	fmt.Println(url)
 	var rt http.RoundTripper = &basicAuthTransport{}
 	cli := client.New(url, fmtPrinlnLogger{}, &rt)
 	return &Catapult{client: cli}
