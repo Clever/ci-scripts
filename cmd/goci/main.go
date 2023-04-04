@@ -75,7 +75,9 @@ func run() error {
 		lmda := lambda.New(cfg)
 
 		for artifact, binary := range lambdaTargets {
-			lmda.Publish(ctx, binary, artifact)
+			if err := lmda.Publish(ctx, binary, artifact); err != nil {
+				return err
+			}
 		}
 	}
 	return catapult.New().Publish(ctx, artifacts)
