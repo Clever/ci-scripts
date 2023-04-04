@@ -3,7 +3,7 @@ module github.com/Clever/ci-scripts
 go 1.20
 
 require (
-	github.com/Clever/catapult/gen-go/models v1.154.0
+	github.com/Clever/catapult/gen-go/models v1.156.0
 	github.com/Clever/circle-ci-integrations/gen-go/client v0.0.0-20230317164210-4d554db10fa0
 	github.com/Clever/circle-ci-integrations/gen-go/models v0.0.0-20230317164210-4d554db10fa0
 	github.com/Clever/wag/logging/wagclientlogger v0.0.0-20230227191614-7aa97ba44ab1
@@ -75,10 +75,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.4.0 // indirect
 )
-
-// The Docker tooling uses an incompatible version of otel.
-replace go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v0.31.0
-
-// Temporary use of local catpault schema until I finalize the new
-// launch config useage.
-replace github.com/Clever/catapult/gen-go/models => /Users/andrew.marine/go/src/github.com/Clever/catapult/gen-go/models
