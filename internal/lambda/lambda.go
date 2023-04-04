@@ -43,7 +43,7 @@ func (l *Lambda) Publish(ctx context.Context, binaryPath, artifactName string) e
 			cfg := l.awsCfg.Copy()
 			cfg.Region = region
 
-			_, err = s3.NewFromConfig(cfg).PutObject(grpCtx, &s3.PutObjectInput{
+			res, err := s3.NewFromConfig(cfg).PutObject(grpCtx, &s3.PutObjectInput{
 				Bucket: aws.String(bucket),
 				Key:    aws.String(key),
 				Body:   f,
@@ -51,6 +51,7 @@ func (l *Lambda) Publish(ctx context.Context, binaryPath, artifactName string) e
 			if err != nil {
 				return fmt.Errorf("failed to upload %s to %s: %v", binaryPath, s3uri, err)
 			}
+			fmt.Printf("res: %s - %s\n", *res.VersionId, *res.ETag)
 			return nil
 		})
 	}

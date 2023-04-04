@@ -43,7 +43,6 @@ func New() *Catapult {
 // Publish a list of build artifacts to catapult.
 func (c *Catapult) Publish(ctx context.Context, artifacts []*Artifact) error {
 	for _, art := range artifacts {
-		fmt.Printf("req: %+v\n", art)
 		err := c.client.PostCatapultV2(ctx, &models.CatapultPublishRequest{
 			Username: environment.User,
 			Reponame: environment.Repo,
