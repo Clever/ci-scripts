@@ -34,10 +34,10 @@ var (
 	CatapultURL = envMustString("CATAPULT_URL", true)
 	// LambdaAccessKeyID is the AWS access key ID which has correct
 	// permissions to upload to S3 lambda artifact buckets.
-	LambdaAccessKeyID = envMustString("LAMBDA_AWS_ACCESS_KEY_ID", true)
+	LambdaAccessKeyID = envMustString("LAMBDA_AWS_ACCESS_KEY_ID", false)
 	// LambdaSecretAccessKey is the AWS secret key which has correct
 	// permissions to upload to S3 lambda artifact buckets.
-	LambdaSecretAccessKey = envMustString("LAMBDA_AWS_SECRET_ACCESS_KEY", true)
+	LambdaSecretAccessKey = envMustString("LAMBDA_AWS_SECRET_ACCESS_KEY", false)
 	// CatapultUser is the username to access circle-ci-integrations via
 	// basic auth.
 	CatapultUser = envMustString("CATAPULT_USER", true)
