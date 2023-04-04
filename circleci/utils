@@ -34,3 +34,17 @@ install_yq(){
   export PATH="/tmp/bin:$PATH"
   echo "Completed yq install"
 }
+
+install_breakdowncli(){
+  if type breakdowncli > /dev/null; then
+    echo "breakdowncli already installed"
+    return
+  fi
+
+  echo "Installing breakdowncli..."
+  mkdir -p "/tmp/bin"
+  wget -O "/tmp/bin/breakdowncli" "https://github.com/Clever/breakdown/releases/download/breakdowncli%2Fv0.1.2/breakdowncli-v0.1.2-linux-amd64"
+  chmod +x "/tmp/bin/breakdowncli"
+  export PATH="/tmp/bin:$PATH"
+  echo "Completed breakdowncli install"
+}

@@ -1,0 +1,77 @@
+#!/bin/bash
+
+# Parses dependencies and sends info to breakdown via circle-ci-integrations
+#
+# Usage:
+#
+#   breakdown-sync [BREAKDOWN_URL] [USER] [PASS]
+#
+
+set -e
+
+: ${CIRCLE_BRANCH?"Missing required env var"}
+BRANCH=$CIRCLE_BRANCH
+if [[ $BRANCH != "master" ]]; then
+  echo "Skipping sync for non-master branch"
+  exit 0
+fi
+
+DIR=$(dirname "$0")
+. $DIR/utils
+
+# User supplied args
+BREAKDOWN_URL=$1
+if [[ -z $BREAKDOWN_URL ]]; then echo "Missing arg1 BREAKDOWN_URL" && exit 1; fi
+USER=$2
+if [[ -z $USER ]]; then echo "Missing arg2 USER" && exit 1; fi
+PASS=$3
+if [[ -z $PASS ]]; then echo "Missing arg3 PASS" && exit 1; fi
+
+: ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
+REPO=$CIRCLE_PROJECT_REPONAME
+: ${CIRCLE_SHA1?"Missing required env var"}
+FULL_SHA=${CIRCLE_SHA1}
+SHORT_SHA=${CIRCLE_SHA1:0:8}
+
+# check if repo commit already exists
+RC=$(curl -u $USER:$PASS \
+  --retry 5 \
+  -o /dev/null \
+  -w "%{http_code}" \
+  -H "Content-Type: application/json" \
+  -X GET \
+  -d "{\"commit_sha\": \"$SHORT_SHA\",\"repo_name\":\"$REPO\"}" \
+  $BREAKDOWN_URL/v1/commit)
+
+if [ "$RC" -eq 200 ]; then
+  echo "Repo and commit already exist"
+  exit 0
+fi
+
+install_breakdowncli
+
+TMP_OUT="$(mktemp)"
+
+breakdowncli \
+  -output $TMP_OUT \
+  -pretty=f \
+  $REPO $SHORT_SHA
+
+echo "Posting info to breakdown..."
+SC=$(curl -u $USER:$PASS \
+  --retry 5 \
+  -w "%{http_code}" \
+  -H "Content-Type: application/json" \
+  -X POST \
+  -d @$TMP_OUT \
+  $BREAKDOWN_URL/v1/upload)
+
+rm $TMP_OUT
+
+if [ "$SC" -eq 200 ]; then
+  echo "Successfully published to breakdown"
+  exit 0
+else
+  echo "Failed to publish to breakdown"
+  exit 1
+fi
