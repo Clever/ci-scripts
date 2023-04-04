@@ -55,7 +55,7 @@ CIRCLE_CI_INTEGRATIONS_URL=$(dirname $CATAPULT_URL)
 
 # TODO: should probably `ark init` things with an environment variable pointing to base url of circle-ci-integrations
 # Update Catapult URL to v2 if not already
-if [[ ! $CATAPULT_URL = *"/v2/catapult"* ]]; then 
+if [[ ! $CATAPULT_URL = *"/v2/catapult"* ]]; then
   CATAPULT_URL=${CATAPULT_URL/catapult/v2/catapult}
 fi
 LAMBDA_AWS_S3_KEY=${APP_NAME}/${SHORT_SHA}/${APP_NAME}.zip
@@ -111,3 +111,7 @@ fi
 # publish catalog app config
 CATALOG_SYNC_SCRIPT="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )/catalog-sync"
 "${CATALOG_SYNC_SCRIPT}" $CIRCLE_CI_INTEGRATIONS_URL $CATAPULT_USER $CATAPULT_PASS $APP_NAME
+
+# publish dep info
+BREAKDOWN_SYNC_SCRIPT="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )/breakdown-sync"
+"${BREAKDOWN_SYNC_SCRIPT}" "$CIRCLE_CI_INTEGRATIONS_URL/breakdown" $CATAPULT_USER $CATAPULT_PASS
