@@ -34,7 +34,7 @@ func BuildTargets(apps map[string]*models.LaunchConfig) (map[string]string, []*c
 			ID:        name,
 			Branch:    environment.Branch,
 			Source:    fmt.Sprintf("github:Clever/%s@%s", environment.Repo, environment.FullSHA1),
-			Artifacts: fmt.Sprintf("lambda:clever/%s@%s;S3Key=\\\"%s,%s", artifact, environment.ShortSHA1, s3Key(artifact), s3Buckets()),
+			Artifacts: fmt.Sprintf("lambda:clever/%s@%s;S3Key=\"%s,%s", artifact, environment.ShortSHA1, s3Key(artifact), s3Buckets()),
 		})
 
 		if _, ok := done[artifact]; ok {
@@ -57,7 +57,7 @@ func s3Key(artifactName string) string {
 func s3Buckets() string {
 	out := []string{}
 	for _, r := range environment.Regions {
-		out = append(out, fmt.Sprintf("S3Buckets={%[1]s=\\\"%[2]s-%[1]s", r, environment.LambdaArtifactBucketPrefix))
+		out = append(out, fmt.Sprintf("S3Buckets={%[1]s=\"%[2]s-%[1]s", r, environment.LambdaArtifactBucketPrefix))
 	}
 	return strings.Join(out, ",")
 }

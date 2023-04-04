@@ -35,7 +35,6 @@ func New() *Catapult {
 	// possibilities
 	url := strings.TrimSuffix(environment.CatapultURL, "/v2/catapult")
 	url = strings.TrimSuffix(url, "/catapult")
-	fmt.Println(url)
 	var rt http.RoundTripper = &basicAuthTransport{}
 	cli := client.New(url, fmtPrinlnLogger{}, &rt)
 	return &Catapult{client: cli}
