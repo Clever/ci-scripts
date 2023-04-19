@@ -38,16 +38,19 @@ type Docker struct {
 
 // New initializes a new docker daemon client and caches ecr credentials
 // for all 4 regions.
-func New(ctx context.Context, cfg aws.Config) (*Docker, error) {
+func New(ctx context.Context) (*Docker, error) {
 	cl, err := client.NewClientWithOpts(client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize client: %v", err)
 	}
-	d := &Docker{cli: cl, awsCfg: cfg}
+	d := &Docker{
+		cli:    cl,
+		awsCfg: environment.AWSCfg(ctx, environment.ECRAccessKeyID, environment.ECRSecretAccessKey),
+	}
 
 	grp, ctx := errgroup.WithContext(ctx)
 	d.ecrCreds = map[string]types.AuthConfig{}
-	for _, r := range environment.AWSRegions {
+	for _, r := range environment.Regions {
 		r := r
 		grp.Go(func() error { return d.ecrCredentials(ctx, r) })
 	}
@@ -63,6 +66,10 @@ func New(ctx context.Context, cfg aws.Config) (*Docker, error) {
 // be a full filepath. If dockerfile is an empty string, then the
 // default 'Dockerfile' name is used in the context dir.
 func (d *Docker) Build(ctx context.Context, contextDir, dockerfile string, tags []string) error {
+	if dockerfile == "" {
+		dockerfile = "Dockerfile"
+	}
+	fmt.Println("building", tags, "from", dockerfile, "...")
 	excludes, err := readDockerignore(contextDir)
 	if err != nil {
 		return fmt.Errorf("failed to read docker ignore: %v", err)
@@ -88,22 +95,34 @@ func (d *Docker) Build(ctx context.Context, contextDir, dockerfile string, tags 
 	return print(res.Body)
 }
 
-// Push the tag to it's private ecr repository. If the tag is not for a
-// private ecr repository, Push will panic.
-func (d *Docker) Push(ctx context.Context, tag string) error {
-	parts := strings.Split(tag, ".")
-	region := parts[3]
-	// TODO: check if the repository exists, if it doesnt this just
-	// non-descriptly endlessly retries.
-	res, err := d.cli.ImagePush(ctx, tag, types.ImagePushOptions{
-		RegistryAuth: encodeCreds(d.ecrCreds[region]),
-	})
-	if err != nil {
-		return fmt.Errorf("unable to push image: %v", err)
+// Push the tags to their private ecr repository. If a tag is not for a
+// private ecr repository, Push will panic. Each tag is pushed in a
+// separate goroutine.
+func (d *Docker) Push(ctx context.Context, tags []string) error {
+	grp, grpCtx := errgroup.WithContext(ctx)
+
+	for _, tag := range tags {
+		tag := tag
+		fmt.Println("pushing", tag)
+		parts := strings.Split(tag, ".")
+		region := parts[3]
+
+		grp.Go(func() error {
+			// TODO: check if the repository exists, if it doesn't this just
+			// nondescriptly endlessly retries.
+			res, err := d.cli.ImagePush(grpCtx, tag, types.ImagePushOptions{
+				RegistryAuth: encodeCreds(d.ecrCreds[region]),
+			})
+			if err != nil {
+				return fmt.Errorf("unable to push image: %v", err)
+			}
+
+			defer res.Close()
+			return print(res)
+		})
 	}
 
-	defer res.Close()
-	return print(res)
+	return grp.Wait()
 }
 
 // fetch and cache docker client ecr credentials for the specified region.

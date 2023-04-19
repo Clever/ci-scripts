@@ -4,15 +4,12 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
-	"golang.org/x/sync/errgroup"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
-
+	"github.com/Clever/catapult/gen-go/models"
+	"github.com/Clever/ci-scripts/internal/catapult"
 	"github.com/Clever/ci-scripts/internal/docker"
-	"github.com/Clever/ci-scripts/internal/environment"
+	"github.com/Clever/ci-scripts/internal/lambda"
 	"github.com/Clever/ci-scripts/internal/repo"
 )
 
@@ -32,62 +29,67 @@ func run() error {
 		return err
 	}
 
-	ctx := context.Background()
-	cfg, err := awsCfg(ctx)
-	if err != nil {
+	var (
+		ctx       = context.Background()
+		artifacts []*catapult.Artifact
+	)
+
+	dockerTargets, dockerArtifacts := docker.BuildTargets(apps)
+	lambdaTargets, lambdaArtifacts := lambda.BuildTargets(apps)
+	artifacts = append(artifacts, dockerArtifacts...)
+	artifacts = append(artifacts, lambdaArtifacts...)
+	// We don't handle all application types yet (e.g. spark), so error out
+	// instead of silently not building everything.
+	if err = allAppsBuilt(apps, artifacts); err != nil {
 		return err
 	}
 
-	dockerTargets := docker.BuildTargets(apps)
 	if len(dockerTargets) > 0 {
-		dkr, err := docker.New(ctx, cfg)
+		dkr, err := docker.New(ctx)
 		if err != nil {
 			return err
 		}
 
 		for dockerfile, tags := range dockerTargets {
-			fmt.Println("building", tags, "from", dockerfile, "...")
-			if err := dkr.Build(ctx, ".", dockerfile, tags); err != nil {
+			if err = dkr.Build(ctx, ".", dockerfile, tags); err != nil {
 				return err
 			}
-
-			// Take advantage of concurrency to speed up this multi-push
-			// until we enable replication.
-			grp, grpCtx := errgroup.WithContext(ctx)
-			for _, tag := range tags {
-				tag := tag
-				fmt.Println("pushing", tag)
-				grp.Go(func() error { return dkr.Push(grpCtx, tag) })
-			}
-
-			if err := grp.Wait(); err != nil {
+			if err = dkr.Push(ctx, tags); err != nil {
 				return err
 			}
 		}
 	}
 
-	// TODO: handle lambdas
-	// TODO: publish catapult
-	return nil
+	if len(lambdaTargets) > 0 {
+		lmda := lambda.New(ctx)
+
+		for artifact, binary := range lambdaTargets {
+			if err := lmda.Publish(ctx, binary, artifact); err != nil {
+				return err
+			}
+		}
+	}
+	return catapult.New().Publish(ctx, artifacts)
 }
 
-func awsCfg(ctx context.Context) (aws.Config, error) {
-	opts := []func(*config.LoadOptions) error{
-		config.WithRegion("us-west-1"),
+// allAppsBuilt returns an error if any apps are missing a build artifact.
+func allAppsBuilt(discoveredApps map[string]*models.LaunchConfig, builtApps []*catapult.Artifact) error {
+	if len(discoveredApps) == len(builtApps) {
+		return nil
 	}
 
-	// In local environment we use the default credentials chain that
-	// will automatically pull creds from saml2aws,
-	if !environment.Local {
-		opts = append(opts, config.WithCredentialsProvider(
-			credentials.NewStaticCredentialsProvider(environment.ECRAccessKeyID, environment.ECRSecretAccessKey, ""),
-		))
+	missing := []string{}
+	for name := range discoveredApps {
+		found := false
+		for _, b := range builtApps {
+			if name == b.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			missing = append(missing, name)
+		}
 	}
-
-	cfg, err := config.LoadDefaultConfig(ctx, opts...)
-	if err != nil {
-		return aws.Config{}, fmt.Errorf("failed to load aws config: %v", err)
-	}
-
-	return cfg, nil
+	return fmt.Errorf("applications %s not built", strings.Join(missing, ", "))
 }

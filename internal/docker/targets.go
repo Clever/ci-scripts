@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Clever/catapult/gen-go/models"
+	"github.com/Clever/ci-scripts/internal/catapult"
 	"github.com/Clever/ci-scripts/internal/environment"
 	"github.com/Clever/ci-scripts/internal/repo"
 )
@@ -14,9 +15,12 @@ import (
 // set of tags will be in the final list. This is an optimization so we
 // do not build multiple copies of the same Dockerfile which only differ
 // at runtime.
-func BuildTargets(apps map[string]*models.LaunchConfig) map[string][]string {
-	targets := map[string][]string{}
-	done := map[string]struct{}{}
+func BuildTargets(apps map[string]*models.LaunchConfig) (map[string][]string, []*catapult.Artifact) {
+	var (
+		targets   = map[string][]string{}
+		done      = map[string]struct{}{}
+		artifacts []*catapult.Artifact
+	)
 
 	for name, launch := range apps {
 		if !repo.IsDockerRunType(launch) {
@@ -24,23 +28,34 @@ func BuildTargets(apps map[string]*models.LaunchConfig) map[string][]string {
 		}
 
 		artifact := repo.ArtifactName(name, launch)
+		artifacts = append(artifacts, &catapult.Artifact{
+			RunType:   string(models.RunTypeDocker),
+			ID:        name,
+			Branch:    environment.Branch,
+			Source:    fmt.Sprintf("github:Clever/%s@%s", environment.Repo, environment.FullSHA1),
+			Artifacts: fmt.Sprintf("docker:clever/%s@%s", artifact, environment.ShortSHA1),
+		})
+
 		// Any apps with a shared artifact only need to be built and
-		// tagged once.
+		// tagged once. Short-circuit after we assemble our catapult
+		// artifacts because catapult still needs an artifact reference
+		// for every app.
 		if _, ok := done[artifact]; ok {
-			fmt.Println("shared artifact", artifact)
+			fmt.Println(name, "shares artifact with", artifact)
 			continue
 		}
 		done[artifact] = struct{}{}
 
 		tags := []string{}
-		for _, region := range environment.AWSRegions {
+		for _, region := range environment.Regions {
 			tag := fmt.Sprintf(
 				"%s.dkr.ecr.%s.amazonaws.com/%s:%s",
 				environment.ECRAccountID, region, artifact, environment.ShortSHA1,
 			)
 			tags = append(tags, tag)
 		}
+
 		targets[repo.Dockerfile(launch)] = tags
 	}
-	return targets
+	return targets, artifacts
 }
