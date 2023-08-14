@@ -8,6 +8,7 @@
 #   docker-publish 
 #   optional flag "-r private-repos" enables Docker Build Kit to allow ssh socket mounting to pull private modules/repos
 
+
 set -e
 
 DIR=$(dirname "$0")
@@ -24,7 +25,7 @@ else
 fi
 
 readopt='none'
-while getopts ':r' flag; do
+while getopts 'r:' flag; do
     case "${flag}" in
         r) readopt=${OPTARG};;
     esac
