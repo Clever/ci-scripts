@@ -21,6 +21,29 @@ install_awscli(){
   echo "Completed AWS cli install"
 }
 
+assume_role_with_web_identity() {
+  echo "Setting aws profile to $2"
+  aws configure set profile $2
+  echo "Authenticating via role $1..."
+  aws sts assume-role-with-web-identity \
+    --role-arn "$1" \
+    --role-session-name "oidc-ecr-role-session" \
+    --web-identity-token "${CIRCLE_OIDC_TOKEN_V2}" \
+    --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
+    --output text > /tmp/cred.txt
+  read -r AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN < /tmp/cred.txt 
+  
+  if [ -z "${AWS_ACCESS_KEY_ID}" ] || [ -z "${AWS_SECRET_ACCESS_KEY}" ] || [ -z "${AWS_SESSION_TOKEN}" ]; then
+    echo "Failed to assume role";
+    exit 1
+  else
+    aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID} --profile $2
+    aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY} --profile $2
+    aws configure set aws_session_token ${AWS_SESSION_TOKEN} --profile $2
+    echo "Assume role with web identity succeeded."
+  fi
+}
+
 install_yq(){
   if type yq > /dev/null; then
     echo "yq already installed"
