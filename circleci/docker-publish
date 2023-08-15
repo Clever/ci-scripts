@@ -42,7 +42,7 @@ image_exists() {
 }
 
 check_ecr_vars() {
-  # ECR required env vars. If CIRCLE_OIDC_TOKEN_V2 is defined via context, then use it to login to aws. 
+  # ECR required env vars. If OIDC_ECR_UPLOAD_ROLE is defined via context, then use it to login to aws. 
   if [[ -z $OIDC_ECR_UPLOAD_ROLE ]]; then
     if [[ -z $ECR_ACCOUNT_ID ]]; then echo "Missing var for ECR: ECR_ACCOUNT_ID" && exit 1; fi
     if [[ -z $ECR_PUSH_SECRET ]]; then echo "Missing var for ECR: ECR_PUSH_SECRET" && exit 1; fi
@@ -116,7 +116,7 @@ else
 fi
 
 # ECR login.
-if [[ -z $CIRCLE_OIDC_TOKEN_V2 ]]; then
+if [[ -z $OIDC_ECR_UPLOAD_ROLE ]]; then
   echo "Logging into ECR using static credentials..."
   ecr_login $ECR_REGION_US_WEST_1 $ECR_PUSH_ID $ECR_PUSH_SECRET
   ecr_login $ECR_REGION_US_WEST_2 $ECR_PUSH_ID $ECR_PUSH_SECRET
