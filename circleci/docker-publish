@@ -51,10 +51,6 @@ check_ecr_vars() {
       echo "Role name is required when using CIRCLE_OIDC_TOKEN_V2 to login to aws."
       exit 1
     fi
-    if [ -z "${CIRCLE_OIDC_TOKEN_V2}" ]; then
-      echo "OIDC Token cannot be found. A CircleCI context must be specified."
-      exit 1
-    fi
     echo "Using AWS role '${OIDC_ECR_UPLOAD_ROLE}' to login to aws ecr"
   fi
 }
