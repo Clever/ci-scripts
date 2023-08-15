@@ -23,14 +23,15 @@ install_awscli(){
 
 assume_role_with_web_identity() {
   aws configure set profile $2
-  aws sts assume-role-with-web-identity \
+  read -r AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN << EOF
+  $(aws sts assume-role-with-web-identity \
     --role-arn "$1" \
     --role-session-name "oidc-ecr-role-session" \
     --web-identity-token "${CIRCLE_OIDC_TOKEN_V2}" \
     --profile $2 \
     --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
-    --output text > /tmp/cred.txt
-  read -r AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN < /tmp/cred.txt 
+    --output text)
+EOF
   
   if [ -z "${AWS_ACCESS_KEY_ID}" ] || [ -z "${AWS_SECRET_ACCESS_KEY}" ] || [ -z "${AWS_SESSION_TOKEN}" ]; then
     echo "Failed to assume role";
