@@ -28,7 +28,6 @@ assume_role_with_web_identity() {
     --role-arn "$1" \
     --role-session-name "oidc-ecr-role-session" \
     --web-identity-token "${CIRCLE_OIDC_TOKEN_V2}" \
-    --profile $2 \
     --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
     --output text)
 EOF
