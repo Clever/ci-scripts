@@ -42,15 +42,29 @@ image_exists() {
 }
 
 check_ecr_vars() {
-  # ECR required env vars
-  if [[ -z $ECR_ACCOUNT_ID ]]; then echo "Missing var for ECR: ECR_ACCOUNT_ID" && exit 1; fi
-  if [[ -z $ECR_PUSH_SECRET ]]; then echo "Missing var for ECR: ECR_PUSH_SECRET" && exit 1; fi
+  # ECR required env vars. If OIDC_ECR_UPLOAD_ROLE is defined via context, then use it to login to aws. 
+  if [[ -z $OIDC_ECR_UPLOAD_ROLE ]]; then
+    if [[ -z $ECR_ACCOUNT_ID ]]; then echo "Missing var for ECR: ECR_ACCOUNT_ID" && exit 1; fi
+    if [[ -z $ECR_PUSH_SECRET ]]; then echo "Missing var for ECR: ECR_PUSH_SECRET" && exit 1; fi
+  else
+    if [ -z "${CIRCLE_OIDC_TOKEN_V2}" ]; then
+      echo "OIDC Token cannot be found. A CircleCI context must be specified."
+      exit 1
+    fi
+    echo "Using AWS role defined in \$OIDC_ECR_UPLOAD_ROLE to login to aws ecr"
+  fi
 }
 
 ecr_login(){
   REGION=$1
   ECR_REPO=$ECR_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
   AWS_ACCESS_KEY_ID=$2 AWS_SECRET_ACCESS_KEY=$3 aws ecr --region $REGION get-login-password | docker login --username AWS --password-stdin $ECR_REPO
+}
+
+ecr_login_with_profile(){
+  REGION=$1
+  ECR_REPO=$ECR_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+  aws ecr --region $REGION get-login-password --profile $AWS_ECR_PROFILE | docker login --username AWS --password-stdin $ECR_REPO
 }
 
 push_ecr_image(){
@@ -76,6 +90,7 @@ ECR_REGION_US_WEST_1=us-west-1
 ECR_REGION_US_WEST_2=us-west-2
 ECR_REGION_US_EAST_1=us-east-1
 ECR_REGION_US_EAST_2=us-east-2
+AWS_ECR_PROFILE=oidc-ecr-profile
 
 echo "Docker version..."
 docker version
@@ -101,11 +116,20 @@ else
 fi
 
 # ECR login.
-echo "Logging into ECR..."
-ecr_login $ECR_REGION_US_WEST_1 $ECR_PUSH_ID $ECR_PUSH_SECRET
-ecr_login $ECR_REGION_US_WEST_2 $ECR_PUSH_ID $ECR_PUSH_SECRET
-ecr_login $ECR_REGION_US_EAST_1 $ECR_PUSH_ID $ECR_PUSH_SECRET
-ecr_login $ECR_REGION_US_EAST_2 $ECR_PUSH_ID $ECR_PUSH_SECRET
+if [[ -z $OIDC_ECR_UPLOAD_ROLE ]]; then
+  echo "Logging into ECR using static credentials..."
+  ecr_login $ECR_REGION_US_WEST_1 $ECR_PUSH_ID $ECR_PUSH_SECRET
+  ecr_login $ECR_REGION_US_WEST_2 $ECR_PUSH_ID $ECR_PUSH_SECRET
+  ecr_login $ECR_REGION_US_EAST_1 $ECR_PUSH_ID $ECR_PUSH_SECRET
+  ecr_login $ECR_REGION_US_EAST_2 $ECR_PUSH_ID $ECR_PUSH_SECRET
+else
+  echo "Logging into ECR using role credentials..."
+  assume_role_with_web_identity $OIDC_ECR_UPLOAD_ROLE $AWS_ECR_PROFILE 
+  ecr_login_with_profile $ECR_REGION_US_WEST_1
+  ecr_login_with_profile $ECR_REGION_US_WEST_2
+  ecr_login_with_profile $ECR_REGION_US_EAST_1
+  ecr_login_with_profile $ECR_REGION_US_EAST_2
+fi
 
 echo "Pushing to ECR..."
 push_ecr_image $ECR_REGION_US_WEST_1
