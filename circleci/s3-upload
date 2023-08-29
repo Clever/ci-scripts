@@ -75,8 +75,8 @@ fi
 echo "  Source: $SOURCE_DIR_OR_FILE"
 echo "  Desination: $S3_BUCKET_URL"
 if [[ -v OIDC_S3_UPLOAD_ROLE ]]; then
-    echo "Uploading files to S3 using profile `$AWS_S3_PROFILE`" 
-    aws s3 --profile $AWS_S3_PROFILE cp $DIR_OR_FILE_TO_UPLOAD $S3_BUCKET_URL --acl "private" --cache-control "max-age=31536000" $ADDITIONAL_S3_FLAGS
+    echo "Uploading files to S3 using profile $AWS_S3_PROFILE" 
+    aws s3 cp --profile $AWS_S3_PROFILE  $DIR_OR_FILE_TO_UPLOAD $S3_BUCKET_URL --acl "private" --cache-control "max-age=31536000" $ADDITIONAL_S3_FLAGS
 else
     echo "Uploading files to S3 using static credentials" 
     aws s3 cp $DIR_OR_FILE_TO_UPLOAD $S3_BUCKET_URL --acl "private" --cache-control "max-age=31536000" $ADDITIONAL_S3_FLAGS
