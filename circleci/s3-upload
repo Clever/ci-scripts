@@ -67,14 +67,14 @@ fi
 install_awscli
 # aws login.
 AWS_S3_PROFILE=oidc-s3-profile
-if [[ -v $OIDC_S3_UPLOAD_ROLE ]]; then
+if [[ -v OIDC_S3_UPLOAD_ROLE ]]; then
   echo "Logging into AWS using role credentials...."
   assume_role_with_web_identity $OIDC_S3_UPLOAD_ROLE $AWS_S3_PROFILE 
 fi
 
 echo "  Source: $SOURCE_DIR_OR_FILE"
 echo "  Desination: $S3_BUCKET_URL"
-if [[ -v $OIDC_S3_UPLOAD_ROLE ]]; then
+if [[ -v OIDC_S3_UPLOAD_ROLE ]]; then
     echo "Uploading files to S3 using profile `$AWS_S3_PROFILE`" 
     aws s3 --profile $AWS_S3_PROFILE cp $DIR_OR_FILE_TO_UPLOAD $S3_BUCKET_URL --acl "private" --cache-control "max-age=31536000" $ADDITIONAL_S3_FLAGS
 else

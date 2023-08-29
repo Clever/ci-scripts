@@ -42,7 +42,7 @@ install_awscli
 
 # aws login.
 AWS_LAMBDA_PROFILE=oidc-lambda-profile
-if [[ -v $OIDC_LAMBDA_ROLE ]]; then
+if [[ -v OIDC_LAMBDA_ROLE ]]; then
   echo "Logging into AWS using role credentials...."
   assume_role_with_web_identity $OIDC_S3_UPLOAD_ROLE $AWS_LAMBDA_PROFILE 
 fi
@@ -73,7 +73,7 @@ LAMBDA_AWS_S3_KEY=${APP_NAME}/${SHORT_SHA}/${APP_NAME}.zip
 for AWS_REGION in ${AWS_REGIONS}; do
     # region doesn't really matter for an S3 upload, since the bucket region is fixed
     AWS_REGION=$AWS_REGION
-    if [[ -v $OIDC_LAMBDA_ROLE ]]; then
+    if [[ -v OIDC_LAMBDA_ROLE ]]; then
         echo "Uploading to S3 using profile `$AWS_LAMBDA_PROFILE`"
         aws s3 --profile $AWS_LAMBDA_PROFILE cp bin/${APP_NAME}.zip s3://${LAMBDA_AWS_BUCKET}-${AWS_REGION}/${LAMBDA_AWS_S3_KEY}
     else
@@ -86,7 +86,7 @@ for AWS_REGION in ${AWS_REGIONS}; do
     if [ -e swagger.yml ]; then
         # api gateway fails to parse on x-nullable
         sed '/x-nullable/d' ./swagger.yml > ./swagger.lambda.yml
-        if [[ -v $OIDC_LAMBDA_ROLE ]]; then
+        if [[ -v OIDC_LAMBDA_ROLE ]]; then
             echo "Uploading swagger.yml using profile `$AWS_LAMBDA_PROFILE`"
             aws s3 --profile $AWS_LAMBDA_PROFILE cp swagger.lambda.yml s3://${LAMBDA_AWS_BUCKET}-${AWS_REGION}/${APP_NAME}/${SHORT_SHA}/swagger.lambda.yml
         else
