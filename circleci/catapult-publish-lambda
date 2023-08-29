@@ -74,8 +74,8 @@ for AWS_REGION in ${AWS_REGIONS}; do
     # region doesn't really matter for an S3 upload, since the bucket region is fixed
     AWS_REGION=$AWS_REGION
     if [[ -v OIDC_LAMBDA_ROLE ]]; then
-        echo "Uploading to S3 using profile `$AWS_LAMBDA_PROFILE`"
-        aws s3 --profile $AWS_LAMBDA_PROFILE cp bin/${APP_NAME}.zip s3://${LAMBDA_AWS_BUCKET}-${AWS_REGION}/${LAMBDA_AWS_S3_KEY}
+        echo "Uploading to S3 using profile ${AWS_LAMBDA_PROFILE}"
+        aws s3 cp --profile $AWS_LAMBDA_PROFILE  bin/${APP_NAME}.zip s3://${LAMBDA_AWS_BUCKET}-${AWS_REGION}/${LAMBDA_AWS_S3_KEY}
     else
         echo "Uploading to S3 using static credential"
         AWS_ACCESS_KEY_ID=$LAMBDA_AWS_ACCESS_KEY_ID \

@@ -66,8 +66,8 @@ GLUE_AWS_S3_KEY=${APP_NAME}/${SHORT_SHA}
 # upload to s3
 AWS_REGION=$AWS_REGION
 if [[ -v OIDC_GLUE_UPLOAD_ROLE ]]; then
-    echo "Uploading to S3 using profile `$AWS_GLUE_PROFILE`"
-    aws s3 --profile $AWS_GLUE_PROFILE cp --recursive bin/${APP_NAME} s3://${GLUE_AWS_BUCKET}-${AWS_REGION}/${GLUE_AWS_S3_KEY}
+    echo "Uploading to S3 using profile ${AWS_GLUE_PROFILE}"
+    aws s3 cp --profile $AWS_GLUE_PROFILE --recursive bin/${APP_NAME} s3://${GLUE_AWS_BUCKET}-${AWS_REGION}/${GLUE_AWS_S3_KEY}
 else
     echo "Uploading to S3 using static credential..."
     AWS_ACCESS_KEY_ID=$GLUE_AWS_ACCESS_KEY_ID \
