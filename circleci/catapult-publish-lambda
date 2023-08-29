@@ -44,7 +44,7 @@ install_awscli
 AWS_LAMBDA_PROFILE=oidc-lambda-profile
 if [[ -v OIDC_LAMBDA_ROLE ]]; then
   echo "Logging into AWS using role credentials...."
-  assume_role_with_web_identity $OIDC_S3_UPLOAD_ROLE $AWS_LAMBDA_PROFILE 
+  assume_role_with_web_identity $OIDC_LAMBDA_ROLE $AWS_LAMBDA_PROFILE 
 fi
 
 install_yq
