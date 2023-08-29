@@ -38,6 +38,13 @@ BRANCH=$CIRCLE_BRANCH
 
 install_awscli
 
+# aws login.
+AWS_GLUE_PROFILE=oidc-glue-profile
+if [[ -v $OIDC_GLUE_UPLOAD_ROLE ]]; then
+  echo "Logging into AWS using role credentials...."
+  assume_role_with_web_identity $OIDC_GLUE_UPLOAD_ROLE $AWS_GLUE_PROFILE 
+fi
+
 install_yq
 
 RUN_TYPE=$(yq e '.run.type' "launch/${APP_NAME}.yml")
@@ -57,11 +64,16 @@ CATAPULT_URL=$(echo "${CATAPULT_URL}" | sed 's/\/catapult/\/v2\/catapult/')
 GLUE_AWS_S3_KEY=${APP_NAME}/${SHORT_SHA}
 
 # upload to s3
-echo "Uploading to S3..."
-AWS_REGION=$AWS_REGION \
-          AWS_ACCESS_KEY_ID=$GLUE_AWS_ACCESS_KEY_ID \
-          AWS_SECRET_ACCESS_KEY=$GLUE_AWS_SECRET_ACCESS_KEY \
-          aws s3 cp --recursive bin/${APP_NAME} s3://${GLUE_AWS_BUCKET}-${AWS_REGION}/${GLUE_AWS_S3_KEY}
+AWS_REGION=$AWS_REGION
+if [[ -v $OIDC_GLUE_UPLOAD_ROLE ]]; then
+    echo "Uploading to S3 using profile `$AWS_GLUE_PROFILE`"
+    aws s3 --profile $AWS_GLUE_PROFILE cp --recursive bin/${APP_NAME} s3://${GLUE_AWS_BUCKET}-${AWS_REGION}/${GLUE_AWS_S3_KEY}
+else
+    echo "Uploading to S3 using static credential..."
+    AWS_ACCESS_KEY_ID=$GLUE_AWS_ACCESS_KEY_ID \
+    AWS_SECRET_ACCESS_KEY=$GLUE_AWS_SECRET_ACCESS_KEY \
+    aws s3 cp --recursive bin/${APP_NAME} s3://${GLUE_AWS_BUCKET}-${AWS_REGION}/${GLUE_AWS_S3_KEY}
+fi
 
 # publish the application to catapult
 echo "Publishing to catapult..."

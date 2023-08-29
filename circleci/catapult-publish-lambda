@@ -29,14 +29,23 @@ BUILD_NUM=$CIRCLE_BUILD_NUM
 BRANCH=$CIRCLE_BRANCH
 
 # Set by init service
-: ${LAMBDA_AWS_ACCESS_KEY_ID?"Missing required env var"}
-: ${LAMBDA_AWS_SECRET_ACCESS_KEY?"Missing required env var"}
-: ${LAMBDA_AWS_BUCKET?"Missing required env var"}
 : ${CATAPULT_URL?"Missing required env var"}
 : ${CATAPULT_USER?"Missing required env var"}
 : ${CATAPULT_PASS?"Missing required env var"}
+if [[ -z $OIDC_LAMBDA_ROLE ]]; then
+    : ${LAMBDA_AWS_ACCESS_KEY_ID?"Missing required env var"}
+    : ${LAMBDA_AWS_SECRET_ACCESS_KEY?"Missing required env var"}
+    : ${LAMBDA_AWS_BUCKET?"Missing required env var"}
+fi
 
 install_awscli
+
+# aws login.
+AWS_LAMBDA_PROFILE=oidc-lambda-profile
+if [[ -v $OIDC_LAMBDA_ROLE ]]; then
+  echo "Logging into AWS using role credentials...."
+  assume_role_with_web_identity $OIDC_S3_UPLOAD_ROLE $AWS_LAMBDA_PROFILE 
+fi
 
 install_yq
 
@@ -61,22 +70,31 @@ fi
 LAMBDA_AWS_S3_KEY=${APP_NAME}/${SHORT_SHA}/${APP_NAME}.zip
 
 # upload to s3
-echo "Uploading to S3..."
 for AWS_REGION in ${AWS_REGIONS}; do
     # region doesn't really matter for an S3 upload, since the bucket region is fixed
-    AWS_REGION=$AWS_REGION \
-              AWS_ACCESS_KEY_ID=$LAMBDA_AWS_ACCESS_KEY_ID \
-              AWS_SECRET_ACCESS_KEY=$LAMBDA_AWS_SECRET_ACCESS_KEY \
-              aws s3 cp bin/${APP_NAME}.zip s3://${LAMBDA_AWS_BUCKET}-${AWS_REGION}/${LAMBDA_AWS_S3_KEY}
+    AWS_REGION=$AWS_REGION
+    if [[ -v $OIDC_LAMBDA_ROLE ]]; then
+        echo "Uploading to S3 using profile `$AWS_LAMBDA_PROFILE`"
+        aws s3 --profile $AWS_LAMBDA_PROFILE cp bin/${APP_NAME}.zip s3://${LAMBDA_AWS_BUCKET}-${AWS_REGION}/${LAMBDA_AWS_S3_KEY}
+    else
+        echo "Uploading to S3 using static credential"
+        AWS_ACCESS_KEY_ID=$LAMBDA_AWS_ACCESS_KEY_ID \
+        AWS_SECRET_ACCESS_KEY=$LAMBDA_AWS_SECRET_ACCESS_KEY \
+        aws s3 cp bin/${APP_NAME}.zip s3://${LAMBDA_AWS_BUCKET}-${AWS_REGION}/${LAMBDA_AWS_S3_KEY}
+    fi
 
     if [ -e swagger.yml ]; then
-        echo "Uploading swagger.yml"
         # api gateway fails to parse on x-nullable
         sed '/x-nullable/d' ./swagger.yml > ./swagger.lambda.yml
-        AWS_REGION=$AWS_REGION \
-                  AWS_ACCESS_KEY_ID=$LAMBDA_AWS_ACCESS_KEY_ID \
-                  AWS_SECRET_ACCESS_KEY=$LAMBDA_AWS_SECRET_ACCESS_KEY \
-                  aws s3 cp swagger.lambda.yml s3://${LAMBDA_AWS_BUCKET}-${AWS_REGION}/${APP_NAME}/${SHORT_SHA}/swagger.lambda.yml
+        if [[ -v $OIDC_LAMBDA_ROLE ]]; then
+            echo "Uploading swagger.yml using profile `$AWS_LAMBDA_PROFILE`"
+            aws s3 --profile $AWS_LAMBDA_PROFILE cp swagger.lambda.yml s3://${LAMBDA_AWS_BUCKET}-${AWS_REGION}/${APP_NAME}/${SHORT_SHA}/swagger.lambda.yml
+        else
+            echo "Uploading swagger.yml using static credential"
+            AWS_ACCESS_KEY_ID=$LAMBDA_AWS_ACCESS_KEY_ID \
+            AWS_SECRET_ACCESS_KEY=$LAMBDA_AWS_SECRET_ACCESS_KEY \
+            aws s3 cp swagger.lambda.yml s3://${LAMBDA_AWS_BUCKET}-${AWS_REGION}/${APP_NAME}/${SHORT_SHA}/swagger.lambda.yml
+        fi
     fi
 done;
 
