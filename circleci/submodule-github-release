@@ -9,7 +9,7 @@
 # Usage:
 #
 # MODULE_PATH here is the relative path to the submodule. 
-#   github-release [--pre-release] <GITHUB_TOKEN> [MODULE_PATH] 
+#   github-release [--pre-release] <GITHUB_TOKEN> [MODULE_PATH]
 
 set -e
 
@@ -30,6 +30,8 @@ fi
 
 # User supplied args
 if [[ -z $GITHUB_TOKEN ]]; then echo "Missing arg1 GITHUB_TOKEN" && exit 1; fi
+: ${CIRCLE_SHA1?"Missing required env var"}
+SHORT_SHA=${CIRCLE_SHA1:0:7}
 
 # Set automatically by CircleCI
 : ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
@@ -63,7 +65,7 @@ DESCRIPTION=$(tail -n +2 VERSION)
 echo "Creating tag $TAG"
 # create a release and wait at most 60 seconds for it to be created
 export GITHUB_TOKEN=$GITHUB_TOKEN
-result=$($GITHUB_RELEASE release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" $PRE_RELEASE 2>&1 || true)
+result=$($GITHUB_RELEASE release -u $USER -r $REPO -t $TAG -n "$TAG" -d "$DESCRIPTION" $PRE_RELEASE -c $SHORT_SHA 2>&1 || true)
 now=$SECONDS
 end=$((now+60))
 if [[ $result =~ "already_exists" ]]; then
