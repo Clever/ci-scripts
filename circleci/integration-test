@@ -90,18 +90,21 @@ fi
 download_test_artifacts(){
   echo "Downloading test artifacts"
   mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS
-  TEST_WORKFLOW_ID=$(cat integration-tests.out | jq '.testWorkflowID')
-  S3_BUCKET_URL="s3://frontend-to-end-tester-files/${TEST_WORKFLOW_ID}/artifacts.zip"
-  echo "  Source: $S3_BUCKET_URL"
-  echo "  Desination: $CIRCLE_ARTIFACTS"
-  if [[ -v OIDC_S3_UPLOAD_ROLE ]]; then
-      echo "Downloading files from S3 using profile ${AWS_S3_PROFILE}" 
-      aws s3 cp --profile $AWS_S3_PROFILE  $S3_BUCKET_URL $CIRCLE_ARTIFACTS
-  else
-      echo "Downloading files from S3 using static credentials" 
-      aws s3 cp $S3_BUCKET_URL $CIRCLE_ARTIFACTS
-  fi
-  unzip $CIRCLE_ARTIFACTS/artifacts.zip test-results.xml -d $CIRCLE_TEST_REPORTS
+  for workflowID in $(cat integration-tests.out | jq -r '.testWorkflowIds[]');
+  do
+    S3_BUCKET_URL="s3://frontend-to-end-tester-files/${workflowID}/artifacts.zip"
+    DEST="${CIRCLE_ARTIFACTS}/${workflowID}"
+    echo "  Source: $S3_BUCKET_URL"
+    echo "  Desination: $DEST"
+    if [[ -v OIDC_S3_UPLOAD_ROLE ]]; then
+        echo "Downloading files from S3 using profile ${AWS_S3_PROFILE}" 
+        aws s3 cp --profile $AWS_S3_PROFILE  $S3_BUCKET_URL $DEST
+    else
+        echo "Downloading files from S3 using static credentials" 
+        aws s3 cp $S3_BUCKET_URL $CIRCLE_ARTIFACTS
+    fi
+    unzip $DEST/artifacts.zip test-results.xml -d $CIRCLE_TEST_REPORTS/${workflowID}
+  done
 }
 
 echo "Waiting 1 minute before polling"
