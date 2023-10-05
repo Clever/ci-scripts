@@ -15,6 +15,9 @@
 
 set -e
 
+DIR=$(dirname "$0")
+. $DIR/utils
+
 if [ $# -ne 4 ] && [ $# -ne 5 ] && [ $# -ne 6 ]; then
     echo "Incorrect number of arguments given. Expected at least 4, received $#"
     echo "Usage: integration-test [TESTING_SERVICE_URL] [TESTING_SERVICE_USER] [TESTING_SERVICE_PASS] [APP_NAMES] [[TESTS_TO_RUN]]"
