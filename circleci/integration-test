@@ -129,7 +129,9 @@ do
   if [[ $SC -eq 200 ]]; then
     echo "------------------------------------------------"
     STATUS=$(cat integration-tests.out | jq '.status')
+    OUT=$(cat integration-tests.out | jq)
     echo "Tests status: $STATUS"
+    echo "Out: $OUT"
     if [[ $STATUS == '"succeeded"' ]]; then
       download_test_artifacts
       rm -f integration-tests.out
