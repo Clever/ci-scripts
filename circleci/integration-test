@@ -92,7 +92,7 @@ download_test_artifacts(){
   mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS
   for workflowID in $(cat integration-tests.out | jq -r '.testWorkflowIds[]');
   do
-    S3_BUCKET_URL="s3://frontend-to-end-tester-files/${workflowID}/artifacts.zip"
+    S3_BUCKET_URL="s3://frontend-to-end-tester-files-dev/${workflowID}/artifacts.zip"
     DEST="${CIRCLE_ARTIFACTS}/${workflowID}"
     echo "  Source: $S3_BUCKET_URL"
     echo "  Desination: $DEST"
