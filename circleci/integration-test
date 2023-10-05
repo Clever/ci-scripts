@@ -40,6 +40,9 @@ USER=$CIRCLE_PROJECT_USERNAME
 : ${CIRCLE_BUILD_NUM?"Missing required env var"}
 BUILD_NUM=$CIRCLE_BUILD_NUM
 
+: ${CIRCLE_TEST_REPORTS?"Missing required env var"}
+: ${CIRCLE_ARTIFACTS?"Missing required env var"}
+
 # Convert APP_NAMES (comma-separated list of apps e.g appA,appB) into a JSON array
 APPS=$(echo "${APP_NAMES}" |
 	   sed 's/,/\n/g' | # a,b,c => a\nb\nc
@@ -73,6 +76,14 @@ fi
 
 echo "Job ID: $JOB_ID"
 
+install_awscli
+# aws login.
+AWS_S3_PROFILE=oidc-s3-profile
+if [[ -v OIDC_S3_UPLOAD_ROLE ]]; then
+  echo "Logging into AWS using role credentials...."
+  assume_role_with_web_identity $OIDC_S3_UPLOAD_ROLE $AWS_S3_PROFILE 
+fi
+
 echo "Waiting 1 minute before polling"
 sleep 1m
 
@@ -97,6 +108,21 @@ do
     STATUS=$(cat integration-tests.out | jq '.status')
     echo "Tests status: $STATUS"
     if [[ $STATUS == '"succeeded"' ]]; then
+      TEST_WORKFLOW_ID=$(cat integration-tests.out | jq '.testWorkflowID')
+      echo "Downloading test artifacts"
+      mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS
+      S3_BUCKET_URL="s3://frontend-to-end-tester-files/${TEST_WORKFLOW_ID}/artifacts.zip"
+      echo "  Source: $S3_BUCKET_URL"
+      echo "  Desination: $CIRCLE_ARTIFACTS"
+      if [[ -v OIDC_S3_UPLOAD_ROLE ]]; then
+          echo "Downloading files from S3 using profile ${AWS_S3_PROFILE}" 
+          aws s3 cp --profile $AWS_S3_PROFILE  $S3_BUCKET_URL $CIRCLE_ARTIFACTS
+      else
+          echo "Downloading files from S3 using static credentials" 
+          aws s3 cp $S3_BUCKET_URL $CIRCLE_ARTIFACTS
+      fi
+      unzip $CIRCLE_ARTIFACTS/artifacts.zip test-results.xml -d $CIRCLE_TEST_REPORTS
+
       rm -f integration-tests.out
       exit 0
     elif [[ $STATUS == '"testsFailed"' ]]; then
@@ -107,6 +133,22 @@ do
       echo "------------------------------------------------"
       ENV=$(jq .environment < integration-tests.out)
       echo "Tests ran in staging environment: ${ENV:-<not sure>}"
+
+      TEST_WORKFLOW_ID=$(cat integration-tests.out | jq '.testWorkflowID')
+      echo "Downloading test artifacts"
+      mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS
+      S3_BUCKET_URL="s3://frontend-to-end-tester-files/${TEST_WORKFLOW_ID}/artifacts.zip"
+      echo "  Source: $S3_BUCKET_URL"
+      echo "  Desination: $CIRCLE_ARTIFACTS"
+      if [[ -v OIDC_S3_UPLOAD_ROLE ]]; then
+          echo "Downloading files from S3 using profile ${AWS_S3_PROFILE}" 
+          aws s3 cp --profile $AWS_S3_PROFILE  $S3_BUCKET_URL $CIRCLE_ARTIFACTS
+      else
+          echo "Downloading files from S3 using static credentials" 
+          aws s3 cp $S3_BUCKET_URL $CIRCLE_ARTIFACTS
+      fi
+      unzip $CIRCLE_ARTIFACTS/artifacts.zip test-results.xml -d $CIRCLE_TEST_REPORTS
+
       rm -f integration-tests.out
       exit 1
     elif [[ $STATUS == '"systemError"' ]]; then
