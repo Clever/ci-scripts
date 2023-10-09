@@ -15,6 +15,9 @@
 
 set -e
 
+DIR=$(dirname "$0")
+. $DIR/utils
+
 if [ $# -ne 4 ] && [ $# -ne 5 ] && [ $# -ne 6 ]; then
     echo "Incorrect number of arguments given. Expected at least 4, received $#"
     echo "Usage: integration-test [TESTING_SERVICE_URL] [TESTING_SERVICE_USER] [TESTING_SERVICE_PASS] [APP_NAMES] [[TESTS_TO_RUN]]"
@@ -39,6 +42,9 @@ REPO=$CIRCLE_PROJECT_REPONAME
 USER=$CIRCLE_PROJECT_USERNAME
 : ${CIRCLE_BUILD_NUM?"Missing required env var"}
 BUILD_NUM=$CIRCLE_BUILD_NUM
+
+: ${CIRCLE_TEST_REPORTS?"Missing required env var"}
+: ${CIRCLE_ARTIFACTS?"Missing required env var"}
 
 # Convert APP_NAMES (comma-separated list of apps e.g appA,appB) into a JSON array
 APPS=$(echo "${APP_NAMES}" |
@@ -73,6 +79,31 @@ fi
 
 echo "Job ID: $JOB_ID"
 
+install_awscli
+# aws login.
+AWS_S3_PROFILE=oidc-s3-profile
+if [[ -v OIDC_S3_UPLOAD_ROLE ]]; then
+  echo "Logging into AWS using role credentials...."
+  assume_role_with_web_identity $OIDC_S3_UPLOAD_ROLE $AWS_S3_PROFILE 
+fi
+
+download_test_artifacts(){
+  echo "Downloading test artifacts"
+  mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS
+  for workflowID in $(cat integration-tests.out | jq -r '.testWorkflowIds[]');
+  do
+    S3_BUCKET_URL="s3://frontend-to-end-tester-files-dev/${workflowID}/artifacts.zip"
+    DEST="${CIRCLE_ARTIFACTS}/${workflowID}/artifacts.zip"
+    echo "  Source: $S3_BUCKET_URL"
+    echo "  Desination: $DEST"
+    if [[ -v OIDC_S3_UPLOAD_ROLE ]]; then
+        echo "Downloading files from S3 using profile ${AWS_S3_PROFILE}" 
+        aws s3 cp --profile $AWS_S3_PROFILE $S3_BUCKET_URL $DEST
+    fi
+    unzip $DEST test-results.xml -d $CIRCLE_TEST_REPORTS/${workflowID}
+  done
+}
+
 echo "Waiting 1 minute before polling"
 sleep 1m
 
@@ -97,6 +128,7 @@ do
     STATUS=$(cat integration-tests.out | jq '.status')
     echo "Tests status: $STATUS"
     if [[ $STATUS == '"succeeded"' ]]; then
+      download_test_artifacts
       rm -f integration-tests.out
       exit 0
     elif [[ $STATUS == '"testsFailed"' ]]; then
@@ -107,6 +139,7 @@ do
       echo "------------------------------------------------"
       ENV=$(jq .environment < integration-tests.out)
       echo "Tests ran in staging environment: ${ENV:-<not sure>}"
+      download_test_artifacts
       rm -f integration-tests.out
       exit 1
     elif [[ $STATUS == '"systemError"' ]]; then
