@@ -99,6 +99,9 @@ download_test_artifacts(){
     if [[ -v OIDC_S3_UPLOAD_ROLE ]]; then
         echo "Downloading files from S3 using profile ${AWS_S3_PROFILE}" 
         aws s3 cp --profile $AWS_S3_PROFILE $S3_BUCKET_URL $DEST
+    else
+        echo "Downloading files to S3 using static credentials" 
+        aws s3 cp $S3_BUCKET_URL $DEST
     fi
     unzip $DEST test-results.xml -d $CIRCLE_TEST_REPORTS/${workflowID}
   done
