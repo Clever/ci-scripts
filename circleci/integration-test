@@ -93,6 +93,12 @@ download_test_artifacts(){
   for workflowID in $(cat integration-tests.out | jq -r '.testWorkflowIds[]');
   do
     S3_BUCKET_URL="s3://frontend-to-end-tester-files-dev/${workflowID}/artifacts.zip"
+    # TODO we probably at some point want to separate out the integration test script from the artifacts download
+    # that way when we want to use i-t-s for other tests besides fe2e, we can still use this script
+    if ! aws s3 ls $S3_BUCKET_URL >/dev/null 2>&1; then
+        echo "File $S3_BUCKET_URL does not exist. Skipping..."
+        continue
+    fi
     DEST="${CIRCLE_ARTIFACTS}/${workflowID}/artifacts.zip"
     echo "  Source: $S3_BUCKET_URL"
     echo "  Desination: $DEST"
