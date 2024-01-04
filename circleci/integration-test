@@ -94,7 +94,7 @@ download_test_artifacts(){
   do
     S3_BUCKET="frontend-to-end-tester-files-dev"
     S3_ARTIFACTS_KEY="${workflowID}/artifacts.zip"
-    S3_BUCKET_URL="s3://${S3_BUCKET_URL}/${S3_ARTIFACTS_KEY}"
+    S3_BUCKET_URL="s3://${S3_BUCKET}/${S3_ARTIFACTS_KEY}"
     # TODO we probably at some point want to separate out the integration test script from the artifacts download
     # that way when we want to use i-t-s for other tests besides fe2e, we can still use this script
     NOT_EXIST=$(aws s3api head-object --profile ${AWS_S3_PROFILE} --bucket ${S3_BUCKET} --key ${S3_ARTIFACTS_KEY} >/dev/null 2>1; echo $?)
