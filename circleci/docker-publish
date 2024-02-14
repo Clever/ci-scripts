@@ -136,6 +136,7 @@ else
     --builder container \
     --cache-to mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=$ECR_ACCOUNT_ID.dkr.ecr.us-west-1.amazonaws.com/$REPO:cache \
     --cache-from type=registry,ref=$ECR_ACCOUNT_ID.dkr.ecr.us-west-1.amazonaws.com/$REPO:cache \
+    --load \
     .
 fi
 
