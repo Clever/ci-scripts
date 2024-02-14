@@ -87,7 +87,7 @@ for AWS_REGION in ${AWS_REGIONS}; do
         # api gateway fails to parse on x-nullable
         sed '/x-nullable/d' ./swagger.yml > ./swagger.lambda.yml
         if [[ -v OIDC_LAMBDA_ROLE ]]; then
-            echo "Uploading swagger.yml using profile `$AWS_LAMBDA_PROFILE`"
+            echo "Uploading swagger.yml using profile '$AWS_LAMBDA_PROFILE'"
             aws s3 --profile $AWS_LAMBDA_PROFILE cp swagger.lambda.yml s3://${LAMBDA_AWS_BUCKET}-${AWS_REGION}/${APP_NAME}/${SHORT_SHA}/swagger.lambda.yml
         else
             echo "Uploading swagger.yml using static credential"
