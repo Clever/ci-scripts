@@ -131,6 +131,7 @@ else
   docker buildx create \
       --name container \
       --driver=docker-container \
+      --driver-opt image=moby/buildkit:v0.12.0 \
       --use --bootstrap
   docker buildx build -t $ORG/$REPO:$SHORT_SHA \
     --builder container \
@@ -141,7 +142,7 @@ else
 fi
 
 
-# echo "Pushing to ECR..."
+echo "Pushing to ECR..."
 push_ecr_image $ECR_REGION_US_WEST_1
 push_ecr_image $ECR_REGION_US_WEST_2
 push_ecr_image $ECR_REGION_US_EAST_1
