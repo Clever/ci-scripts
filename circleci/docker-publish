@@ -128,7 +128,7 @@ if [ $readopt == "private-repos" ]; then
   echo "With Private Repos..."
   DOCKER_BUILDKIT=1 docker build --ssh default -t $ORG/$REPO:$SHORT_SHA . 
 else
-  docker buildx build -t $ORG/$REPO:$SHORT_SHA \
+  DOCKER_BUILDKIT=1 docker build -t $ORG/$REPO:$SHORT_SHA \
     --cache-to mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=$ECR_ACCOUNT_ID.dkr.ecr.us-west-1.amazonaws.com/$REPO:cache \
     --cache-from type=registry,ref=$ECR_ACCOUNT_ID.dkr.ecr.us-west-1.amazonaws.com/$REPO:cache \
     .
