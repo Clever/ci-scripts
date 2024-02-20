@@ -107,7 +107,7 @@ if [[ -n $ECR_BUILD_ID ]]; then
   ecr_login us-west-1 $ECR_BUILD_ID $ECR_BUILD_SECRET
 fi
 
-if [ -n "$(docker images -q $ORG/$REPO:$SHORT_SHA)" ]; then 
+if [ -z "$(docker images -q $ORG/$REPO:$SHORT_SHA)" ]; then 
   echo "Building docker image..." 
   if [ $readopt == "private-repos" ]; then
     echo "With Private Repos..."
