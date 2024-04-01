@@ -17,24 +17,17 @@ if [[ -z $APP_NAME ]]; then echo "Missing arg1 APP_NAME" && exit 1; fi
 
 # Set automatically by CircleCI
 : ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
-REPO=$CIRCLE_PROJECT_REPONAME
 : ${CIRCLE_SHA1?"Missing required env var"}
-FULL_SHA=${CIRCLE_SHA1}
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 : ${CIRCLE_PROJECT_USERNAME?"Missing required env var"}
 USER=$CIRCLE_PROJECT_USERNAME
 : ${CIRCLE_BUILD_NUM?"Missing required env var"}
-BUILD_NUM=$CIRCLE_BUILD_NUM
 : ${CIRCLE_BRANCH?"Missing required env var"}
-BRANCH=$CIRCLE_BRANCH
 
 # Set by init service
 : ${GLUE_AWS_ACCESS_KEY_ID?"Missing required env var"}
 : ${GLUE_AWS_SECRET_ACCESS_KEY?"Missing required env var"}
 : ${GLUE_AWS_BUCKET?"Missing required env var"}
-: ${CATAPULT_URL?"Missing required env var"}
-: ${CATAPULT_USER?"Missing required env var"}
-: ${CATAPULT_PASS?"Missing required env var"}
 
 install_awscli
 
@@ -42,29 +35,16 @@ install_awscli
 AWS_GLUE_PROFILE=oidc-glue-profile
 if [[ -v OIDC_GLUE_UPLOAD_ROLE ]]; then
   echo "Logging into AWS using role credentials...."
-  assume_role_with_web_identity $OIDC_GLUE_UPLOAD_ROLE $AWS_GLUE_PROFILE 
-fi
-
-install_yq
-
-RUN_TYPE=$(yq e '.run.type' "launch/${APP_NAME}.yml")
-if [[ $RUN_TYPE != "glue" ]]; then
-    echo "Can only publish applications with run type 'glue' using this script; got ${RUN_TYPE}"
-    exit 1
+  assume_role_with_web_identity $OIDC_GLUE_UPLOAD_ROLE $AWS_GLUE_PROFILE
 fi
 
 # glue is only supported in us-west-2
 AWS_REGION="us-west-2"
-S3_ARTIFACTS=",S3Bucket=\\\"${GLUE_AWS_BUCKET}-${AWS_REGION}"
-
-CIRCLE_CI_INTEGRATIONS_URL=$(dirname $CATAPULT_URL)
 
 # hack to switch from /catapult to /v2/catapult
-CATAPULT_URL=$(echo "${CATAPULT_URL}" | sed 's/\/catapult/\/v2\/catapult/')
 GLUE_AWS_S3_KEY=${APP_NAME}/${SHORT_SHA}
 
 # upload to s3
-AWS_REGION=$AWS_REGION
 if [[ -v OIDC_GLUE_UPLOAD_ROLE ]]; then
     echo "Uploading to S3 using profile ${AWS_GLUE_PROFILE}"
     aws s3 cp --profile $AWS_GLUE_PROFILE --recursive bin/${APP_NAME} s3://${GLUE_AWS_BUCKET}-${AWS_REGION}/${GLUE_AWS_S3_KEY}
@@ -74,39 +54,3 @@ else
     AWS_SECRET_ACCESS_KEY=$GLUE_AWS_SECRET_ACCESS_KEY \
     aws s3 cp --recursive bin/${APP_NAME} s3://${GLUE_AWS_BUCKET}-${AWS_REGION}/${GLUE_AWS_S3_KEY}
 fi
-
-# publish the application to catapult
-echo "Publishing to catapult..."
-echo "Using data:"
-DATA="{\"username\":\"${USER}\",\"reponame\":\"${REPO}\",\"buildnum\":${BUILD_NUM},\"app\":{\"run_type\":\"${RUN_TYPE}\",\"id\":\"${APP_NAME}\",\"source\":\"github:Clever/${REPO}@${FULL_SHA}\",\"artifacts\":\"glue:clever/${APP_NAME}@${SHORT_SHA};S3Key=\\\"${GLUE_AWS_S3_KEY}${S3_ARTIFACTS}\",\"branch\":\"${BRANCH}\"}}"
-echo "${DATA}"
-echo "================================================================================"
-SC=$(curl -u $CATAPULT_USER:$CATAPULT_PASS \
-          --retry 5 \
-          -w "%{http_code}" \
-          --output catapult.out \
-          -H "Content-Type: application/json" \
-          -X POST \
-          -d "${DATA}" \
-          $CATAPULT_URL)
-
-if [ "$SC" -eq 200 ]; then
-    echo "Successfully published catapult application"
-    rm -f catapult.out
-else
-    echo "Failed to publish catapult application"
-    echo "------------------------------------------------"
-    cat catapult.out
-    echo ""
-    echo "------------------------------------------------"
-    rm -f catapult.out
-    exit 1
-fi
-
-# publish catalog app config
-CATALOG_SYNC_SCRIPT="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )/catalog-sync"
-"${CATALOG_SYNC_SCRIPT}" $CIRCLE_CI_INTEGRATIONS_URL $CATAPULT_USER $CATAPULT_PASS $APP_NAME
-
-# publish dep info
-BREAKDOWN_SYNC_SCRIPT="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )/breakdown-sync"
-"${BREAKDOWN_SYNC_SCRIPT}" "$CIRCLE_CI_INTEGRATIONS_URL/breakdown" $CATAPULT_USER $CATAPULT_PASS
