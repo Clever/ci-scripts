@@ -104,7 +104,26 @@ install_awscli
 echo "If necessary, add the ECR_BUILD_ID and ECR_BUILD_SECRET env vars to circle manually."
 echo "They can be found in init-service as CI_ECR_XXX_KEY and CI_ECR_XXX_SECRET."
 if [[ -n $ECR_BUILD_ID ]]; then
-  ecr_login us-west-1 $ECR_BUILD_ID $ECR_BUILD_SECRET
+  if [[ -z $OIDC_ECR_UPLOAD_ROLE ]]; then
+    echo "Logging into ECR in us-west-1 using static credentials..."
+    ecr_login us-west-1 $ECR_BUILD_ID $ECR_BUILD_SECRET
+  else
+    echo "Logging into ECR using role credentials..."
+    assume_role_with_web_identity $OIDC_ECR_UPLOAD_ROLE $AWS_ECR_PROFILE 
+    ecr_login_with_profile $ECR_REGION_US_WEST_1
+  fi
+fi
+
+if [ -z "$(docker images -q $ORG/$REPO:$SHORT_SHA)" ]; then 
+  echo "Building docker image..." 
+  if [ $readopt == "private-repos" ]; then
+    echo "With Private Repos..."
+    DOCKER_BUILDKIT=1 docker build --ssh default -t $ORG/$REPO:$SHORT_SHA . 
+  else
+    docker build -t $ORG/$REPO:$SHORT_SHA .
+  fi
+else
+  echo "Image already exists... skipping build"
 fi
 
 # ECR login.
@@ -121,18 +140,6 @@ else
   ecr_login_with_profile $ECR_REGION_US_WEST_2
   ecr_login_with_profile $ECR_REGION_US_EAST_1
   ecr_login_with_profile $ECR_REGION_US_EAST_2
-fi
-
-if [ -z "$(docker images -q $ORG/$REPO:$SHORT_SHA)" ]; then 
-  echo "Building docker image..." 
-  if [ $readopt == "private-repos" ]; then
-    echo "With Private Repos..."
-    DOCKER_BUILDKIT=1 docker build --ssh default -t $ORG/$REPO:$SHORT_SHA . 
-  else
-    docker build -t $ORG/$REPO:$SHORT_SHA .
-  fi
-else
-  echo "Image already exists... skipping build"
 fi
 
 echo "Pushing to ECR..."
