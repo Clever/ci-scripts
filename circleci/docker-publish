@@ -89,7 +89,6 @@ ORG=clever
 ECR_REGION_US_WEST_1=us-west-1
 ECR_REGION_US_WEST_2=us-west-2
 ECR_REGION_US_EAST_1=us-east-1
-ECR_REGION_US_EAST_2=us-east-2
 AWS_ECR_PROFILE=oidc-ecr-profile
 
 echo "Docker version..."
@@ -132,18 +131,15 @@ if [[ -z $OIDC_ECR_UPLOAD_ROLE ]]; then
   ecr_login $ECR_REGION_US_WEST_1 $ECR_PUSH_ID $ECR_PUSH_SECRET
   ecr_login $ECR_REGION_US_WEST_2 $ECR_PUSH_ID $ECR_PUSH_SECRET
   ecr_login $ECR_REGION_US_EAST_1 $ECR_PUSH_ID $ECR_PUSH_SECRET
-  ecr_login $ECR_REGION_US_EAST_2 $ECR_PUSH_ID $ECR_PUSH_SECRET
 else
   echo "Logging into ECR using role credentials..."
   assume_role_with_web_identity $OIDC_ECR_UPLOAD_ROLE $AWS_ECR_PROFILE 
   ecr_login_with_profile $ECR_REGION_US_WEST_1
   ecr_login_with_profile $ECR_REGION_US_WEST_2
   ecr_login_with_profile $ECR_REGION_US_EAST_1
-  ecr_login_with_profile $ECR_REGION_US_EAST_2
 fi
 
 echo "Pushing to ECR..."
 push_ecr_image $ECR_REGION_US_WEST_1
 push_ecr_image $ECR_REGION_US_WEST_2
 push_ecr_image $ECR_REGION_US_EAST_1
-push_ecr_image $ECR_REGION_US_EAST_2

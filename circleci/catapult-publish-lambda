@@ -55,7 +55,7 @@ if [[ $RUN_TYPE != "lambda" ]]; then
     exit 1
 fi
 
-AWS_REGIONS="us-east-1 us-east-2 us-west-1 us-west-2"
+AWS_REGIONS="us-east-1 us-west-1 us-west-2"
 for REGION in ${AWS_REGIONS}; do
     S3_ARTIFACTS=${S3_ARTIFACTS},"S3Buckets={${REGION}=\\\"${LAMBDA_AWS_BUCKET}-${REGION}"
 done
