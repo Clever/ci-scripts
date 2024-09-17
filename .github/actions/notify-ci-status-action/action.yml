@@ -26,5 +26,5 @@ outputs:
   messageTS:
     description: 'The slack message TS'
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'dist/index.js'

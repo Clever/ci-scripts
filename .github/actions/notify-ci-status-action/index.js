@@ -64,6 +64,11 @@ async function getSlackIDFromEmail(githubUsername) {
 }
 
 function formMessage(repo, branch, state, targetURL, failedStep) {
+  // if targetUrl is not set and failed step contains circleCI then set link to circleCi
+  if (!targetURL && failedStep.toLowerCase().includes("circleci")) {
+    targetURL = `https://app.circleci.com/pipelines/github/Clever/${repo}?branch=${branch}`;
+  }
+
   const preText = failedStep
     ? `*:ohno: CI Failure*\n\n`
     : `*:successkid: CI Success*\n\n`;
