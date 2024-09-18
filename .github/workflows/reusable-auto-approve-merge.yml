@@ -22,6 +22,6 @@ jobs:
     # v2.1.0 as of 02/23/2022, reviewed by eng-security.
     - if: github.actor == 'dependabot[bot]' || contains( github.event.pull_request.labels.*.name, 'auto approve')
       name: Approve
-      uses: hmarr/auto-approve-action@5d04a5ca6da9aeb8ca9f31a5239b96fc3e003029
+      uses: hmarr/auto-approve-action@v3
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
