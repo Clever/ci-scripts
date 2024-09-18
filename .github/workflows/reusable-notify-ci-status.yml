@@ -38,6 +38,7 @@ jobs:
         CIRCLE_CI_INTEGRATIONS_URL: ${{ secrets.CIRCLE_CI_INTEGRATIONS_URL }}
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
       with:
+        # This action can be triggered by a status event (ark db) or a check_suite event (circle ci)
         branch: ${{ github.event.branches[0].name || github.event.check_suite.head_branch }}
         description: ${{ github.event.description || github.event.check_suite.head_commit.message }}
         failedStep: ${{ github.event.context || github.event.check_suite.app.name }}
