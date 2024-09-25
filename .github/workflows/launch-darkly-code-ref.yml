@@ -11,9 +11,6 @@ jobs:
         uses: actions/checkout@v4
       - name: Find flags
         uses: launchdarkly/find-code-references-in-pull-request@v2
-        env:
-
-        id: find-flags
         with:
           project-key: default
           environment-key: production
