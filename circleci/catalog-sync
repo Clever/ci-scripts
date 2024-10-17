@@ -14,7 +14,7 @@ set -e
 BRANCH=$CIRCLE_BRANCH
 : ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
 REPO=$CIRCLE_PROJECT_REPONAME
-
+: ${GITHUB_TOKEN?"Missing required env var"}
 DEFAULT_BRANCH=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
   "https://api.github.com/repos/Clever/$REPO" | jq -r '.default_branch')
 if [[ $BRANCH !=  $DEFAULT_BRANCH ]]; then
