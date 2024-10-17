@@ -11,7 +11,13 @@ set -e
 
 : ${CIRCLE_BRANCH?"Missing required env var"}
 BRANCH=$CIRCLE_BRANCH
-if [[ $BRANCH != "master" ]]; then
+: ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
+REPO=$CIRCLE_PROJECT_REPONAME
+
+DEFAULT_BRANCH=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+  "https://api.github.com/repos/Clever/$REPO" | jq -r '.default_branch')
+
+if [[ $BRANCH != $DEFAULT_BRANCH  ]]; then
   echo "Skipping sync for non-master branch"
   exit 0
 fi
