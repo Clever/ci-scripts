@@ -45,7 +45,7 @@ func New(ctx context.Context) (*Docker, error) {
 	}
 	d := &Docker{
 		cli:    cl,
-		awsCfg: environment.AWSCfg(ctx, environment.ECRAccessKeyID, environment.ECRSecretAccessKey),
+		awsCfg: environment.AWSCfg(ctx, environment.OidcEcrUploadRole),
 	}
 
 	grp, ctx := errgroup.WithContext(ctx)

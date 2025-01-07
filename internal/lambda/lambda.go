@@ -20,7 +20,7 @@ type Lambda struct {
 // New initializes a new Lambda handling wrapper with it's s3 client.
 func New(ctx context.Context) *Lambda {
 	return &Lambda{
-		awsCfg: environment.AWSCfg(ctx, environment.LambdaAccessKeyID, environment.LambdaSecretAccessKey),
+		awsCfg: environment.AWSCfg(ctx, environment.OidcLambdaRole),
 	}
 }
 
