@@ -30,9 +30,6 @@ func DiscoverApplications(dir string) (map[string]*models.LaunchConfig, error) {
 		if f.IsDir() {
 			continue
 		}
-		if strings.HasSuffix(f.Name(), "-db.yml") {
-			continue
-		}
 		if path.Ext(f.Name()) != ".yml" {
 			continue
 		}
@@ -45,6 +42,11 @@ func DiscoverApplications(dir string) (map[string]*models.LaunchConfig, error) {
 		lc := models.LaunchConfig{}
 		if err := yaml.Unmarshal(bs, &lc); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal yaml in %s: %v", f.Name(), err)
+		}
+
+		// These are DB launch configs, which we don't want to build.
+		if lc.PodConfig == nil || lc.PodConfig.Group == "" {
+			continue
 		}
 
 		m[strings.TrimSuffix(f.Name(), ".yml")] = &lc
