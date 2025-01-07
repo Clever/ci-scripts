@@ -14,7 +14,7 @@ of each application.
 
 # Multi-app Support
 
-goci will automatically detect all laucn configs in the `launch`
+goci will automatically detect all launch configs in the `launch`
 directory, then perform the following actions as needed.
 
 1. detect the run type of the application
