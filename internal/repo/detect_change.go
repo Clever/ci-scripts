@@ -18,7 +18,7 @@ import (
 // hard and involves persisted caching of some sort which should be
 // left to a build system later on.
 func DetectArtifactDependencyChange(lc *models.LaunchConfig) (bool, error) {
-	if lc.Build.Artifact.Dependencies == nil {
+	if lc.Build == nil || lc.Build.Artifact == nil || lc.Build.Artifact.Dependencies == nil {
 		return true, nil
 	}
 
