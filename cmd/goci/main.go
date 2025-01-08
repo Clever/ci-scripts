@@ -29,6 +29,12 @@ func run() error {
 		return err
 	}
 
+	if len(apps) == 0 {
+		fmt.Println("No applications have buildable changes. If this is unexpected, " +
+			"double check your artifact dependency configuration in the launch yaml.")
+		return nil
+	}
+
 	var (
 		ctx       = context.Background()
 		artifacts []*catapult.Artifact
