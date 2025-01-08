@@ -15,7 +15,9 @@ import (
 // DiscoverApplications finds any launch config files in the specified
 // directory and returns a map with the application name as the key and
 // the corresponding launch config file as the value. DB launch configs
-// are ignored.
+// are ignored. Any applications that do not have changes detected
+// according to the launch config dependencies are filtered from the
+// result set.
 func DiscoverApplications(dir string) (map[string]*models.LaunchConfig, error) {
 	fe, err := os.ReadDir(dir)
 	if err != nil {
@@ -46,6 +48,12 @@ func DiscoverApplications(dir string) (map[string]*models.LaunchConfig, error) {
 
 		// These are DB launch configs, which we don't want to build.
 		if lc.PodConfig == nil || lc.PodConfig.Group == "" {
+			continue
+		}
+
+		if changed, err := DetectArtifactDependencyChange(&lc); err != nil {
+			return nil, fmt.Errorf("failed to detect artifact dependency change for %s: %v", f.Name(), err)
+		} else if !changed {
 			continue
 		}
 
