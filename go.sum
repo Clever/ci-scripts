@@ -1,8 +1,8 @@
 github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 h1:UQHMgLO+TxOElx5B5HZ4hJQsoJ/PvUvKRhJHDQXO8P8=
 github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/Clever/catapult/gen-go/models v1.198.0 h1:ev/ekVWVgQBQKCtt65URBPfzcW+sJPrjeS7LwW8QeNQ=
-github.com/Clever/catapult/gen-go/models v1.198.0/go.mod h1:KycooNSZj8fMqRjzFimkzDkcllvrVQ4v30EdZRfS0tU=
+github.com/Clever/catapult/gen-go/models v1.199.0 h1:U/XVLo8fMQBG+XSauW/SfpLfjuCvfvkfkszMKEoOstw=
+github.com/Clever/catapult/gen-go/models v1.199.0/go.mod h1:KycooNSZj8fMqRjzFimkzDkcllvrVQ4v30EdZRfS0tU=
 github.com/Clever/circle-ci-integrations/gen-go/client v0.0.0-20230317164210-4d554db10fa0 h1:QlgvxlCkH2wvVBPEBCTzVFnFZTlXfkqu0Q+GFaXoBWo=
 github.com/Clever/circle-ci-integrations/gen-go/client v0.0.0-20230317164210-4d554db10fa0/go.mod h1:b6cswTCs4/PCtMyAUrOS7iEtUvhAzmFrbvYfdxZ7vHQ=
 github.com/Clever/circle-ci-integrations/gen-go/models v0.0.0-20230317164210-4d554db10fa0 h1:J+Nimwh3a/uPETcJprzZ9PFzDVidm1rfSc4XbZQdbNc=
