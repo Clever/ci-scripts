@@ -48,7 +48,7 @@ func DetectArtifactDependencyChange(lc *models.LaunchConfig) (bool, error) {
 	fmt.Println(files)
 
 	// Prepare git diff command with the found files
-	args := append([]string{"diff", "--name-only", "HEAD", "--"}, files...)
+	args := append([]string{"diff", "--name-only", "HEAD", "master", "--"}, files...)
 	gitCmd := exec.Command("git", args...)
 	fmt.Println(gitCmd.String())
 
