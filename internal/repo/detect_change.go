@@ -7,12 +7,10 @@ import (
 	"github.com/Clever/catapult/gen-go/models"
 )
 
-// go list -f '{{.Dir}}' -deps ./cmd/arkdb | grep $(pwd) | grep -v '/vendor/'
-
 // DetectArtifactDependencyChange checks if the artifact dependency
 // globs defined in the launch config have changed by using git diff for
 // only the specified file globs. The dependencies are always checked
-// against the base branch (HEAD). More advanced dependency checking is
+// against the primary branch. More advanced dependency checking is
 // hard and involves persisted caching of some sort which should be
 // left to a build system later on.
 func DetectArtifactDependencyChange(lc *models.LaunchConfig) (bool, error) {
