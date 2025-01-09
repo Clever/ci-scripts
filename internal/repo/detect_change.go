@@ -23,14 +23,22 @@ func DetectArtifactDependencyChange(lc *models.LaunchConfig) (bool, error) {
 	}
 
 	// Define the find command to search for multiple globs
-	globs := []string{"."}
-	for i, glob := range lc.Build.Artifact.Dependencies {
-		if i == 0 {
-			globs = append(globs, "-name", glob)
+	globs := []string{".", "-type", "f", "("}
+	nots := []string{}
+	for _, glob := range lc.Build.Artifact.Dependencies {
+		if strings.HasPrefix(glob, "!") {
+			nots = append(nots, "-not", "-path", glob[1:])
+			continue
+		}
+
+		if len(globs) == 4 {
+			globs = append(globs, "-path", glob)
 		} else {
-			globs = append(globs, "-o", "-name", glob)
+			globs = append(globs, "-o", "-path", glob)
 		}
 	}
+	globs = append(globs, ")")
+	globs = append(globs, nots...)
 	findCmd := exec.Command("find", globs...)
 	fmt.Println(findCmd.String())
 
@@ -45,12 +53,15 @@ func DetectArtifactDependencyChange(lc *models.LaunchConfig) (bool, error) {
 	if len(files) == 0 {
 		return false, errors.New("no matching files")
 	}
+	// You can uncomment the following line to see the files found by
+	// the find command but it is very verbose
 	fmt.Println(files)
 
 	// Prepare git diff command with the found files
 	args := append([]string{"diff", "--name-only", "HEAD", "master", "--"}, files...)
 	gitCmd := exec.Command("git", args...)
-	fmt.Println(gitCmd.String())
+	// This command is also very verbose
+	// fmt.Println(gitCmd.String())
 
 	// Capture the output from git diff
 	output, err = gitCmd.Output()
