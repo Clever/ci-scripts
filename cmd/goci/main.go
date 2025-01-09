@@ -9,7 +9,6 @@ import (
 	"github.com/Clever/catapult/gen-go/models"
 	"github.com/Clever/ci-scripts/internal/catapult"
 	"github.com/Clever/ci-scripts/internal/docker"
-	"github.com/Clever/ci-scripts/internal/environment"
 	"github.com/Clever/ci-scripts/internal/lambda"
 	"github.com/Clever/ci-scripts/internal/repo"
 )
@@ -104,9 +103,9 @@ func run(mode string) error {
 		return err
 	}
 
-	if environment.Branch == "master" {
-		return cp.Deploy(ctx, appIDs)
-	}
+	// if environment.Branch == "master" {
+	return cp.Deploy(ctx, appIDs)
+	// }
 	return nil
 }
 
