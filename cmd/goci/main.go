@@ -17,16 +17,28 @@ import (
 // repository is the working directory.
 
 func main() {
-	if err := run(); err != nil {
+	if err := run(os.Args[1]); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 }
 
-func run() error {
+func run(mode string) error {
 	apps, err := repo.DiscoverApplications("./launch")
 	if err != nil {
 		return err
+	}
+
+	switch mode {
+	case "detect":
+		names := make([]string, len(apps))
+		for app := range apps {
+			names = append(names, app)
+		}
+		fmt.Println(strings.Join(names, " "))
+		return nil
+	default:
+		// default case, run the full suite
 	}
 
 	if len(apps) == 0 {
