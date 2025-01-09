@@ -56,6 +56,22 @@ func (c *Catapult) Publish(ctx context.Context, artifacts []*Artifact) error {
 	return nil
 }
 
+func (c *Catapult) Deploy(ctx context.Context, apps []string) error {
+	for _, app := range apps {
+		fmt.Println("Deploying", app)
+		// err := c.client.PostDapple(ctx, &models.DeployRequest{
+		// 	Appname:  app,
+		// 	Buildnum: environment.CircleBuildNum,
+		// 	Reponame: environment.Repo,
+		// 	Username: environment.CircleUser,
+		// })
+		// if err != nil {
+		// 	return fmt.Errorf("failed to deploy %s: %v", app, err)
+		// }
+	}
+	return nil
+}
+
 // Wraps the default http transport in a very thin wrapper which just
 // adds basic auth to all of the requests. The auth params are pulled
 // from the ci environment.

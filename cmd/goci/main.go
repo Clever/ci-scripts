@@ -9,6 +9,7 @@ import (
 	"github.com/Clever/catapult/gen-go/models"
 	"github.com/Clever/ci-scripts/internal/catapult"
 	"github.com/Clever/ci-scripts/internal/docker"
+	"github.com/Clever/ci-scripts/internal/environment"
 	"github.com/Clever/ci-scripts/internal/lambda"
 	"github.com/Clever/ci-scripts/internal/repo"
 )
@@ -36,13 +37,14 @@ func run(mode string) error {
 		return err
 	}
 
+	appIDs := make([]string, len(apps))
+	for app := range apps {
+		appIDs = append(appIDs, app)
+	}
+
 	switch mode {
 	case "detect":
-		names := make([]string, len(apps))
-		for app := range apps {
-			names = append(names, app)
-		}
-		fmt.Println(strings.Join(names, " "))
+		fmt.Println(strings.Join(appIDs, " "))
 		return nil
 	case "artifact-build-publish":
 		// continue
@@ -96,7 +98,16 @@ func run(mode string) error {
 			}
 		}
 	}
-	return catapult.New().Publish(ctx, artifacts)
+	cp := catapult.New()
+
+	if err = cp.Publish(ctx, artifacts); err != nil {
+		return err
+	}
+
+	if environment.Branch == "master" {
+		return cp.Deploy(ctx, appIDs)
+	}
+	return nil
 }
 
 // allAppsBuilt returns an error if any apps are missing a build artifact.
