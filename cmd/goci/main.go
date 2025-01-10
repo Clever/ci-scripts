@@ -13,11 +13,17 @@ import (
 	"github.com/Clever/ci-scripts/internal/repo"
 )
 
+const usage = "usage: goci <detect|artifact-build-publish>"
+
 // This app assumes the code has been checked out and that the
 // repository is the working directory.
 
 func main() {
-	if err := run(os.Args[1]); err != nil {
+	if len(os.Args) < 2 {
+		fmt.Println("requires 1 argument.", usage)
+	}
+	mode := os.Args[1]
+	if err := run(mode); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -37,8 +43,10 @@ func run(mode string) error {
 		}
 		fmt.Println(strings.Join(names, " "))
 		return nil
+	case "artifact-build-publish":
+		// continue
 	default:
-		// default case, run the full suite
+		return fmt.Errorf("unknown mode %s. %s", mode, usage)
 	}
 
 	if len(apps) == 0 {
