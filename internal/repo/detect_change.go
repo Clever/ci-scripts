@@ -5,6 +5,7 @@ import (
 	"os/exec"
 
 	"github.com/Clever/catapult/gen-go/models"
+	"github.com/Clever/ci-scripts/internal/environment"
 )
 
 // DetectArtifactDependencyChange checks if the artifact dependency
@@ -18,7 +19,12 @@ func DetectArtifactDependencyChange(lc *models.LaunchConfig) (bool, error) {
 		return true, nil
 	}
 
-	args := append([]string{"diff", "--name-only", "HEAD", "master", "--"}, lc.Build.Artifact.Dependencies...)
+	compareRange := environment.PrimaryCompare
+	if environment.Branch == "master" {
+		compareRange = environment.PreviousPipelineCompare
+	}
+
+	args := append([]string{"diff", "--name-only", compareRange, "--"}, lc.Build.Artifact.Dependencies...)
 	gitCmd := exec.Command("git", args...)
 	fmt.Println("Checking for changes with:", gitCmd.String())
 
