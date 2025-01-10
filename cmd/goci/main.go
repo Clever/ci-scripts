@@ -36,7 +36,7 @@ func run(mode string) error {
 		return err
 	}
 
-	appIDs := make([]string, len(apps))
+	appIDs := []string{}
 	for app := range apps {
 		appIDs = append(appIDs, app)
 	}
