@@ -53,7 +53,7 @@ func BuildTargets(apps map[string]*models.LaunchConfig) (map[string]LambdaTarget
 		}
 		done[artifact] = struct{}{}
 		targets[artifact] = LambdaTarget{
-			Zip:     fmt.Sprintf("./bin/%s.zip", name),
+			Zip:     fmt.Sprintf("./bin/%s.zip", artifact),
 			Command: repo.BuildCommand(launch),
 		}
 	}
