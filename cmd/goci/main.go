@@ -79,11 +79,15 @@ func run(mode string) error {
 			return err
 		}
 
-		for dockerfile, tags := range dockerTargets {
-			if err = dkr.Build(ctx, ".", dockerfile, tags); err != nil {
+		for dockerfile, t := range dockerTargets {
+			if err = repo.ExecBuild(t.Command); err != nil {
 				return err
 			}
-			if err = dkr.Push(ctx, tags); err != nil {
+
+			if err = dkr.Build(ctx, ".", dockerfile, t.Tags); err != nil {
+				return err
+			}
+			if err = dkr.Push(ctx, t.Tags); err != nil {
 				return err
 			}
 		}
