@@ -51,11 +51,11 @@ func DiscoverApplications(dir string) (map[string]*models.LaunchConfig, error) {
 			continue
 		}
 
-		// if changed, err := DetectArtifactDependencyChange(&lc); err != nil {
-		// 	return nil, fmt.Errorf("failed to detect artifact dependency change for %s: %v", f.Name(), err)
-		// } else if !changed {
-		// 	continue
-		// }
+		if changed, err := DetectArtifactDependencyChange(&lc); err != nil {
+			return nil, fmt.Errorf("failed to detect artifact dependency change for %s: %v", f.Name(), err)
+		} else if !changed {
+			continue
+		}
 
 		m[strings.TrimSuffix(f.Name(), ".yml")] = &lc
 	}
