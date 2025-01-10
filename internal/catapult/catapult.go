@@ -38,6 +38,7 @@ func New() *Catapult {
 	url = strings.TrimSuffix(url, "/catapult")
 	var rt http.RoundTripper = &basicAuthTransport{}
 	cli := client.New(url, fmtPrinlnLogger{}, &rt)
+	cli.SetTimeout(15 * time.Second)
 	return &Catapult{client: cli}
 }
 
@@ -58,8 +59,6 @@ func (c *Catapult) Publish(ctx context.Context, artifacts []*Artifact) error {
 }
 
 func (c *Catapult) Deploy(ctx context.Context, apps []string) error {
-	deadline, set := ctx.Deadline()
-	fmt.Println("deadline:", time.Until(deadline), "set", set)
 	for _, app := range apps {
 		fmt.Println("Deploying", app)
 		err := c.client.PostDapple(ctx, &models.DeployRequest{
