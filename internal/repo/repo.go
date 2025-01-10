@@ -142,6 +142,7 @@ func ExecBuild(c string) error {
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to run build command: %v", err)
 	}
+	fmt.Println("Build command completed successfully")
 
 	return nil
 }
