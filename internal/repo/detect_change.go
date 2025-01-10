@@ -20,13 +20,13 @@ func DetectArtifactDependencyChange(lc *models.LaunchConfig) (bool, error) {
 
 	args := append([]string{"diff", "--name-only", "HEAD", "master", "--"}, lc.Build.Artifact.Dependencies...)
 	gitCmd := exec.Command("git", args...)
-	fmt.Println(gitCmd.String())
+	fmt.Println("Checking for changes with:", gitCmd.String())
 
 	output, err := gitCmd.Output()
 	if err != nil {
 		return false, fmt.Errorf("git diff: %v", err)
 	}
-	fmt.Println(string(output))
+	fmt.Println("Changed files:", string(output))
 
-	return string(output) != "", nil
+	return len(output) != 0, nil
 }
