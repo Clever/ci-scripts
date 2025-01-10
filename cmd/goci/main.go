@@ -13,20 +13,47 @@ import (
 	"github.com/Clever/ci-scripts/internal/repo"
 )
 
+const usage = "usage: goci <detect|artifact-build-publish>"
+
 // This app assumes the code has been checked out and that the
 // repository is the working directory.
 
 func main() {
-	if err := run(); err != nil {
+	if len(os.Args) < 2 {
+		fmt.Println("requires 1 argument.", usage)
+		os.Exit(1)
+	}
+	mode := os.Args[1]
+	if err := run(mode); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 }
 
-func run() error {
+func run(mode string) error {
 	apps, err := repo.DiscoverApplications("./launch")
 	if err != nil {
 		return err
+	}
+
+	switch mode {
+	case "detect":
+		names := make([]string, len(apps))
+		for app := range apps {
+			names = append(names, app)
+		}
+		fmt.Println(strings.Join(names, " "))
+		return nil
+	case "artifact-build-publish":
+		// continue
+	default:
+		return fmt.Errorf("unknown mode %s. %s", mode, usage)
+	}
+
+	if len(apps) == 0 {
+		fmt.Println("No applications have buildable changes. If this is unexpected, " +
+			"double check your artifact dependency configuration in the launch yaml.")
+		return nil
 	}
 
 	var (
