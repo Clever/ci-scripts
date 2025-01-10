@@ -92,8 +92,12 @@ func run(mode string) error {
 	if len(lambdaTargets) > 0 {
 		lmda := lambda.New(ctx)
 
-		for artifact, binary := range lambdaTargets {
-			if err := lmda.Publish(ctx, binary, artifact); err != nil {
+		for artifact, t := range lambdaTargets {
+			if err = repo.ExecBuild(t.Command); err != nil {
+				return err
+			}
+
+			if err = lmda.Publish(ctx, t.Zip, artifact); err != nil {
 				return err
 			}
 		}
