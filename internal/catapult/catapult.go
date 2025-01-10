@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Clever/ci-scripts/internal/environment"
 	"github.com/Clever/circle-ci-integrations/gen-go/client"
@@ -57,14 +58,15 @@ func (c *Catapult) Publish(ctx context.Context, artifacts []*Artifact) error {
 }
 
 func (c *Catapult) Deploy(ctx context.Context, apps []string) error {
+	deadline, set := ctx.Deadline()
+	fmt.Println("deadline:", time.Until(deadline), "set", set)
 	for _, app := range apps {
 		fmt.Println("Deploying", app)
 		err := c.client.PostDapple(ctx, &models.DeployRequest{
-			Appname:     app,
-			Buildnum:    environment.CircleBuildNum,
-			Reponame:    environment.Repo,
-			Username:    environment.CircleUser,
-			Environment: "andru",
+			Appname:  app,
+			Buildnum: environment.CircleBuildNum,
+			Reponame: environment.Repo,
+			Username: environment.CircleUser,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to deploy %s: %v", app, err)
