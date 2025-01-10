@@ -13,7 +13,7 @@ import (
 	"github.com/Clever/ci-scripts/internal/repo"
 )
 
-const usage = "usage: goci <detect|artifact-build-publish>"
+const usage = "usage: goci <detect|artifact-build-publish-deploy>"
 
 // This app assumes the code has been checked out and that the
 // repository is the working directory.
@@ -45,7 +45,7 @@ func run(mode string) error {
 	case "detect":
 		fmt.Println(strings.Join(appIDs, " "))
 		return nil
-	case "artifact-build-publish":
+	case "artifact-build-publish-deploy":
 		// continue
 	default:
 		return fmt.Errorf("unknown mode %s. %s", mode, usage)
