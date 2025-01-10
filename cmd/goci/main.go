@@ -21,6 +21,7 @@ const usage = "usage: goci <detect|artifact-build-publish>"
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("requires 1 argument.", usage)
+		os.Exit(1)
 	}
 	mode := os.Args[1]
 	if err := run(mode); err != nil {
