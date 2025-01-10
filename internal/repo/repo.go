@@ -132,7 +132,7 @@ func ExecBuild(c string) error {
 		return nil
 	}
 
-	args := strings.Split(c, "")
+	args := strings.Split(c, " ")
 	cmd := exec.Command(args[0], args[1:]...)
 	fmt.Println("Running build command:", cmd.String())
 
