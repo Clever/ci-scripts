@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Clever/ci-scripts/internal/environment"
 	"github.com/Clever/circle-ci-integrations/gen-go/client"
@@ -37,6 +38,7 @@ func New() *Catapult {
 	url = strings.TrimSuffix(url, "/catapult")
 	var rt http.RoundTripper = &basicAuthTransport{}
 	cli := client.New(url, fmtPrinlnLogger{}, &rt)
+	cli.SetTimeout(15 * time.Second)
 	return &Catapult{client: cli}
 }
 
@@ -51,6 +53,22 @@ func (c *Catapult) Publish(ctx context.Context, artifacts []*Artifact) error {
 		})
 		if err != nil {
 			return fmt.Errorf("failed to publish %s with catapult: %v", art.ID, err)
+		}
+	}
+	return nil
+}
+
+func (c *Catapult) Deploy(ctx context.Context, apps []string) error {
+	for _, app := range apps {
+		fmt.Println("Deploying", app)
+		err := c.client.PostDapple(ctx, &models.DeployRequest{
+			Appname:  app,
+			Buildnum: environment.CircleBuildNum,
+			Reponame: environment.Repo,
+			Username: environment.CircleUser,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to deploy %s: %v", app, err)
 		}
 	}
 	return nil

@@ -122,6 +122,7 @@ func envMustString(key string, localRequired bool) string {
 		fmt.Println("env variable missing:", key)
 		os.Exit(1)
 	}
+
 	return v
 }
 
@@ -130,6 +131,8 @@ func envMustInt64(key string, localRequired bool) int64 {
 	if v == "" && localRequired {
 		fmt.Println("env variable missing:", key)
 		os.Exit(1)
+	} else if Local && !localRequired && v == "" {
+		return 0
 	}
 
 	i, err := strconv.ParseInt(v, 10, 64)

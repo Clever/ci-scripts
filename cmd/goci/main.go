@@ -9,11 +9,12 @@ import (
 	"github.com/Clever/catapult/gen-go/models"
 	"github.com/Clever/ci-scripts/internal/catapult"
 	"github.com/Clever/ci-scripts/internal/docker"
+	"github.com/Clever/ci-scripts/internal/environment"
 	"github.com/Clever/ci-scripts/internal/lambda"
 	"github.com/Clever/ci-scripts/internal/repo"
 )
 
-const usage = "usage: goci <detect|artifact-build-publish>"
+const usage = "usage: goci <detect|artifact-build-publish-deploy>"
 
 // This app assumes the code has been checked out and that the
 // repository is the working directory.
@@ -36,15 +37,16 @@ func run(mode string) error {
 		return err
 	}
 
+	appIDs := []string{}
+	for app := range apps {
+		appIDs = append(appIDs, app)
+	}
+
 	switch mode {
 	case "detect":
-		names := make([]string, len(apps))
-		for app := range apps {
-			names = append(names, app)
-		}
-		fmt.Println(strings.Join(names, " "))
+		fmt.Println(strings.Join(appIDs, " "))
 		return nil
-	case "artifact-build-publish":
+	case "artifact-build-publish-deploy":
 		// continue
 	default:
 		return fmt.Errorf("unknown mode %s. %s", mode, usage)
@@ -96,7 +98,16 @@ func run(mode string) error {
 			}
 		}
 	}
-	return catapult.New().Publish(ctx, artifacts)
+	cp := catapult.New()
+
+	if err = cp.Publish(ctx, artifacts); err != nil {
+		return err
+	}
+
+	if environment.Branch == "master" {
+		return cp.Deploy(ctx, appIDs)
+	}
+	return nil
 }
 
 // allAppsBuilt returns an error if any apps are missing a build artifact.
