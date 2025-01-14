@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 
@@ -117,4 +118,31 @@ func ArtifactName(appName string, lc *models.LaunchConfig) string {
 		artifactName = lc.Build.Artifact.Name
 	}
 	return artifactName
+}
+
+func BuildCommand(lc *models.LaunchConfig) string {
+	if lc.Build == nil || lc.Build.Artifact == nil {
+		return ""
+	}
+	return lc.Build.Artifact.Command
+}
+
+func ExecBuild(c string) error {
+	if c == "" {
+		return nil
+	}
+
+	args := strings.Split(c, " ")
+	cmd := exec.Command(args[0], args[1:]...)
+	fmt.Println("Running build command:", cmd.String())
+
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to run build command: %v", err)
+	}
+	fmt.Println("Build command completed successfully")
+
+	return nil
 }

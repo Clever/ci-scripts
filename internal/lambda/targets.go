@@ -10,15 +10,25 @@ import (
 	"github.com/Clever/ci-scripts/internal/repo"
 )
 
+// LambdaTarget represents the information needed to build and publish a
+// lambda to S3.
+type LambdaTarget struct {
+	// Zip is the the path to where the lambda artifact will be located
+	// on the local FS
+	Zip string
+	// Command is the command to run to build the lambda artifact
+	Command string
+}
+
 // BuildTargets returns a set of lambda targets to build and publish to
 // S3 as well as a list of artifacts to be published to catapult. The
 // targets map has the artifact name as the key and the already built
-// local archive location as the value. Any apps with a shared artifact
+// local zip location as the value. Any apps with a shared artifact
 // will have only one entry in the map, but will still have individual
 // entries in the catapult build artifacts
-func BuildTargets(apps map[string]*models.LaunchConfig) (map[string]string, []*catapult.Artifact) {
+func BuildTargets(apps map[string]*models.LaunchConfig) (map[string]LambdaTarget, []*catapult.Artifact) {
 	var (
-		targets   = map[string]string{}
+		targets   = map[string]LambdaTarget{}
 		done      = map[string]struct{}{}
 		artifacts []*catapult.Artifact
 	)
@@ -42,10 +52,10 @@ func BuildTargets(apps map[string]*models.LaunchConfig) (map[string]string, []*c
 			continue
 		}
 		done[artifact] = struct{}{}
-		// Right now we aren't yet building source code into zips in
-		// this application so we will just pull the assumed built file
-		// name from the existing CI script until we do handle this.
-		targets[artifact] = fmt.Sprintf("./bin/%s.zip", name)
+		targets[artifact] = LambdaTarget{
+			Zip:     fmt.Sprintf("./bin/%s.zip", artifact),
+			Command: repo.BuildCommand(launch),
+		}
 	}
 	return targets, artifacts
 }

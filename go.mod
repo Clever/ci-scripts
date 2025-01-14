@@ -3,7 +3,7 @@ module github.com/Clever/ci-scripts
 go 1.22
 
 require (
-	github.com/Clever/catapult/gen-go/models v1.199.0
+	github.com/Clever/catapult/gen-go/models v1.199.1-0.20250110052250-7b3e32105523
 	github.com/Clever/circle-ci-integrations/gen-go/client v0.0.0-20230317164210-4d554db10fa0
 	github.com/Clever/circle-ci-integrations/gen-go/models v0.0.0-20230317164210-4d554db10fa0
 	github.com/Clever/wag/logging/wagclientlogger v0.0.0-20230227191614-7aa97ba44ab1

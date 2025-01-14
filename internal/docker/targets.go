@@ -9,15 +9,22 @@ import (
 	"github.com/Clever/ci-scripts/internal/repo"
 )
 
+type DockerTarget struct {
+	// Tags are the list of tags to push for the built docker image.
+	Tags []string
+	// Command is the command to run to build the lambda artifact.
+	Command string
+}
+
 // BuildTargets returns a map of dockerfile path keys with their
 // associated tags for pushing to a remote repository. If multiple apps
 // share a repository then only the first matching Dockerfile and its
 // set of tags will be in the final list. This is an optimization so we
 // do not build multiple copies of the same Dockerfile which only differ
 // at runtime.
-func BuildTargets(apps map[string]*models.LaunchConfig) (map[string][]string, []*catapult.Artifact) {
+func BuildTargets(apps map[string]*models.LaunchConfig) (map[string]DockerTarget, []*catapult.Artifact) {
 	var (
-		targets   = map[string][]string{}
+		targets   = map[string]DockerTarget{}
 		done      = map[string]struct{}{}
 		artifacts []*catapult.Artifact
 	)
@@ -55,7 +62,10 @@ func BuildTargets(apps map[string]*models.LaunchConfig) (map[string][]string, []
 			tags = append(tags, tag)
 		}
 
-		targets[repo.Dockerfile(launch)] = tags
+		targets[repo.Dockerfile(launch)] = DockerTarget{
+			Tags:    tags,
+			Command: repo.BuildCommand(launch),
+		}
 	}
 	return targets, artifacts
 }
