@@ -12,6 +12,8 @@ import (
 	"github.com/Clever/circle-ci-integrations/gen-go/client"
 	"github.com/Clever/circle-ci-integrations/gen-go/models"
 	"github.com/Clever/wag/logging/wagclientlogger"
+
+	"golang.org/x/sync/errgroup"
 )
 
 // Artifact aliases a catapult models.CatapultApplication, and contains
@@ -44,19 +46,31 @@ func New() *Catapult {
 
 // Publish a list of build artifacts to catapult.
 func (c *Catapult) Publish(ctx context.Context, artifacts []*Artifact) error {
+	grp, grpCtx := errgroup.WithContext(ctx)
+
 	for _, art := range artifacts {
-		fmt.Println("Publishing", art.ID)
-		err := c.client.PostCatapultV2(ctx, &models.CatapultPublishRequest{
-			Username: environment.CircleUser,
-			Reponame: environment.Repo,
-			Buildnum: environment.CircleBuildNum,
-			App:      art,
+		grp.Go(func() error {
+			fmt.Println("Publishing", art.ID)
+			err := c.client.PostCatapultV2(grpCtx, &models.CatapultPublishRequest{
+				Username: environment.CircleUser,
+				Reponame: environment.Repo,
+				Buildnum: environment.CircleBuildNum,
+				App:      art,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to publish %s with catapult: %v", art.ID, err)
+			}
+
+			err = c.client.SyncCatalogApp(grpCtx, &models.SyncCatalogAppInput{
+				App: art.ID,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to sync catalog app %s with catapult: %v", art.ID, err)
+			}
+			return nil
 		})
-		if err != nil {
-			return fmt.Errorf("failed to publish %s with catapult: %v", art.ID, err)
-		}
 	}
-	return nil
+	return grp.Wait()
 }
 
 func (c *Catapult) Deploy(ctx context.Context, apps []string) error {
