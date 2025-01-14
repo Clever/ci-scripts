@@ -65,7 +65,7 @@ func (c *Catapult) Publish(ctx context.Context, artifacts []*Artifact) error {
 				App: art.ID,
 			})
 			if err != nil {
-				return fmt.Errorf("failed to sync catalog app %s with catapult: %v", art.ID, err)
+				return fmt.Errorf("failed to sync catalog app %s with catalogue config: %v", art.ID, err)
 			}
 			return nil
 		})
