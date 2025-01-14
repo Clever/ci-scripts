@@ -73,6 +73,9 @@ func (c *Catapult) Publish(ctx context.Context, artifacts []*Artifact) error {
 	return grp.Wait()
 }
 
+// Deploy a list of apps via catapult. Note that it is only possible to
+// deploy to production, even if you pass an env param to
+// circle-ci-integrations, which seems to ignore the param.
 func (c *Catapult) Deploy(ctx context.Context, apps []string) error {
 	for _, app := range apps {
 		fmt.Println("Deploying", app)

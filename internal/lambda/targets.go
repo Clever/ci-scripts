@@ -22,10 +22,10 @@ type LambdaTarget struct {
 
 // BuildTargets returns a set of lambda targets to build and publish to
 // S3 as well as a list of artifacts to be published to catapult. The
-// targets map has the artifact name as the key and the already built
-// local zip location as the value. Any apps with a shared artifact
-// will have only one entry in the map, but will still have individual
-// entries in the catapult build artifacts
+// targets map has the artifact name as the key and a build command and
+// destination zip file in the value struct. Any apps with a shared
+// artifact will have only one entry in the map, but will still have
+// individual entries in the catapult build artifacts
 func BuildTargets(apps map[string]*models.LaunchConfig) (map[string]LambdaTarget, []*catapult.Artifact) {
 	var (
 		targets   = map[string]LambdaTarget{}
