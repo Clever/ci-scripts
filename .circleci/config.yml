@@ -9,5 +9,4 @@ jobs:
     steps:
     - checkout
     - run: make release
-    - run: ./circleci/github-release $GH_RELEASE_TOKEN artifacts/
-    # - run: if [ "${CIRCLE_BRANCH}" == "master" ]; then ./circleci/github-release $GH_RELEASE_TOKEN artifacts; fi;
+    - run: if [ "${CIRCLE_BRANCH}" == "master" ]; then ./circleci/github-release $GH_RELEASE_TOKEN artifacts; fi;

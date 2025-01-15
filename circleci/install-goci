@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# This script install the latest version of goci for the correct OS and architecture.
+
+# Exit immediately if a command exits with a non-zero status
+set -e
+
+# Configuration
+REPO="Clever/ci-scripts"
+INSTALL_DIR="/usr/local/bin"
+
+# Detect OS and Architecture
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+ARCH=$(uname -m)
+
+# Fetch the latest release
+echo "Fetching the latest release from $REPO..."
+LATEST_RELEASE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$REPO/releases/latest")
+
+# Find the asset matching the OS and architecture
+ASSET_URL=$(echo "$LATEST_RELEASE" | jq -r ".assets[] | select(.name | test(\"$OS.*$ARCH\")) | .browser_download_url")
+
+if [ -z "$ASSET_URL" ]; then
+  echo "Error: No matching release asset found for OS=$OS and ARCH=$ARCH."
+  exit 1
+fi
+
+# Download the asset
+ASSET_NAME=$(basename "$ASSET_URL")
+echo "Downloading $ASSET_NAME..."
+curl -L -o "/tmp/$ASSET_NAME" "$ASSET_URL"
+
+# Move the asset to the install directory and make it executable
+echo "Installing $ASSET_NAME to $INSTALL_DIR..."
+sudo mv "/tmp/$ASSET_NAME" "$INSTALL_DIR/$ASSET_NAME"
+sudo chmod +x "$INSTALL_DIR/$ASSET_NAME"
+
+echo "Installation complete. $ASSET_NAME is now available in $PATH."
