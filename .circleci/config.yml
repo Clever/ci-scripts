@@ -4,6 +4,7 @@ jobs:
     working_directory: ~/Clever/ci-scripts
     docker:
     - image: cimg/go:1.22
+    steps:
     - checkout
     - run: make release
     - run: ./circleci/github-release $GH_RELEASE_TOKEN artifacts/
