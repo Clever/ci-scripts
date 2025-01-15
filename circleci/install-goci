@@ -20,7 +20,7 @@ ARCH=$(uname -m)
 echo "Fetching the latest release from $REPO..."
 LATEST_RELEASE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$REPO/releases/latest")
 
-if [ -z "$ASSET_URL" ]; then
+if [ -z "$LATEST_RELEASE" ]; then
   echo "Error: No latest release found. Check repository permissions."
   exit 1
 fi
