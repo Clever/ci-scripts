@@ -46,7 +46,7 @@ curl -L -o "/tmp/$ASSET_NAME" "$ASSET_URL"
 
 # Move the asset to the install directory and make it executable
 echo "Installing $ASSET_NAME to $INSTALL_DIR..."
-sudo mv "/tmp/$ASSET_NAME" "$INSTALL_DIR/$ASSET_NAME"
-sudo chmod +x "$INSTALL_DIR/$ASSET_NAME"
+sudo mv "/tmp/$ASSET_NAME" "$INSTALL_DIR/goci"
+sudo chmod +x "$INSTALL_DIR/goci"
 
-echo "Installation complete. $ASSET_NAME is now available in $PATH."
+echo "Installation complete. goci is now available in \$PATH."
