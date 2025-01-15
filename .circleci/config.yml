@@ -4,6 +4,8 @@ jobs:
     working_directory: ~/Clever/ci-scripts
     docker:
     - image: cimg/go:1.22
+    environment:
+      GOPRIVATE: github.com/Clever/*
     steps:
     - checkout
     - run: make release
