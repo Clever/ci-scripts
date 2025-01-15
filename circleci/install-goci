@@ -17,6 +17,15 @@ ARCH=$(uname -m)
 echo "Fetching the latest release from $REPO..."
 LATEST_RELEASE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$REPO/releases/latest")
 
+if [ -z "$ASSET_URL" ]; then
+  echo "Error: No latest release found."
+  exit 1
+fi
+
+echo "Latest release: $LATEST_RELEASE"
+echo "OS: $OS"
+echo "ARCH: $ARCH"
+
 # Find the asset matching the OS and architecture
 ASSET_URL=$(echo "$LATEST_RELEASE" | jq -r ".assets[] | select(.name | test(\"$OS.*$ARCH\")) | .browser_download_url")
 
