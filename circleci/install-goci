@@ -28,7 +28,6 @@ if [ -z "$LATEST_RELEASE" ]; then
   exit 1
 fi
 
-echo "Latest release: $LATEST_RELEASE"
 echo "OS: $OS"
 echo "ARCH: $ARCH"
 
