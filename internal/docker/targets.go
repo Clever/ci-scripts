@@ -9,6 +9,8 @@ import (
 	"github.com/Clever/ci-scripts/internal/repo"
 )
 
+// DockerTarget contains information about how to build and push a
+// docker build target.
 type DockerTarget struct {
 	// Tags are the list of tags to push for the built docker image.
 	Tags []string
@@ -16,12 +18,12 @@ type DockerTarget struct {
 	Command string
 }
 
-// BuildTargets returns a map of dockerfile path keys with their
-// associated tags for pushing to a remote repository. If multiple apps
-// share a repository then only the first matching Dockerfile and its
-// set of tags will be in the final list. This is an optimization so we
-// do not build multiple copies of the same Dockerfile which only differ
-// at runtime.
+// BuildTargets returns a map of dockerfile path keys with their build
+// command and associated tags for pushing to a remote repository. If
+// multiple apps share a repository then only the first matching
+// Dockerfile and its set of tags will be in the final list. This is an
+// optimization so we do not build multiple copies of the same
+// Dockerfile which only differ at runtime.
 func BuildTargets(apps map[string]*models.LaunchConfig) (map[string]DockerTarget, []*catapult.Artifact) {
 	var (
 		targets   = map[string]DockerTarget{}

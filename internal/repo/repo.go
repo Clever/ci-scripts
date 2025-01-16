@@ -120,6 +120,8 @@ func ArtifactName(appName string, lc *models.LaunchConfig) string {
 	return artifactName
 }
 
+// BuildCommand returns the build command for the application artifact,
+// if any is specified. Otherwise it returns an empty string.
 func BuildCommand(lc *models.LaunchConfig) string {
 	if lc.Build == nil || lc.Build.Artifact == nil {
 		return ""
@@ -127,6 +129,8 @@ func BuildCommand(lc *models.LaunchConfig) string {
 	return lc.Build.Artifact.Command
 }
 
+// ExecBuild runs the build command for the application artifact, if any
+// exists. If the command is empty, it returns nil after performing nop.
 func ExecBuild(c string) error {
 	if c == "" {
 		return nil
