@@ -1,0 +1,7 @@
+v1.0.0
+Begin publishing goci binaries
+
+Previously:
+- Call catalogue config with goci
+- build with goci
+- deploy with goci
