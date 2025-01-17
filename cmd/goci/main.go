@@ -32,6 +32,10 @@ func main() {
 }
 
 func run(mode string) error {
+	if strings.Contains(environment.Branch, "/") {
+		return fmt.Errorf("branch name %s contains a `/` character, which is not supported by catapult", environment.Branch)
+	}
+
 	apps, err := repo.DiscoverApplications("./launch")
 	if err != nil {
 		return err
