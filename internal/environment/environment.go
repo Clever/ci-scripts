@@ -29,7 +29,7 @@ var (
 	PreviousPipelineCompare = envMustString("PREVIOUS_PIPELINE_COMPARE", false)
 	// PrimaryCompare is the git commit range to run change detection
 	// commands against when running for a non-primary branch.
-	PrimaryCompare = envMustString("MASTER_COMPARE", false)
+	PrimaryCompare = envMustString("MASTER_COMPARE", true)
 	// CatapultURL is the dns of the circle-ci-integrations ALB
 	// including the protocol.
 	CatapultURL = envMustString("CATAPULT_URL", true)
