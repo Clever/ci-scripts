@@ -1,7 +1,8 @@
-v1.0.0
-Begin publishing goci binaries
+v1.0.1
+- Instead of emitting an error on failed catalog syncs, simply warn
 
 Previously:
+- Begin publishing goci binaries
 - Call catalogue config with goci
 - build with goci
 - deploy with goci
