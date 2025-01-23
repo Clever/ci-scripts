@@ -1,7 +1,8 @@
-v1.0.1
-- Instead of emitting an error on failed catalog syncs, simply warn
+v1.0.2
+variable MASTER_COMPARE is now required for local dev
 
 Previously:
+- Instead of emitting an error on failed catalog syncs, simply warn
 - Begin publishing goci binaries
 - Call catalogue config with goci
 - build with goci
