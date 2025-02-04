@@ -3,9 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
-	"strings"
+	"regexp"
 	"strconv"
+	"strings"
 
 	"golang.org/x/mod/modfile"
 
@@ -18,7 +21,6 @@ import (
 )
 
 const usage = "usage: goci <detect|artifact-build-publish-deploy>"
-const newestGoVersion = 1.23
 
 // This app assumes the code has been checked out and that the
 // repository is the working directory.
@@ -126,6 +128,90 @@ func run(mode string) error {
 	return nil
 }
 
+// validateRun checks the env.branch and go version to ensure the build is valid.
+func validateRun() error {
+	if strings.Contains(environment.Branch, "/") {
+		return fmt.Errorf("branch name %s contains a `/` character, which is not supported by catapult", environment.Branch)
+	}
+
+	latestGoVersion, err := fetchLatestGoVersion()
+	if err != nil {
+		return fmt.Errorf("failed to fetch latest Go version: %v", err)
+	}
+
+	goModPath := "./go.mod"
+    fileBytes, err := os.ReadFile(goModPath)
+    if err != nil {
+        return fmt.Errorf("failed to read go.mod file: %v", err)
+    }
+
+	f, err := modfile.Parse("./go.mod", fileBytes , nil)
+	if err != nil {
+    	panic(err)
+	}
+
+	// trim the patch value from the authoring repositories go version
+	trimmedVersion := f.Go.Version[:len(f.Go.Version)-2]
+	version, e := strconv.ParseFloat(trimmedVersion, 64)
+	if e != nil {
+		return fmt.Errorf("failed to parse go version: %v", e)
+	}
+
+	// trim the patch value from the latest go version
+	latestGoVersion = latestGoVersion[:len(latestGoVersion)-2]
+	newestGoVersion, e := strconv.ParseFloat(latestGoVersion, 64)
+	if e != nil {
+		return fmt.Errorf("failed to parse go version: %v", e)
+	}
+
+	if version < newestGoVersion - 0.01 {
+		return fmt.Errorf("go version %v is no longer supported. Please upgrade to version %v", version, newestGoVersion)
+	} else if version == newestGoVersion - 0.01 {
+		// We'll give a PR comment to the Author to warn them about the need to upgrade
+		fmt.Printf("Warning: This go version (%v) is nearing deprecation. Please upgrade to version %v\n", version, newestGoVersion)
+	}
+
+	return nil
+}
+
+// fetchLatestGoVersion fetches the latest Go version from the official Go download page.
+func fetchLatestGoVersion() (string, error) {
+	// official Go download page
+    resp, err := http.Get("https://go.dev/dl/")
+    if err != nil {
+        return "", fmt.Errorf("failed to fetch Go download page: %v", err)
+    }
+    defer resp.Body.Close()
+	
+    if resp.StatusCode != http.StatusOK {
+        return "", fmt.Errorf("failed to fetch Go download page: status code %d", resp.StatusCode)
+    }
+
+    bodyBytes, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return "", fmt.Errorf("failed to read response body: %v", err)
+    }
+    body := string(bodyBytes)
+
+    // Extract the latest macOS (darwin) download URL
+    re := regexp.MustCompile(`/dl/go[0-9]+\.[0-9]+\.[0-9]+\.darwin-arm64.pkg`)
+    matches := re.FindStringSubmatch(body)
+    if len(matches) == 0 {
+        return "", fmt.Errorf("failed to find Go download URL")
+    }
+    goURL := "https://go.dev" + matches[0]
+
+    // Extract the Go version number from the URL
+    reVersion := regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+`)
+    versionMatches := reVersion.FindStringSubmatch(goURL)
+    if len(versionMatches) == 0 {
+        return "", fmt.Errorf("failed to find Go version in URL")
+    }
+    goVersion := versionMatches[0]
+
+    return goVersion, nil
+}
+
 // allAppsBuilt returns an error if any apps are missing a build artifact.
 func allAppsBuilt(discoveredApps map[string]*models.LaunchConfig, builtApps []*catapult.Artifact) error {
 	if len(discoveredApps) == len(builtApps) {
@@ -146,37 +232,4 @@ func allAppsBuilt(discoveredApps map[string]*models.LaunchConfig, builtApps []*c
 		}
 	}
 	return fmt.Errorf("applications %s not built", strings.Join(missing, ", "))
-}
-
-func validateRun() error {
-	if strings.Contains(environment.Branch, "/") {
-		return fmt.Errorf("branch name %s contains a `/` character, which is not supported by catapult", environment.Branch)
-	}
-
-	goModPath := "../go.mod"
-    fileBytes, err := os.ReadFile(goModPath)
-    if err != nil {
-        return fmt.Errorf("failed to read go.mod file: %v", err)
-    }
-
-	f, err := modfile.Parse("../go.mod", fileBytes , nil)
-	if err != nil {
-    	panic(err)
-	}
-
-	trimmedVersion := f.Go.Version[:len(f.Go.Version)-2]
-	version, e := strconv.ParseFloat(trimmedVersion, 64)
-
-	if e != nil {
-		return fmt.Errorf("failed to parse go version: %v", e)
-	}
-
-	if version < newestGoVersion - 0.01 {
-		return fmt.Errorf("go version %v is no longer supported. Please upgrade to version %v", version, newestGoVersion)
-	} else if version == newestGoVersion - 0.01 {
-		// We'll give a PR comment to the Author to warn them about the need to upgrade
-		fmt.Printf("Warning: This go version (%v) is nearing deprecation. Please upgrade to version %v\n", version, newestGoVersion)
-	}
-
-	return nil
 }
