@@ -1,6 +1,8 @@
 module github.com/Clever/ci-scripts
 
-go 1.22
+go 1.22.0
+
+toolchain go1.22.11
 
 require (
 	github.com/Clever/catapult/gen-go/models v1.199.1-0.20250110052250-7b3e32105523
@@ -16,6 +18,7 @@ require (
 	github.com/docker/docker v23.0.2+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/moby/buildkit v0.11.5
+	golang.org/x/mod v0.23.0
 	golang.org/x/sync v0.10.0
 )
 
@@ -69,7 +72,6 @@ require (
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
 	go.mongodb.org/mongo-driver v1.11.3 // indirect
-	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/time v0.3.0 // indirect

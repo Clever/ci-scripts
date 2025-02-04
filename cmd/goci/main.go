@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"strconv"
+
+	"golang.org/x/mod/modfile"
 
 	"github.com/Clever/catapult/gen-go/models"
 	"github.com/Clever/ci-scripts/internal/catapult"
@@ -15,6 +18,7 @@ import (
 )
 
 const usage = "usage: goci <detect|artifact-build-publish-deploy>"
+const newestGoVersion = 1.23
 
 // This app assumes the code has been checked out and that the
 // repository is the working directory.
@@ -32,8 +36,8 @@ func main() {
 }
 
 func run(mode string) error {
-	if strings.Contains(environment.Branch, "/") {
-		return fmt.Errorf("branch name %s contains a `/` character, which is not supported by catapult", environment.Branch)
+	if err := validateRun(); err != nil {
+		return err
 	}
 
 	apps, err := repo.DiscoverApplications("./launch")
@@ -142,4 +146,37 @@ func allAppsBuilt(discoveredApps map[string]*models.LaunchConfig, builtApps []*c
 		}
 	}
 	return fmt.Errorf("applications %s not built", strings.Join(missing, ", "))
+}
+
+func validateRun() error {
+	if strings.Contains(environment.Branch, "/") {
+		return fmt.Errorf("branch name %s contains a `/` character, which is not supported by catapult", environment.Branch)
+	}
+
+	goModPath := "../go.mod"
+    fileBytes, err := os.ReadFile(goModPath)
+    if err != nil {
+        return fmt.Errorf("failed to read go.mod file: %v", err)
+    }
+
+	f, err := modfile.Parse("../go.mod", fileBytes , nil)
+	if err != nil {
+    	panic(err)
+	}
+
+	trimmedVersion := f.Go.Version[:len(f.Go.Version)-2]
+	version, e := strconv.ParseFloat(trimmedVersion, 64)
+
+	if e != nil {
+		return fmt.Errorf("failed to parse go version: %v", e)
+	}
+
+	if version < newestGoVersion - 0.01 {
+		return fmt.Errorf("go version %v is no longer supported. Please upgrade to version %v", version, newestGoVersion)
+	} else if version == newestGoVersion - 0.01 {
+		// We'll give a PR comment to the Author to warn them about the need to upgrade
+		fmt.Printf("Warning: This go version (%v) is nearing deprecation. Please upgrade to version %v\n", version, newestGoVersion)
+	}
+
+	return nil
 }
