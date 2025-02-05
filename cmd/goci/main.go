@@ -20,7 +20,7 @@ import (
 	"github.com/Clever/ci-scripts/internal/repo"
 )
 
-const usage = "usage: goci <detect|artifact-build-publish-deploy>"
+const usage = "usage: goci <validate|detect|artifact-build-publish-deploy>"
 
 // This app assumes the code has been checked out and that the
 // repository is the working directory.
@@ -38,10 +38,6 @@ func main() {
 }
 
 func run(mode string) error {
-	if err := validateRun(); err != nil {
-		return err
-	}
-
 	apps, err := repo.DiscoverApplications("./launch")
 	if err != nil {
 		return err
@@ -53,6 +49,13 @@ func run(mode string) error {
 	}
 
 	switch mode {
+	case "validate":
+		err := validateRun()
+		if err != nil {
+			fmt.Fprintln(os.Stdout, err)
+			return err
+		}
+		return nil
 	case "detect":
 		fmt.Println(strings.Join(appIDs, " "))
 		return nil
