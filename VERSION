@@ -2,6 +2,7 @@ v1.0.3
 goci now supports validation of go version
 
 Previously:
+- variable MASTER_COMPARE is now required for local dev
 - Instead of emitting an error on failed catalog syncs, simply warn
 - Begin publishing goci binaries
 - Call catalogue config with goci
