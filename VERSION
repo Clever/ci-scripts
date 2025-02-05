@@ -1,5 +1,5 @@
-v1.0.2
-variable MASTER_COMPARE is now required for local dev
+v1.0.3
+goci now supports validation of go version
 
 Previously:
 - Instead of emitting an error on failed catalog syncs, simply warn
