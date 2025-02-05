@@ -25,6 +25,15 @@ const usage = "usage: goci <validate|detect|artifact-build-publish-deploy>"
 // This app assumes the code has been checked out and that the
 // repository is the working directory.
 
+// ValidationError represents an error that occurs during validation.
+type ValidationError struct {
+    Message string
+}
+
+func (e *ValidationError) Error() string {
+    return e.Message
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("requires 1 argument.", usage)
@@ -32,8 +41,13 @@ func main() {
 	}
 	mode := os.Args[1]
 	if err := run(mode); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		if _, ok := err.(*ValidationError); ok {
+            fmt.Println("Validation error:", err)
+            os.Exit(2) // Use a different exit code for validation errors
+        } else {
+            fmt.Println("Error:", err)
+            os.Exit(1)
+        }
 	}
 }
 
@@ -52,7 +66,6 @@ func run(mode string) error {
 	case "validate":
 		err := validateRun()
 		if err != nil {
-			fmt.Fprintln(os.Stdout, err)
 			return err
 		}
 		return nil
@@ -65,6 +78,11 @@ func run(mode string) error {
 		return fmt.Errorf("unknown mode %s. %s", mode, usage)
 	}
 
+	// We want to validate on every run, not just when the mode is "validate".
+	if err = validateRun(); err != nil {
+		return err
+	}
+	
 	if len(apps) == 0 {
 		fmt.Println("No applications have buildable changes. If this is unexpected, " +
 			"double check your artifact dependency configuration in the launch yaml.")
@@ -134,7 +152,7 @@ func run(mode string) error {
 // validateRun checks the env.branch and go version to ensure the build is valid.
 func validateRun() error {
 	if strings.Contains(environment.Branch, "/") {
-		return fmt.Errorf("branch name %s contains a `/` character, which is not supported by catapult", environment.Branch)
+        return &ValidationError{Message: fmt.Sprintf("branch name %s contains a `/` character, which is not supported by catapult", environment.Branch)}
 	}
 
 	latestGoVersion, err := fetchLatestGoVersion()
@@ -156,8 +174,14 @@ func validateRun() error {
 	// trim the patch value from the authoring repositories go version
 	trimmedVersion := f.Go.Version[:len(f.Go.Version)-2]
 	version, e := strconv.ParseFloat(trimmedVersion, 64)
+
 	if e != nil {
 		return fmt.Errorf("failed to parse go version: %v", e)
+	}
+
+	// We will begin enforcing this policy for go version 1.24 and above, for now set the minimum version to 1.23
+	if version <= 1.23 {
+		version = 1.23
 	}
 
 	// trim the patch value from the latest go version
@@ -168,7 +192,7 @@ func validateRun() error {
 	}
 
 	if version < newestGoVersion - 0.01 {
-		return fmt.Errorf("go version %v is no longer supported. Please upgrade to version %v", version, newestGoVersion)
+        return &ValidationError{Message: fmt.Sprintf("go version %v is no longer supported. Please upgrade to version %v", version, newestGoVersion)}
 	} else if version == newestGoVersion - 0.01 {
 		// We'll give a PR comment to the Author to warn them about the need to upgrade
 		fmt.Printf("Warning: This go version (%v) is nearing deprecation. Please upgrade to version %v\n", version, newestGoVersion)
