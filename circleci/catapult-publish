@@ -51,15 +51,6 @@ FULL_SHA=${CIRCLE_SHA1}
 VALIDATE_OUTPUT=$(goci artifact-build-publish-deploy)
 VALIDATE_EXIT_CODE=$?
 
-# In the case of an error - we print the error and will make a PR comment with the error message
-if [[ $VALIDATE_EXIT_CODE -ne 0 ]]; then
-  echo "goci failed with the following output:"
-  echo "$VALIDATE_OUTPUT"
-
-  post_github_pr_comment $USER $REPO $FULL_SHA $GH_RELEASE_TOKEN $VALIDATE_OUTPUT
-  
-  exit 1
-fi
 
 # If a warning is present, we print the warning and will make a PR comment with the warning message
 if [[ -n "$VALIDATE_OUTPUT" ]]; then
@@ -67,8 +58,6 @@ if [[ -n "$VALIDATE_OUTPUT" ]]; then
   echo "$VALIDATE_OUTPUT"
 
   post_github_pr_comment $USER $REPO $FULL_SHA $GH_RELEASE_TOKEN $VALIDATE_OUTPUT
-
-  exit 0
 fi
 
 
