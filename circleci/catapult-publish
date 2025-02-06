@@ -45,7 +45,7 @@ REPO=$CIRCLE_PROJECT_REPONAME
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 FULL_SHA=${CIRCLE_SHA1}
 
-./install-goci
+../install-goci
 
 # Run the validate step using goci and capture the output
 VALIDATE_OUTPUT=$(goci artifact-build-publish-deploy)
