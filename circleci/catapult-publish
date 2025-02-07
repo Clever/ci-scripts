@@ -47,8 +47,10 @@ FULL_SHA=${CIRCLE_SHA1}
 
 . $DIR/install-goci
 
+echo "Running goci."
 # Run the validate step using goci and capture the output
 VALIDATE_OUTPUT=$(goci artifact-build-publish-deploy)
+echo "goci completed."
 
 # If a warning is present, we print the warning and will make a PR comment with the warning message
 if [[ -n "$VALIDATE_OUTPUT" ]]; then
