@@ -57,7 +57,7 @@ if [[ -n "$VALIDATE_OUTPUT" ]]; then
   echo "goci output:"
   echo "$VALIDATE_OUTPUT"
 
-  post_github_pr_comment $USER $REPO $FULL_SHA $GH_RELEASE_TOKEN $VALIDATE_OUTPUT
+  post_github_pr_comment $USER $REPO $FULL_SHA $GH_RELEASE_TOKEN "$VALIDATE_OUTPUT"
 fi
 
 
