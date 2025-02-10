@@ -168,11 +168,17 @@ func validateRun() error {
 
 	f, err := modfile.Parse("./go.mod", fileBytes , nil)
 	if err != nil {
-    	panic(err)
+		return fmt.Errorf("failed to parse go.mod file: %v", err)
 	}
 
-	// trim the patch value from the authoring repositories go version
-	trimmedVersion := f.Go.Version[:len(f.Go.Version)-2]
+	// trim the patch value from the authoring repositories go version - if 2 dots are present
+	var trimmedVersion string
+	if strings.Count(f.Go.Version, ".") == 2 {
+		trimmedVersion = f.Go.Version[:len(f.Go.Version)-2]
+	} else {
+		trimmedVersion = f.Go.Version
+	}
+
 	version, e := strconv.ParseFloat(trimmedVersion, 64)
 
 	if e != nil {
