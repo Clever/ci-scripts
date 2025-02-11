@@ -43,6 +43,25 @@ REPO=$CIRCLE_PROJECT_REPONAME
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 FULL_SHA=${CIRCLE_SHA1}
 
+. $DIR/install-goci
+
+set +e
+echo "Running goci."
+# Run the validate step using goci and capture the output
+VALIDATE_OUTPUT=$(goci validate)
+echo "goci completed."
+
+set -e
+# If a warning is present, we print the warning and will make a PR comment with the warning message
+if [[ -n "$VALIDATE_OUTPUT" ]]; then
+  echo "goci output:"
+  echo "$VALIDATE_OUTPUT"
+
+  post_github_pr_comment $USER $REPO $FULL_SHA $GH_RELEASE_TOKEN "$VALIDATE_OUTPUT"
+fi
+
+
+
 install_yq
 
 RUN_TYPE=$(yq e '.run.type // "docker"' "launch/${APP_NAME}.yml")
