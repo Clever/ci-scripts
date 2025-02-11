@@ -79,9 +79,13 @@ post_github_pr_comment() {
   local comment_body=$5
 
   # Query the GitHub API for open PRs and find the PR number that matches the commit SHA
-  PR_NUMBER=$(curl -s "https://api.github.com/repos/$repo_owner/$repo_name/pulls?state=open" \
-      -H "Authorization: token $github_token" \
-      | jq -r --arg SHA "$sha" '.[] | select(.head.sha == $SHA) | .number')
+  API_RESPONSE=$(curl -s "https://api.github.com/repos/$repo_owner/$repo_name/pulls?state=open" \
+      -H "Authorization: token $github_token")
+
+  # Print API Response
+  echo "API Response: $API_RESPONSE"
+
+  PR_NUMBER=$(echo "$API_RESPONSE" | jq -r --arg SHA "$sha" '.[] | select(.head.sha == $SHA) | .number')
 
   # Post comment if PR number is found
   if [[ -n "$PR_NUMBER" ]]; then
