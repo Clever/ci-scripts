@@ -5,7 +5,9 @@
 REPO=$CIRCLE_PROJECT_REPONAME
 : ${CIRCLE_PROJECT_USERNAME?"Missing required env var"}
 USER=$CIRCLE_PROJECT_USERNAME
-
+: ${GITHUB_TOKEN?"Missing required env var"}
+DEFAULT_BRANCH=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+  "https://api.github.com/repos/Clever/$REPO" | jq -r '.default_branch')
 echo "frontend-test failed! As a result, your deploy will not start automatically."
 echo "If you think this is a transient issue, try re-running this job with the \"Rerun from failed\" option."
 echo "To force deploy, do the following:"
@@ -14,7 +16,7 @@ echo "2) Run the following command, replacing CIRCLE_API_TOKEN with the token fr
 echo "curl -u CIRCLE_API_TOKEN: \\
 -X POST \\
 --header \"Content-Type: application/json\" -d '{
-  \"branch\": \"master\",
+  \"branch\": \"${DEFAULT_BRANCH}\",
   \"parameters\": {
     \"force_deploy\": true
     }
