@@ -40,7 +40,7 @@ BUILD_NUM=$CIRCLE_BUILD_NUM
 : ${CIRCLE_BRANCH?"Missing required env var"}
 BRANCH=$CIRCLE_BRANCH
 : ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
-REPO=$CIRCLE_PROJECT_REPONAME
+REPO_NAME=$CIRCLE_PROJECT_REPONAME
 : ${CIRCLE_SHA1?"Missing required env var"}
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 FULL_SHA=${CIRCLE_SHA1}
@@ -59,7 +59,7 @@ if [[ -n "$VALIDATE_OUTPUT" ]]; then
   echo "goci output:"
   echo "$VALIDATE_OUTPUT"
 
-  post_github_pr_comment "$USER" "$REPO" "$FULL_SHA" "$GH_RELEASE_TOKEN" "$VALIDATE_OUTPUT"
+  post_github_pr_comment $USER $REPO_NAME $FULL_SHA $GH_RELEASE_TOKEN "$VALIDATE_OUTPUT"
 fi
 
 
@@ -77,7 +77,7 @@ fi
 
 echo "Publishing to catapult..."
 echo "Using data:"
-DATA="{\"username\":\"${USER}\",\"reponame\":\"${REPO}\",\"buildnum\":${BUILD_NUM},\"app\":{\"run_type\":\"${RUN_TYPE}\",\"id\":\"${APP_NAME}\",\"source\":\"github:Clever/${REPO}@${FULL_SHA}\",\"branch\":\"${BRANCH}\",\"artifacts\":\"docker:clever/$REPO@$SHORT_SHA\"}}"
+DATA="{\"username\":\"${USER}\",\"reponame\":\"${REPO_NAME}\",\"buildnum\":${BUILD_NUM},\"app\":{\"run_type\":\"${RUN_TYPE}\",\"id\":\"${APP_NAME}\",\"source\":\"github:Clever/${REPO_NAME}@${FULL_SHA}\",\"branch\":\"${BRANCH}\",\"artifacts\":\"docker:clever/$REPO_NAME@$SHORT_SHA\"}}"
 echo "${DATA}"
 echo "================================================================================"
 SC=$(curl -u $CATAPULT_USER:$CATAPULT_PASS \
