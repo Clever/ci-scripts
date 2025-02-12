@@ -14,7 +14,7 @@ import (
 
 var (
 	// ECRAccountID is the account ID for clever's ECR repositories.
-	ECRAccountID = envMustString("ECR_ACCOUNT_ID", true)
+	ecrAccountID = ""
 	// FullSHA1 is the full git commit SHA being built in CI.
 	FullSHA1 = envMustString("CIRCLE_SHA1", true)
 	// ShortSHA1 is the first 7 characters of the git commit SHA being
@@ -67,6 +67,13 @@ var (
 	// locally on a developers machine.
 	Local = os.Getenv("LOCAL") == "true"
 )
+
+func ECRAccountID() string {
+	if ecrAccountID == "" {
+		ecrAccountID = envMustString("ECR_ACCOUNT_ID", true)
+	}
+	return ecrAccountID
+}
 
 // AWS doesn't provide a way to get the token from a string so we will
 // use this to satisfy the interface.
