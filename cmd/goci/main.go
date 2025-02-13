@@ -105,7 +105,7 @@ func run(mode string) error {
 	}
 
 	if len(dockerTargets) > 0 {
-		dkr, err := docker.New(ctx)
+		dkr, err := docker.New(ctx, environment.OidcEcrUploadRole())
 		if err != nil {
 			return err
 		}
@@ -125,7 +125,7 @@ func run(mode string) error {
 	}
 
 	if len(lambdaTargets) > 0 {
-		lmda := lambda.New(ctx)
+		lmda := lambda.New(ctx, environment.LambdaArtifactBucketPrefix())
 
 		for artifact, t := range lambdaTargets {
 			if err = repo.ExecBuild(t.Command); err != nil {
@@ -137,13 +137,13 @@ func run(mode string) error {
 			}
 		}
 	}
-	cp := catapult.New()
+	cp := catapult.New(environment.CatapultURL(), environment.CircleUser(), environment.Repo(), environment.CircleBuildNum())
 
-	if err = cp.Publish(ctx, artifacts); err != nil {
+	if err = cp.Publish(ctx, artifacts, ); err != nil {
 		return err
 	}
 
-	if environment.Branch == "master" {
+	if environment.Branch() == "master" {
 		return cp.Deploy(ctx, appIDs)
 	}
 	return nil
@@ -151,8 +151,8 @@ func run(mode string) error {
 
 // validateRun checks the env.branch and go version to ensure the build is valid.
 func validateRun() error {
-	if strings.Contains(environment.Branch, "/") {
-        return &ValidationError{Message: fmt.Sprintf("branch name %s contains a `/` character, which is not supported by catapult", environment.Branch)}
+	if strings.Contains(environment.Branch(), "/") {
+        return &ValidationError{Message: fmt.Sprintf("branch name %s contains a `/` character, which is not supported by catapult", environment.Branch())}
 	}
 
 	latestGoVersion, err := fetchLatestGoVersion()

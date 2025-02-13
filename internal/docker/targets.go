@@ -40,9 +40,9 @@ func BuildTargets(apps map[string]*models.LaunchConfig) (map[string]DockerTarget
 		artifacts = append(artifacts, &catapult.Artifact{
 			RunType:   string(models.RunTypeDocker),
 			ID:        name,
-			Branch:    environment.Branch,
-			Source:    fmt.Sprintf("github:Clever/%s@%s", environment.Repo, environment.FullSHA1),
-			Artifacts: fmt.Sprintf("docker:clever/%s@%s", artifact, environment.ShortSHA1),
+			Branch:    environment.Branch(),
+			Source:    fmt.Sprintf("github:Clever/%s@%s", environment.Repo(), environment.FullSHA1()),
+			Artifacts: fmt.Sprintf("docker:clever/%s@%s", artifact, environment.ShortSHA1()),
 		})
 
 		// Any apps with a shared artifact only need to be built and
@@ -59,7 +59,7 @@ func BuildTargets(apps map[string]*models.LaunchConfig) (map[string]DockerTarget
 		for _, region := range environment.Regions {
 			tag := fmt.Sprintf(
 				"%s.dkr.ecr.%s.amazonaws.com/%s:%s",
-				environment.ECRAccountID, region, artifact, environment.ShortSHA1,
+				environment.ECRAccountID(), region, artifact, environment.ShortSHA1(),
 			)
 			tags = append(tags, tag)
 		}

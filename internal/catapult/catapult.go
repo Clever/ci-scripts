@@ -25,23 +25,27 @@ type Artifact = models.CatapultApplication
 // and simplified API.
 type Catapult struct {
 	client client.Client
+	catapultURL string
+	circleUser string
+	repo string
+	circleBuildNumber int64
 }
 
 // New initializes Catapult with a circle-ci-integrations client that
 // handles basic auth and discovers it's url via ci environment variables.
-func New() *Catapult {
+func New(catapultURL string, circleUser string, repo string, circleBuildNumber int64) *Catapult {
 	// circle-ci-integrations up until this app was requested against in
 	// ci via curl. Because of this the url environment variable was the
 	// full protocol, hostname and path. This cleans up the variable so
 	// we only have the proto and hostname. There are two separate
 	// variables provided to provide legacy support so clean up both
 	// possibilities
-	url := strings.TrimSuffix(environment.CatapultURL, "/v2/catapult")
+	url := strings.TrimSuffix(catapultURL, "/v2/catapult")
 	url = strings.TrimSuffix(url, "/catapult")
 	var rt http.RoundTripper = &basicAuthTransport{}
 	cli := client.New(url, fmtPrinlnLogger{}, &rt)
 	cli.SetTimeout(15 * time.Second)
-	return &Catapult{client: cli}
+	return &Catapult{client: cli, catapultURL: url, circleUser: circleUser, repo: repo, circleBuildNumber: circleBuildNumber}
 }
 
 // Publish a list of build artifacts to catapult.
@@ -52,9 +56,9 @@ func (c *Catapult) Publish(ctx context.Context, artifacts []*Artifact) error {
 		grp.Go(func() error {
 			fmt.Println("Publishing", art.ID)
 			err := c.client.PostCatapultV2(grpCtx, &models.CatapultPublishRequest{
-				Username: environment.CircleUser,
-				Reponame: environment.Repo,
-				Buildnum: environment.CircleBuildNum,
+				Username: c.circleUser,
+				Reponame: c.repo,
+				Buildnum: c.circleBuildNumber,
 				App:      art,
 			})
 			if err != nil {
@@ -81,9 +85,9 @@ func (c *Catapult) Deploy(ctx context.Context, apps []string) error {
 		fmt.Println("Deploying", app)
 		err := c.client.PostDapple(ctx, &models.DeployRequest{
 			Appname:  app,
-			Buildnum: environment.CircleBuildNum,
-			Reponame: environment.Repo,
-			Username: environment.CircleUser,
+			Buildnum: c.circleBuildNumber,
+			Reponame: c.repo,
+			Username: c.circleUser,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to deploy %s: %v", app, err)
@@ -98,7 +102,7 @@ func (c *Catapult) Deploy(ctx context.Context, apps []string) error {
 type basicAuthTransport struct{}
 
 func (ba *basicAuthTransport) RoundTrip(r *http.Request) (*http.Response, error) {
-	r.SetBasicAuth(environment.CatapultUser, environment.CatapultPassword)
+	r.SetBasicAuth(environment.CatapultUser(), environment.CatapultPassword())
 	return http.DefaultTransport.RoundTrip(r)
 }
 
