@@ -14,14 +14,14 @@ import (
 
 // Lambda wraps s3 to provide a simple API building and publishing lambdas.
 type Lambda struct {
-	awsCfg aws.Config
+	awsCfg               aws.Config
 	artifactBucketPrefix string
 }
 
 // New initializes a new Lambda handling wrapper with it's s3 client.
 func New(ctx context.Context, bucketPrefix string) *Lambda {
 	return &Lambda{
-		awsCfg: environment.AWSCfg(ctx, environment.OidcLambdaRole()),
+		awsCfg:               environment.AWSCfg(ctx, environment.OidcLambdaRole()),
 		artifactBucketPrefix: bucketPrefix,
 	}
 }

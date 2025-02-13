@@ -68,112 +68,112 @@ var (
 	Local = os.Getenv("LOCAL") == "true"
 )
 
-func ECRAccountID () string {
+func ECRAccountID() string {
 	if ecrAccountID == "" {
 		ecrAccountID = envMustString("ECR_ACCOUNT_ID", true)
 	}
 	return ecrAccountID
 }
 
-func FullSHA1 () string {
+func FullSHA1() string {
 	if fullSHA1 == "" {
 		fullSHA1 = envMustString("CIRCLE_SHA1", true)
 	}
 	return fullSHA1
 }
 
-func ShortSHA1 () string {
+func ShortSHA1() string {
 	if shortSHA1 == "" {
 		shortSHA1 = FullSHA1()[:7]
 	}
 	return shortSHA1
 }
 
-func LambdaArtifactBucketPrefix () string {
+func LambdaArtifactBucketPrefix() string {
 	if lambdaArtifactBucketPrefix == "" {
 		lambdaArtifactBucketPrefix = envMustString("LAMBDA_AWS_BUCKET", true)
 	}
 	return lambdaArtifactBucketPrefix
 }
 
-func PreviousPipelineCompare () string {
+func PreviousPipelineCompare() string {
 	if previousPipelineCompare == "" {
 		previousPipelineCompare = envMustString("PREVIOUS_PIPELINE_COMPARE", false)
 	}
 	return previousPipelineCompare
 }
 
-func PrimaryCompare () string {
+func PrimaryCompare() string {
 	if primaryCompare == "" {
 		primaryCompare = envMustString("MASTER_COMPARE", true)
 	}
 	return primaryCompare
 }
 
-func CatapultURL () string {
+func CatapultURL() string {
 	if catapultURL == "" {
 		catapultURL = envMustString("CATAPULT_URL", true)
 	}
 	return catapultURL
 }
 
-func CatapultUser () string {
+func CatapultUser() string {
 	if catapultUser == "" {
 		catapultUser = envMustString("CATAPULT_USER", true)
 	}
 	return catapultUser
 }
 
-func CatapultPassword () string {
+func CatapultPassword() string {
 	if catapultPassword == "" {
 		catapultPassword = envMustString("CATAPULT_PASS", true)
 	}
 	return catapultPassword
 }
 
-func CircleUser () string {
+func CircleUser() string {
 	if circleUser == "" {
 		circleUser = envMustString("CIRCLE_PROJECT_USERNAME", true)
 	}
 	return circleUser
 }
 
-func Repo () string {
+func Repo() string {
 	if repo == "" {
 		repo = envMustString("CIRCLE_PROJECT_REPONAME", true)
 	}
 	return repo
 }
 
-func CircleBuildNum () int64 {
+func CircleBuildNum() int64 {
 	if circleBuildNum == 0 {
 		circleBuildNum = envMustInt64("CIRCLE_BUILD_NUM", true)
 	}
 	return circleBuildNum
 }
 
-func Branch () string {
+func Branch() string {
 	if branch == "" {
 		branch = envMustString("CIRCLE_BRANCH", true)
 	}
 	return branch
 }
 
-func OidcLambdaRole () string {
+func OidcLambdaRole() string {
 	if oidcLambdaRole == "" {
 		oidcLambdaRole = envMustString("OIDC_LAMBDA_ROLE", false)
 	}
 	return oidcLambdaRole
 }
 
-func OidcEcrUploadRole () string {
+func OidcEcrUploadRole() string {
 	if oidcEcrUploadRole == "" {
 		oidcEcrUploadRole = envMustString("OIDC_ECR_UPLOAD_ROLE", false)
 	}
 	return oidcEcrUploadRole
 }
 
-func CircleOidcTokenV2 () string {
+func CircleOidcTokenV2() string {
 	if circleOidcTokenV2 == "" {
 		circleOidcTokenV2 = envMustString("CIRCLE_OIDC_TOKEN_V2", false)
 	}
