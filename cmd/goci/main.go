@@ -179,16 +179,14 @@ func validateRun() error {
 		trimmedVersion = f.Go.Version
 	}
 
-	version, e := strconv.ParseFloat(trimmedVersion, 64)
+	repoVersion, e := strconv.ParseFloat(trimmedVersion, 64)
 
 	if e != nil {
 		return fmt.Errorf("failed to parse go version: %v", e)
 	}
 
 	// We will begin enforcing this policy for go version 1.24 and above, for now set the minimum version to 1.23
-	if version <= 1.23 {
-		version = 1.23
-	}
+	var enforceGoVersionUpgrade float64 = 1.23
 
 	// trim the patch value from the latest go version
 	latestGoVersion = latestGoVersion[:len(latestGoVersion)-2]
@@ -197,11 +195,15 @@ func validateRun() error {
 		return fmt.Errorf("failed to parse go version: %v", e)
 	}
 
-	if version < newestGoVersion-0.01 {
-		return &ValidationError{Message: fmt.Sprintf("go version %v is no longer supported. Please upgrade to version %v", version, newestGoVersion)}
-	} else if version == newestGoVersion-0.01 {
+	// Once 1.23 is no longer supported, we will enforce the policy for 1.24 and above
+	if (repoVersion <= enforceGoVersionUpgrade) && (enforceGoVersionUpgrade < newestGoVersion-0.01) {
+		return &ValidationError{Message: fmt.Sprintf("Your applications go version %v is no longer supported. Please upgrade to version %v.", repoVersion, newestGoVersion)}
+	} else if repoVersion == newestGoVersion-0.01 {
 		// We'll give a PR comment to the Author to warn them about the need to upgrade
-		fmt.Printf("Warning: This go version (%v) is nearing deprecation. Please upgrade to version %v\n", version, newestGoVersion)
+		fmt.Printf("Warning: This applications go version (%v) will be out of support by the next major release. You will have until the next release before you need to upgrade to version %v\n", f.Go.Version, newestGoVersion)
+	} else if repoVersion < newestGoVersion-0.01 {
+		// We'll give a PR comment to the Author to warn them about the need to upgrade, and that their go version is out of support
+		fmt.Printf("Warning: This applications go version (%v) is out of support. You will have until the next Go version release to upgrade to version %v\n", f.Go.Version, newestGoVersion)
 	}
 
 	return nil
