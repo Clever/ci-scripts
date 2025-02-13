@@ -137,7 +137,7 @@ func run(mode string) error {
 			}
 		}
 	}
-	cp := catapult.New(environment.CatapultURL(), environment.CircleUser(), environment.Repo(), environment.CircleBuildNum())
+	cp := catapult.New()
 
 	if err = cp.Publish(ctx, artifacts, ); err != nil {
 		return err
