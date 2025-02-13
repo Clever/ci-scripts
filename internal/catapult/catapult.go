@@ -33,7 +33,7 @@ type Catapult struct {
 
 // New initializes Catapult with a circle-ci-integrations client that
 // handles basic auth and discovers it's url via ci environment variables.
-func New(catapultURL string, circleUser string, repo string, circleBuildNumber int64) *Catapult {
+func New(catapultURL, circleUser, repo string, circleBuildNumber int64) *Catapult {
 	// circle-ci-integrations up until this app was requested against in
 	// ci via curl. Because of this the url environment variable was the
 	// full protocol, hostname and path. This cleans up the variable so
