@@ -14,13 +14,15 @@ import (
 
 // Lambda wraps s3 to provide a simple API building and publishing lambdas.
 type Lambda struct {
-	awsCfg aws.Config
+	awsCfg               aws.Config
+	artifactBucketPrefix string
 }
 
 // New initializes a new Lambda handling wrapper with it's s3 client.
-func New(ctx context.Context) *Lambda {
+func New(ctx context.Context, bucketPrefix string) *Lambda {
 	return &Lambda{
-		awsCfg: environment.AWSCfg(ctx, environment.OidcLambdaRole),
+		awsCfg:               environment.AWSCfg(ctx, environment.OidcLambdaRole()),
+		artifactBucketPrefix: bucketPrefix,
 	}
 }
 
@@ -31,7 +33,7 @@ func (l *Lambda) Publish(ctx context.Context, binaryPath, artifactName string) e
 	grp, grpCtx := errgroup.WithContext(ctx)
 	for _, region := range environment.Regions {
 		region := region
-		bucket := fmt.Sprintf("%s-%s", environment.LambdaArtifactBucketPrefix, region)
+		bucket := fmt.Sprintf("%s-%s", l.artifactBucketPrefix, region)
 		key := s3Key(artifactName)
 		s3uri := fmt.Sprintf("s3://%s/%s", bucket, key)
 

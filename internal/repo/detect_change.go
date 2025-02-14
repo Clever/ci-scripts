@@ -19,9 +19,9 @@ func DetectArtifactDependencyChange(lc *models.LaunchConfig) (bool, error) {
 		return true, nil
 	}
 
-	compareRange := environment.PrimaryCompare
-	if environment.Branch == "master" {
-		compareRange = environment.PreviousPipelineCompare
+	compareRange := environment.PrimaryCompare()
+	if environment.Branch() == "master" {
+		compareRange = environment.PreviousPipelineCompare()
 	}
 
 	args := append([]string{"diff", "--name-only", compareRange, "--"}, lc.Build.Artifact.Dependencies...)

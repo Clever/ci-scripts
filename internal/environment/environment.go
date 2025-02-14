@@ -14,50 +14,50 @@ import (
 
 var (
 	// ECRAccountID is the account ID for clever's ECR repositories.
-	ECRAccountID = envMustString("ECR_ACCOUNT_ID", true)
+	ecrAccountID = ""
 	// FullSHA1 is the full git commit SHA being built in CI.
-	FullSHA1 = envMustString("CIRCLE_SHA1", true)
+	fullSHA1 = ""
 	// ShortSHA1 is the first 7 characters of the git commit SHA being
 	// built in CI.
-	ShortSHA1 = FullSHA1[:7]
+	shortSHA1 = ""
 	// LambdaArtifactBucketPrefix is the prefix of the S3 buckets which
 	// hold Clever's lambda artifacts. There are 4 total – one for each
 	// region. The naming scheme is '<prefix>-<region>'
-	LambdaArtifactBucketPrefix = envMustString("LAMBDA_AWS_BUCKET", true)
+	lambdaArtifactBucketPrefix = ""
 	// PreviousPipelineCompare is the git commit range to run change
 	// detection commands against when running for the primary branch.
-	PreviousPipelineCompare = envMustString("PREVIOUS_PIPELINE_COMPARE", false)
+	previousPipelineCompare = ""
 	// PrimaryCompare is the git commit range to run change detection
 	// commands against when running for a non-primary branch.
-	PrimaryCompare = envMustString("MASTER_COMPARE", true)
+	primaryCompare = ""
 	// CatapultURL is the dns of the circle-ci-integrations ALB
 	// including the protocol.
-	CatapultURL = envMustString("CATAPULT_URL", true)
+	catapultURL = ""
 	// CatapultUser is the username to access circle-ci-integrations via
 	// basic auth.
-	CatapultUser = envMustString("CATAPULT_USER", true)
+	catapultUser = ""
 	// CatapultPassword is the password to access circle-ci-integrations
 	// via basic auth.
-	CatapultPassword = envMustString("CATAPULT_PASS", true)
+	catapultPassword = ""
 	// CircleUser is the name of the ci user assigned by our ci
 	// environment.
-	CircleUser = envMustString("CIRCLE_PROJECT_USERNAME", true)
+	circleUser = ""
 	// Repo is the name of the repo being built in this
 	// CI run.
-	Repo = envMustString("CIRCLE_PROJECT_REPONAME", true)
+	repo = ""
 	// CircleBuildNum is the CI build number.
-	CircleBuildNum = envMustInt64("CIRCLE_BUILD_NUM", true)
+	circleBuildNum = int64(0)
 	// Branch is the git branch being built in CI.
-	Branch = envMustString("CIRCLE_BRANCH", true)
+	branch = ""
 	// OidcLambdaRole is the ARN of the role used to assume the lambda
 	// publishing role.
-	OidcLambdaRole = envMustString("OIDC_LAMBDA_ROLE", false)
+	oidcLambdaRole = ""
 	// OidcEcrUploadRole is the ARN of the role used to assume the ecr
 	// upload role.
-	OidcEcrUploadRole = envMustString("OIDC_ECR_UPLOAD_ROLE", false)
+	oidcEcrUploadRole = ""
 	// circleOidcTokenV2 is the oidc token used to assume roles in CI.
 	// It is provided by circle-ci.
-	circleOidcTokenV2 = envMustString("CIRCLE_OIDC_TOKEN_V2", false)
+	circleOidcTokenV2 = ""
 
 	// Regions is the set of regions this app should perform
 	// operations in.
@@ -67,6 +67,118 @@ var (
 	// locally on a developers machine.
 	Local = os.Getenv("LOCAL") == "true"
 )
+
+func ECRAccountID() string {
+	if ecrAccountID == "" {
+		ecrAccountID = envMustString("ECR_ACCOUNT_ID", true)
+	}
+	return ecrAccountID
+}
+
+func FullSHA1() string {
+	if fullSHA1 == "" {
+		fullSHA1 = envMustString("CIRCLE_SHA1", true)
+	}
+	return fullSHA1
+}
+
+func ShortSHA1() string {
+	if shortSHA1 == "" {
+		shortSHA1 = FullSHA1()[:7]
+	}
+	return shortSHA1
+}
+
+func LambdaArtifactBucketPrefix() string {
+	if lambdaArtifactBucketPrefix == "" {
+		lambdaArtifactBucketPrefix = envMustString("LAMBDA_AWS_BUCKET", true)
+	}
+	return lambdaArtifactBucketPrefix
+}
+
+func PreviousPipelineCompare() string {
+	if previousPipelineCompare == "" {
+		previousPipelineCompare = envMustString("PREVIOUS_PIPELINE_COMPARE", false)
+	}
+	return previousPipelineCompare
+}
+
+func PrimaryCompare() string {
+	if primaryCompare == "" {
+		primaryCompare = envMustString("MASTER_COMPARE", true)
+	}
+	return primaryCompare
+}
+
+func CatapultURL() string {
+	if catapultURL == "" {
+		catapultURL = envMustString("CATAPULT_URL", true)
+	}
+	return catapultURL
+}
+
+func CatapultUser() string {
+	if catapultUser == "" {
+		catapultUser = envMustString("CATAPULT_USER", true)
+	}
+	return catapultUser
+}
+
+func CatapultPassword() string {
+	if catapultPassword == "" {
+		catapultPassword = envMustString("CATAPULT_PASS", true)
+	}
+	return catapultPassword
+}
+
+func CircleUser() string {
+	if circleUser == "" {
+		circleUser = envMustString("CIRCLE_PROJECT_USERNAME", true)
+	}
+	return circleUser
+}
+
+func Repo() string {
+	if repo == "" {
+		repo = envMustString("CIRCLE_PROJECT_REPONAME", true)
+	}
+	return repo
+}
+
+func CircleBuildNum() int64 {
+	if circleBuildNum == 0 {
+		circleBuildNum = envMustInt64("CIRCLE_BUILD_NUM", true)
+	}
+	return circleBuildNum
+}
+
+func Branch() string {
+	if branch == "" {
+		branch = envMustString("CIRCLE_BRANCH", true)
+	}
+	return branch
+}
+
+func OidcLambdaRole() string {
+	if oidcLambdaRole == "" {
+		oidcLambdaRole = envMustString("OIDC_LAMBDA_ROLE", false)
+	}
+	return oidcLambdaRole
+}
+
+func OidcEcrUploadRole() string {
+	if oidcEcrUploadRole == "" {
+		oidcEcrUploadRole = envMustString("OIDC_ECR_UPLOAD_ROLE", false)
+	}
+	return oidcEcrUploadRole
+}
+
+func CircleOidcTokenV2() string {
+	if circleOidcTokenV2 == "" {
+		circleOidcTokenV2 = envMustString("CIRCLE_OIDC_TOKEN_V2", false)
+	}
+	return circleOidcTokenV2
+}
 
 // AWS doesn't provide a way to get the token from a string so we will
 // use this to satisfy the interface.
