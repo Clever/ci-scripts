@@ -82,12 +82,22 @@ post_github_pr_comment() {
   API_RESPONSE=$(curl -s "https://api.github.com/repos/$repo_owner/$repo_name/pulls?state=open" \
       -H "Authorization: token $github_token")
 
-  # Print API Response
-  echo "API Response: $API_RESPONSE"
-
+  # Find the PR number that matches the commit SHA
   PR_NUMBER=$(echo "$API_RESPONSE" | jq -r --arg SHA "$sha" '.[] | select(.head.sha == $SHA) | .number')
 
-  # Post comment if PR number is found
+  # Fetch existing comments
+  COMMENTS_RESPONSE=$(curl -s "https://api.github.com/repos/$repo_owner/$repo_name/issues/$PR_NUMBER/comments" \
+      -H "Authorization: token $github_token")
+
+  # Check if the comment already exists
+  EXISTING_COMMENT=$(echo "$COMMENTS_RESPONSE" | jq -r --arg BODY "$comment_body" '.[] | select(.body == $BODY)')
+
+  if [[ -n "$EXISTING_COMMENT" ]]; then
+      echo "Comment/Warning already exists. Skipping post."
+      return 0
+  fi
+
+  # Post comment if PR number is found and comment does not already exist
   if [[ -n "$PR_NUMBER" ]]; then
       curl -s -X POST "https://api.github.com/repos/$repo_owner/$repo_name/issues/$PR_NUMBER/comments" \
           -H "Authorization: token $github_token" \
