@@ -198,13 +198,10 @@ func validateRun() error {
 	// Once 1.23 is no longer supported, we will enforce the policy for 1.24 and above
 	if (repoVersion <= enforceGoVersionUpgrade) && (enforceGoVersionUpgrade < newestGoVersion-0.01) {
 		return &ValidationError{Message: fmt.Sprintf("Your applications go version %v is no longer supported. Please upgrade to version %v.", repoVersion, newestGoVersion)}
-	} else if repoVersion == newestGoVersion-0.01 {
+	} else if repoVersion <= newestGoVersion-0.01 {
 		// We'll give a PR comment to the Author to warn them about the need to upgrade
-		fmt.Printf("Warning: This applications go version (%v) will be out of support by the next major release. You will have until the next release before you need to upgrade to version %v\n", f.Go.Version, newestGoVersion)
-	} else if repoVersion < newestGoVersion-0.01 {
-		// We'll give a PR comment to the Author to warn them about the need to upgrade, and that their go version is out of support
-		fmt.Printf("Warning: This applications go version (%v) is out of support. You will have until the next Go version release to upgrade to version %v\n", f.Go.Version, newestGoVersion)
-	}
+		fmt.Printf("Warning: This applications go version will be out of support by the next major release. You will have until the next release before you need to upgrade to version %v\n", newestGoVersion)
+	} 
 
 	return nil
 }
