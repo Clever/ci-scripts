@@ -45,15 +45,17 @@ REPO_NAME=$CIRCLE_PROJECT_REPONAME
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 FULL_SHA=${CIRCLE_SHA1}
 
-. $DIR/install-goci
+cd $HOME/ci-scripts
+go build -o "$HOME/ci-scripts/bin/goci" ./cmd/goci
 
-set +e
+echo "Moving to Circle CI Working Directory"
+cd "${CIRCLE_WORKING_DIRECTORY/#~/$HOME}"
+
 echo "Running goci."
 # Run the validate step using goci and capture the output
-VALIDATE_OUTPUT=$(goci validate)
+VALIDATE_OUTPUT=$("$HOME/ci-scripts/bin/goci" validate)
 echo "goci completed."
 
-set -e
 # If a warning is present, we print the warning and will make a PR comment with the warning message
 if [[ -n "$VALIDATE_OUTPUT" ]]; then
   echo "goci output:"
