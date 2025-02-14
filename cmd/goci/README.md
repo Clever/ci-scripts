@@ -34,7 +34,6 @@ Since goci is just a go app, it can be run locally after building the binary. go
 There is a [test app](./testApp) in this repository which you can use to run goci on locally and test various build configurations. Additionally, you can leverage the built in integrations tests in https://github.com/Clever/circleci-orbs/tree/master, which call goci to test new builds of goci in CI.
 
 ### Running locally
-
 Running goci locally is not easy because it leverages a lot of variables set in our CI environments. Generally it would be easier to use the private orbs repo, or make a branch on another app like catapult and pull in the development branch of goci there for testing in CI. If you need to run locally, you can view each of the variables required for local runs in the environment file and provide them all to the command.
 
 ```bash
