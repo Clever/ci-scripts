@@ -45,6 +45,7 @@ REPO_NAME=$CIRCLE_PROJECT_REPONAME
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 FULL_SHA=${CIRCLE_SHA1}
 
+set +e
 cd $HOME/ci-scripts
 go build -o "$HOME/ci-scripts/bin/goci" ./cmd/goci
 
@@ -54,8 +55,20 @@ cd "${CIRCLE_WORKING_DIRECTORY/#~/$HOME}"
 echo "Running goci."
 # Run the validate step using goci and capture the output
 VALIDATE_OUTPUT=$("$HOME/ci-scripts/bin/goci" validate)
+GOCI_EXIT_CODE=$?
 echo "goci completed."
 
+# If goci fails, we exit with the goci exit code and comment on the PR with the goci output
+if [[ $GOCI_EXIT_CODE -ne 0 ]]; then
+  echo "goci failed with exit code $GOCI_EXIT_CODE"
+  echo "goci output:"
+  echo "$VALIDATE_OUTPUT"
+
+  post_github_pr_comment $USER $REPO_NAME $FULL_SHA $GH_RELEASE_TOKEN "$VALIDATE_OUTPUT"
+  exit $GOCI_EXIT_CODE
+fi
+
+set -e
 # If a warning is present, we print the warning and will make a PR comment with the warning message
 if [[ -n "$VALIDATE_OUTPUT" ]]; then
   echo "goci output:"
