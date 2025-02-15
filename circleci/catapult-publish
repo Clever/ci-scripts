@@ -54,13 +54,17 @@ echo "Running goci."
 VALIDATE_OUTPUT=$(goci validate)
 GOCI_EXIT_CODE=$?
 
-# If goci fails, we exit with the goci exit code and comment on the PR with the goci output
-if [[ $GOCI_EXIT_CODE -ne 0 ]]; then
-  echo "goci failed with exit code $GOCI_EXIT_CODE"
+# If goci fails with exit code 2, we print the output and will make a PR comment with the output message
+if [[ $GOCI_EXIT_CODE -eq 2 ]]; then
   echo "goci output:"
   echo "$VALIDATE_OUTPUT"
 
   post_github_pr_comment $USER $REPO_NAME $FULL_SHA $GH_RELEASE_TOKEN "$VALIDATE_OUTPUT"
+fi
+
+# If goci fails with any other exit code, we exit with the same exit code
+if [[ $GOCI_EXIT_CODE -ne 0 ]]; then
+  echo "goci failed with exit code $GOCI_EXIT_CODE"
   exit $GOCI_EXIT_CODE
 fi
 
