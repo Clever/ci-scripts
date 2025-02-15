@@ -1,7 +1,8 @@
-v1.0.5
-- Supporting lazy loading of environment variables
+v1.0.6
+Updating goci warning message
 
 Previously:
+- Supporting lazy loading of environment variables
 - updated parsing of go version from go.mod
 - goci now supports validation of go version
 - variable MASTER_COMPARE is now required for local dev

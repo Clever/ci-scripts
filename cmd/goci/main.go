@@ -200,9 +200,8 @@ func validateRun() error {
 		return &ValidationError{Message: fmt.Sprintf("Your applications go version %v is no longer supported. Please upgrade to version %v.", repoVersion, newestGoVersion)}
 	} else if repoVersion <= newestGoVersion-0.01 {
 		// We'll give a PR comment to the Author to warn them about the need to upgrade
-		fmt.Printf("Warning: This applications go version will be out of support by the next major release. You will have until the next release before you need to upgrade to version %v\n", newestGoVersion)
+		fmt.Printf("A new Go version is out. Your current version (%v) is supported by the Go team for an additional 6 months. After that, CI will fail if it is not upgraded.", f.Go.Version)
 	}
-
 	return nil
 }
 
