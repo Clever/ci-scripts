@@ -155,7 +155,7 @@ func validateRun() error {
 		return &ValidationError{Message: fmt.Sprintf("branch name %s contains a `/` character, which is not supported by catapult", environment.Branch())}
 	}
 
-	latestGoVersion, err := fetchLatestGoVersion()
+	latestGoVersion, releaseDate, err := fetchLatestGoVersion()
 	if err != nil {
 		return fmt.Errorf("failed to fetch latest Go version: %v", err)
 	}
@@ -200,48 +200,40 @@ func validateRun() error {
 		return &ValidationError{Message: fmt.Sprintf("Your applications go version %v is no longer supported. Please upgrade to version %v.", repoVersion, newestGoVersion)}
 	} else if repoVersion <= newestGoVersion-0.01 {
 		// We'll give a PR comment to the Author to warn them about the need to upgrade
-		fmt.Printf("Warning: This applications go version will be out of support by the next major release. You will have until the next release before you need to upgrade to version %v\n", newestGoVersion)
+		fmt.Printf("A new Go version is out, released on (%v). After 6 months of release, Your current Go version (%v) will fail CI workflows if it is not upgraded.\n", releaseDate, f.Go.Version)
 	}
-
 	return nil
 }
 
-// fetchLatestGoVersion fetches the latest Go version from the official Go download page.
-func fetchLatestGoVersion() (string, error) {
-	// official Go download page
-	resp, err := http.Get("https://go.dev/dl/")
-	if err != nil {
-		return "", fmt.Errorf("failed to fetch Go download page: %v", err)
-	}
-	defer resp.Body.Close()
+// fetchLatestGoVersion fetches the latest Go version and its release date from the official Go release notes page.
+func fetchLatestGoVersion() (string, string, error) {
+    // Fetch the Go release notes page
+    resp, err := http.Get("https://go.dev/doc/devel/release")
+    if err != nil {
+        return "", "", fmt.Errorf("failed to fetch Go release notes page: %v", err)
+    }
+    defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("failed to fetch Go download page: status code %d", resp.StatusCode)
-	}
+    if resp.StatusCode != http.StatusOK {
+        return "", "", fmt.Errorf("failed to fetch Go release notes page: status code %d", resp.StatusCode)
+    }
 
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %v", err)
-	}
-	body := string(bodyBytes)
+    bodyBytes, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return "", "", fmt.Errorf("failed to read response body: %v", err)
+    }
+    body := string(bodyBytes)
 
-	// Extract the latest macOS (darwin) download URL
-	re := regexp.MustCompile(`/dl/go[0-9]+\.[0-9]+\.[0-9]+\.darwin-arm64.pkg`)
-	matches := re.FindStringSubmatch(body)
-	if len(matches) == 0 {
-		return "", fmt.Errorf("failed to find Go download URL")
-	}
-	goURL := "https://go.dev" + matches[0]
+    // Extract the latest Go version and its release date
+    re := regexp.MustCompile(`go([0-9]+\.[0-9]+\.[0-9]+) \(released ([0-9]{4}-[0-9]{2}-[0-9]{2})\)`)
+    matches := re.FindStringSubmatch(body)
+    if len(matches) < 3 {
+        return "", "", fmt.Errorf("failed to find Go version and release date")
+    }
+    goVersion := matches[1]
+    releaseDate := matches[2]
 
-	// Extract the Go version number from the URL
-	reVersion := regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+`)
-	versionMatches := reVersion.FindStringSubmatch(goURL)
-	if len(versionMatches) == 0 {
-		return "", fmt.Errorf("failed to find Go version in URL")
-	}
-	goVersion := versionMatches[0]
-
-	return goVersion, nil
+    return goVersion, releaseDate, nil
 }
 
 // allAppsBuilt returns an error if any apps are missing a build artifact.
