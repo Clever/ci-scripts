@@ -5,7 +5,7 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-GITHUB_TOKEN=$GH_RELEASE_TOKEN
+GITHUB_TOKEN=$1
 if [[ -z $GITHUB_TOKEN ]]; then echo "Missing arg1 GITHUB_TOKEN" && exit 1; fi
 
 # Configuration

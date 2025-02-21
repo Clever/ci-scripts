@@ -28,8 +28,6 @@ if [[ -z $CATAPULT_PASS ]]; then echo "Missing arg3 CATAPULT_PASS" && exit 1; fi
 APP_NAME=$4
 if [[ -z $APP_NAME ]]; then echo "Missing arg4 APP_NAME" && exit 1; fi
 
-if [[ -z $GH_RELEASE_TOKEN ]]; then echo "Missing GH_RELEASE_TOKEN" && exit 1; fi
-
 # Set automatically by CircleCI
 : ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
 REPO=$CIRCLE_PROJECT_REPONAME
@@ -40,45 +38,10 @@ BUILD_NUM=$CIRCLE_BUILD_NUM
 : ${CIRCLE_BRANCH?"Missing required env var"}
 BRANCH=$CIRCLE_BRANCH
 : ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
-REPO_NAME=$CIRCLE_PROJECT_REPONAME
+REPO=$CIRCLE_PROJECT_REPONAME
 : ${CIRCLE_SHA1?"Missing required env var"}
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 FULL_SHA=${CIRCLE_SHA1}
-
-
-. $DIR/install-goci
-
-set +e
-echo "Running goci."
-# Run the validate step using goci and capture the output
-VALIDATE_OUTPUT=$(goci validate)
-GOCI_EXIT_CODE=$?
-
-# If goci fails with exit code 2, we print the output and will make a PR comment with the output message
-if [[ $GOCI_EXIT_CODE -eq 2 ]]; then
-  echo "goci output:"
-  echo "$VALIDATE_OUTPUT"
-
-  post_github_pr_comment $USER $REPO_NAME $FULL_SHA $GH_RELEASE_TOKEN "$VALIDATE_OUTPUT"
-fi
-
-# If goci fails with any other exit code, we exit with the same exit code
-if [[ $GOCI_EXIT_CODE -ne 0 ]]; then
-  echo "goci failed with exit code $GOCI_EXIT_CODE"
-  exit $GOCI_EXIT_CODE
-fi
-
-set -e
-# If a warning is present, we print the warning and will make a PR comment with the warning message
-if [[ -n "$VALIDATE_OUTPUT" ]]; then
-  echo "goci warning:"
-  echo "$VALIDATE_OUTPUT"
-
-  post_github_pr_comment $USER $REPO_NAME $FULL_SHA $GH_RELEASE_TOKEN "$VALIDATE_OUTPUT"
-fi
-
-echo "goci passed."
-
 
 install_yq
 
@@ -93,7 +56,7 @@ fi
 
 echo "Publishing to catapult..."
 echo "Using data:"
-DATA="{\"username\":\"${USER}\",\"reponame\":\"${REPO_NAME}\",\"buildnum\":${BUILD_NUM},\"app\":{\"run_type\":\"${RUN_TYPE}\",\"id\":\"${APP_NAME}\",\"source\":\"github:Clever/${REPO_NAME}@${FULL_SHA}\",\"branch\":\"${BRANCH}\",\"artifacts\":\"docker:clever/$REPO_NAME@$SHORT_SHA\"}}"
+DATA="{\"username\":\"${USER}\",\"reponame\":\"${REPO}\",\"buildnum\":${BUILD_NUM},\"app\":{\"run_type\":\"${RUN_TYPE}\",\"id\":\"${APP_NAME}\",\"source\":\"github:Clever/${REPO}@${FULL_SHA}\",\"branch\":\"${BRANCH}\",\"artifacts\":\"docker:clever/$REPO@$SHORT_SHA\"}}"
 echo "${DATA}"
 echo "================================================================================"
 SC=$(curl -u $CATAPULT_USER:$CATAPULT_PASS \
