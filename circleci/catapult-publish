@@ -65,6 +65,7 @@ fi
 # If goci fails with any other exit code, we exit with the same exit code
 if [[ $GOCI_EXIT_CODE -ne 0 ]]; then
   echo "goci failed with exit code $GOCI_EXIT_CODE"
+  echo "$VALIDATE_OUTPUT"
   exit $GOCI_EXIT_CODE
 fi
 
