@@ -55,9 +55,6 @@ var (
 	// OidcEcrUploadRole is the ARN of the role used to assume the ecr
 	// upload role.
 	oidcEcrUploadRole = ""
-	// circleOidcTokenV2 is the oidc token used to assume roles in CI.
-	// It is provided by circle-ci.
-	circleOidcTokenV2 = ""
 
 	// Regions is the set of regions this app should perform
 	// operations in.
@@ -173,19 +170,12 @@ func OidcEcrUploadRole() string {
 	return oidcEcrUploadRole
 }
 
-func CircleOidcTokenV2() string {
-	if circleOidcTokenV2 == "" {
-		circleOidcTokenV2 = envMustString("CIRCLE_OIDC_TOKEN_V2", false)
-	}
-	return circleOidcTokenV2
-}
-
 // AWS doesn't provide a way to get the token from a string so we will
 // use this to satisfy the interface.
 type tokenRetriever struct{}
 
 func (tokenRetriever) GetIdentityToken() ([]byte, error) {
-	return []byte(circleOidcTokenV2), nil
+	return []byte(envMustString("CIRCLE_OIDC_TOKEN_V2", false)), nil
 }
 
 // AWSCfg initializes an AWS config or exits with code 0 on failure. If
