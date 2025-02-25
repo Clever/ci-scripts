@@ -1,7 +1,8 @@
-v1.0.6
-Updating goci warning message, including recent version release date
+v1.0.7
+bugfix: dont lazy load the oidc token
 
 Previously:
+- Updating goci warning message, including recent version release date
 - Supporting lazy loading of environment variables
 - updated parsing of go version from go.mod
 - goci now supports validation of go version
