@@ -53,7 +53,7 @@ cd "${CIRCLE_WORKING_DIRECTORY/#~/$HOME}"
 set +e
 echo "Running goci..."
 
-VALIDATE_OUTPUT=$(/usr/local/bin/goci validate)
+VALIDATE_OUTPUT=$($HOME/ci-scripts/bin/goci validate)
 GOCI_EXIT_CODE=$?
 
 # If goci fails with exit code 2, there was a validation error: print the output and make a PR comment with the output message
