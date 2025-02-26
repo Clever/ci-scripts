@@ -34,6 +34,14 @@ func (e *ValidationError) Error() string {
 	return e.Message
 }
 
+type GoModFileNotFoundError struct {
+	Message string
+}
+
+func (e *GoModFileNotFoundError) Error() string {
+	return e.Message
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("requires 1 argument.", usage)
@@ -41,7 +49,10 @@ func main() {
 	}
 	mode := os.Args[1]
 	if err := run(mode); err != nil {
-		if _, ok := err.(*ValidationError); ok {
+		if _, ok := err.(*GoModFileNotFoundError); ok {
+			fmt.Println("Go Mod file not found error:", err)
+			os.Exit(3)
+		} else if _, ok := err.(*ValidationError); ok {
 			fmt.Println("Validation error:", err)
 			os.Exit(2) // Use a different exit code for validation errors
 		} else {
@@ -163,7 +174,7 @@ func validateRun() error {
 	goModPath := "./go.mod"
 	fileBytes, err := os.ReadFile(goModPath)
 	if err != nil {
-		return fmt.Errorf("failed to read go.mod file: %v", err)
+		return &GoModFileNotFoundError{Message: fmt.Sprintf("failed to read go.mod file: %v", err)}
 	}
 
 	f, err := modfile.Parse("./go.mod", fileBytes, nil)
@@ -207,33 +218,33 @@ func validateRun() error {
 
 // fetchLatestGoVersion fetches the latest Go version and its release date from the official Go release notes page.
 func fetchLatestGoVersion() (string, string, error) {
-    // Fetch the Go release notes page
-    resp, err := http.Get("https://go.dev/doc/devel/release")
-    if err != nil {
-        return "", "", fmt.Errorf("failed to fetch Go release notes page: %v", err)
-    }
-    defer resp.Body.Close()
+	// Fetch the Go release notes page
+	resp, err := http.Get("https://go.dev/doc/devel/release")
+	if err != nil {
+		return "", "", fmt.Errorf("failed to fetch Go release notes page: %v", err)
+	}
+	defer resp.Body.Close()
 
-    if resp.StatusCode != http.StatusOK {
-        return "", "", fmt.Errorf("failed to fetch Go release notes page: status code %d", resp.StatusCode)
-    }
+	if resp.StatusCode != http.StatusOK {
+		return "", "", fmt.Errorf("failed to fetch Go release notes page: status code %d", resp.StatusCode)
+	}
 
-    bodyBytes, err := io.ReadAll(resp.Body)
-    if err != nil {
-        return "", "", fmt.Errorf("failed to read response body: %v", err)
-    }
-    body := string(bodyBytes)
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to read response body: %v", err)
+	}
+	body := string(bodyBytes)
 
-    // Extract the latest Go version and its release date
-    re := regexp.MustCompile(`go([0-9]+\.[0-9]+\.[0-9]+) \(released ([0-9]{4}-[0-9]{2}-[0-9]{2})\)`)
-    matches := re.FindStringSubmatch(body)
-    if len(matches) < 3 {
-        return "", "", fmt.Errorf("failed to find Go version and release date")
-    }
-    goVersion := matches[1]
-    releaseDate := matches[2]
+	// Extract the latest Go version and its release date
+	re := regexp.MustCompile(`go([0-9]+\.[0-9]+\.[0-9]+) \(released ([0-9]{4}-[0-9]{2}-[0-9]{2})\)`)
+	matches := re.FindStringSubmatch(body)
+	if len(matches) < 3 {
+		return "", "", fmt.Errorf("failed to find Go version and release date")
+	}
+	goVersion := matches[1]
+	releaseDate := matches[2]
 
-    return goVersion, releaseDate, nil
+	return goVersion, releaseDate, nil
 }
 
 // allAppsBuilt returns an error if any apps are missing a build artifact.
