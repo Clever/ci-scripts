@@ -177,7 +177,7 @@ func validateRun() error {
 		return &GoModFileNotFoundError{Message: fmt.Sprintf("failed to read go.mod file: %v", err)}
 	}
 
-	f, err := modfile.Parse("./go.mod", fileBytes, nil)
+	f, err := modfile.Parse("../go.mod", fileBytes, nil)
 	if err != nil {
 		return fmt.Errorf("failed to parse go.mod file: %v", err)
 	}
