@@ -57,22 +57,13 @@ VALIDATE_OUTPUT=$($HOME/ci-scripts/bin/goci validate)
 GOCI_EXIT_CODE=$?
 
 if [[ $GOCI_EXIT_CODE -eq 3 ]]; then
-  echo "goci warning:"
-  echo $VALIDATE_OUTPUT
-  echo $GOCI_EXIT_CODE
-fi
-
-# If goci fails with exit code 2, there was a validation error: print the output and make a PR comment with the output message
-if [[ $GOCI_EXIT_CODE -eq 2 ]]; then
-  echo "goci output:"
+  echo "skipping goci validation - no go.mod found"
+elif [[ $GOCI_EXIT_CODE -eq 2 ]]; then
+  echo "goci failed with exit code $GOCI_EXIT_CODE"
   echo "$VALIDATE_OUTPUT"
-
   post_github_pr_comment $USER $REPO_NAME $FULL_SHA $GH_RELEASE_TOKEN "$VALIDATE_OUTPUT"
   exit $GOCI_EXIT_CODE
-fi
-
-# If goci fails with any other exit code, we exit with the same exit code: no pr comment is made
-if [[ $GOCI_EXIT_CODE -eq 1 ]]; then
+elif [[ $GOCI_EXIT_CODE -eq 1 ]]; then
   echo "goci failed with exit code $GOCI_EXIT_CODE"
   echo "$VALIDATE_OUTPUT"
   exit $GOCI_EXIT_CODE
