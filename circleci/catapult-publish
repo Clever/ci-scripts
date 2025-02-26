@@ -44,6 +44,46 @@ REPO_NAME=$CIRCLE_PROJECT_REPONAME
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 FULL_SHA=${CIRCLE_SHA1}
 
+cd $HOME/ci-scripts
+go build -o "$HOME/ci-scripts/bin/goci" ./cmd/goci
+
+echo "Moving to Circle CI Working Directory"
+cd "${CIRCLE_WORKING_DIRECTORY/#~/$HOME}"
+
+set +e
+echo "Running goci..."
+
+VALIDATE_OUTPUT=$(/usr/local/bin/goci validate)
+GOCI_EXIT_CODE=$?
+
+# If goci fails with exit code 2, there was a validation error: print the output and make a PR comment with the output message
+if [[ $GOCI_EXIT_CODE -eq 2 ]]; then
+  echo "goci output:"
+  echo "$VALIDATE_OUTPUT"
+
+  post_github_pr_comment $USER $REPO_NAME $FULL_SHA $GH_RELEASE_TOKEN "$VALIDATE_OUTPUT"
+  exit $GOCI_EXIT_CODE
+fi
+
+# If goci fails with any other exit code, we exit with the same exit code: no pr comment is made
+if [[ $GOCI_EXIT_CODE -eq 1 ]]; then
+  echo "goci failed with exit code $GOCI_EXIT_CODE"
+  echo "$VALIDATE_OUTPUT"
+  exit $GOCI_EXIT_CODE
+fi
+
+set -e
+
+# If a warning is present for a go based repo, we print the warning and will make a PR comment with the warning message
+if [[ -n "$VALIDATE_OUTPUT" && $GOCI_EXIT_CODE -ne 3 ]]; then
+  echo "goci warning:"
+  echo "$VALIDATE_OUTPUT"
+
+  post_github_pr_comment $USER $REPO_NAME $FULL_SHA $GH_RELEASE_TOKEN "$VALIDATE_OUTPUT"
+fi
+
+echo "goci passed."
+
 install_yq
 
 RUN_TYPE=$(yq e '.run.type // "docker"' "launch/${APP_NAME}.yml")
