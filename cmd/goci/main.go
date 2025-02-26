@@ -171,13 +171,13 @@ func validateRun() error {
 		return fmt.Errorf("failed to fetch latest Go version: %v", err)
 	}
 
-	goModPath := "./go.mod"
+	goModPath := "../go.mod"
 	fileBytes, err := os.ReadFile(goModPath)
 	if err != nil {
 		return &GoModFileNotFoundError{Message: fmt.Sprintf("failed to read go.mod file: %v", err)}
 	}
 
-	f, err := modfile.Parse("../go.mod", fileBytes, nil)
+	f, err := modfile.Parse("./go.mod", fileBytes, nil)
 	if err != nil {
 		return fmt.Errorf("failed to parse go.mod file: %v", err)
 	}
