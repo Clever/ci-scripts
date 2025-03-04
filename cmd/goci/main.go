@@ -34,14 +34,6 @@ func (e *ValidationError) Error() string {
 	return e.Message
 }
 
-type GoModFileNotFoundError struct {
-	Message string
-}
-
-func (e *GoModFileNotFoundError) Error() string {
-	return e.Message
-}
-
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("requires 1 argument.", usage)
@@ -49,10 +41,7 @@ func main() {
 	}
 	mode := os.Args[1]
 	if err := run(mode); err != nil {
-		if _, ok := err.(*GoModFileNotFoundError); ok {
-			fmt.Println("Go Mod file not found error:", err)
-			os.Exit(3)
-		} else if _, ok := err.(*ValidationError); ok {
+		if _, ok := err.(*ValidationError); ok {
 			fmt.Println("Validation error:", err)
 			os.Exit(2) // Use a different exit code for validation errors
 		} else {
@@ -174,7 +163,8 @@ func validateRun() error {
 	goModPath := "./go.mod"
 	fileBytes, err := os.ReadFile(goModPath)
 	if err != nil {
-		return &GoModFileNotFoundError{Message: fmt.Sprintf("failed to read go.mod file: %v", err)}
+		// If the go.mod file is not found, we will skip the go version check
+		return nil
 	}
 
 	f, err := modfile.Parse("./go.mod", fileBytes, nil)
