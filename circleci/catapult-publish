@@ -44,6 +44,38 @@ REPO_NAME=$CIRCLE_PROJECT_REPONAME
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 FULL_SHA=${CIRCLE_SHA1}
 
+. $DIR/install-goci
+
+set +e
+echo "Running goci..."
+
+VALIDATE_OUTPUT=$(goci validate)
+GOCI_EXIT_CODE=$?
+
+
+if [[ $GOCI_EXIT_CODE -eq 2 ]]; then
+  echo "goci failed with exit code $GOCI_EXIT_CODE"
+  echo "$VALIDATE_OUTPUT"
+  post_github_pr_comment $USER $REPO_NAME $FULL_SHA $GH_RELEASE_TOKEN "$VALIDATE_OUTPUT"
+  exit $GOCI_EXIT_CODE
+elif [[ $GOCI_EXIT_CODE -eq 1 ]]; then
+  echo "goci failed with exit code $GOCI_EXIT_CODE"
+  echo "$VALIDATE_OUTPUT"
+  exit $GOCI_EXIT_CODE
+fi
+
+set -e
+
+# If a warning is present for a go based repo, we print the warning and will make a PR comment with the warning message
+if [[ -n "$VALIDATE_OUTPUT"  ]]; then
+  echo "goci warning:"
+  echo "$VALIDATE_OUTPUT"
+
+  post_github_pr_comment $USER $REPO_NAME $FULL_SHA $GH_RELEASE_TOKEN "$VALIDATE_OUTPUT"
+fi
+
+echo "goci passed."
+
 install_yq
 
 RUN_TYPE=$(yq e '.run.type // "docker"' "launch/${APP_NAME}.yml")
