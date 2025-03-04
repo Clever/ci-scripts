@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -162,9 +163,11 @@ func validateRun() error {
 
 	goModPath := "./go.mod"
 	fileBytes, err := os.ReadFile(goModPath)
-	if err != nil {
-		// If the go.mod file is not found, we will skip the go version check
+	// If the go.mod file is not found, we will skip the go version check
+	if errors.Is(err, os.ErrNotExist) {
 		return nil
+	} else if err != nil {
+		return fmt.Errorf("failed to read go.mod file: %v", err)
 	}
 
 	f, err := modfile.Parse("./go.mod", fileBytes, nil)
