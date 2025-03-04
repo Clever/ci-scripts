@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -162,7 +163,10 @@ func validateRun() error {
 
 	goModPath := "./go.mod"
 	fileBytes, err := os.ReadFile(goModPath)
-	if err != nil {
+	// If the go.mod file is not found, we will skip the go version check
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	} else if err != nil {
 		return fmt.Errorf("failed to read go.mod file: %v", err)
 	}
 
@@ -207,33 +211,33 @@ func validateRun() error {
 
 // fetchLatestGoVersion fetches the latest Go version and its release date from the official Go release notes page.
 func fetchLatestGoVersion() (string, string, error) {
-    // Fetch the Go release notes page
-    resp, err := http.Get("https://go.dev/doc/devel/release")
-    if err != nil {
-        return "", "", fmt.Errorf("failed to fetch Go release notes page: %v", err)
-    }
-    defer resp.Body.Close()
+	// Fetch the Go release notes page
+	resp, err := http.Get("https://go.dev/doc/devel/release")
+	if err != nil {
+		return "", "", fmt.Errorf("failed to fetch Go release notes page: %v", err)
+	}
+	defer resp.Body.Close()
 
-    if resp.StatusCode != http.StatusOK {
-        return "", "", fmt.Errorf("failed to fetch Go release notes page: status code %d", resp.StatusCode)
-    }
+	if resp.StatusCode != http.StatusOK {
+		return "", "", fmt.Errorf("failed to fetch Go release notes page: status code %d", resp.StatusCode)
+	}
 
-    bodyBytes, err := io.ReadAll(resp.Body)
-    if err != nil {
-        return "", "", fmt.Errorf("failed to read response body: %v", err)
-    }
-    body := string(bodyBytes)
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to read response body: %v", err)
+	}
+	body := string(bodyBytes)
 
-    // Extract the latest Go version and its release date
-    re := regexp.MustCompile(`go([0-9]+\.[0-9]+\.[0-9]+) \(released ([0-9]{4}-[0-9]{2}-[0-9]{2})\)`)
-    matches := re.FindStringSubmatch(body)
-    if len(matches) < 3 {
-        return "", "", fmt.Errorf("failed to find Go version and release date")
-    }
-    goVersion := matches[1]
-    releaseDate := matches[2]
+	// Extract the latest Go version and its release date
+	re := regexp.MustCompile(`go([0-9]+\.[0-9]+\.[0-9]+) \(released ([0-9]{4}-[0-9]{2}-[0-9]{2})\)`)
+	matches := re.FindStringSubmatch(body)
+	if len(matches) < 3 {
+		return "", "", fmt.Errorf("failed to find Go version and release date")
+	}
+	goVersion := matches[1]
+	releaseDate := matches[2]
 
-    return goVersion, releaseDate, nil
+	return goVersion, releaseDate, nil
 }
 
 // allAppsBuilt returns an error if any apps are missing a build artifact.
