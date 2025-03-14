@@ -5,9 +5,6 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-GITHUB_TOKEN=$1
-if [[ -z $GITHUB_TOKEN ]]; then echo "Missing arg1 GITHUB_TOKEN" && exit 1; fi
-
 # Configuration
 REPO="Clever/ci-scripts"
 INSTALL_DIR="/usr/local/bin"
@@ -21,7 +18,7 @@ fi
 
 # Fetch the latest release
 echo "Fetching the latest release from $REPO..."
-LATEST_RELEASE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$REPO/releases/latest")
+LATEST_RELEASE=$(curl -s "https://api.github.com/repos/$REPO/releases/latest")
 
 if [ -z "$LATEST_RELEASE" ]; then
   echo "Error: No latest release found. Check repository permissions."
