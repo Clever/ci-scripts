@@ -1,0 +1,33 @@
+name: Reusable LaunchDarkly Code References
+
+on:
+  workflow_call:
+    secrets:
+      LD_ACCESS_TOKEN:
+        required: true
+      GITHUB_TOKEN:
+        required: true
+    inputs:
+      project-key:
+        required: false
+        type: string
+        default: 'default'
+      environment-key:
+        required: false
+        type: string
+        default: 'production'
+
+jobs:
+  find-flags:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Find flags
+        uses: launchdarkly/find-code-references-in-pull-request@v2
+        id: find-flags
+        with:
+          project-key: ${{ inputs.project-key }}
+          environment-key: ${{ inputs.environment-key }}
+          access-token: ${{ secrets.LD_ACCESS_TOKEN }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
