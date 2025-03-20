@@ -5,7 +5,7 @@ on:
     secrets:
       LD_ACCESS_TOKEN:
         required: true
-      GITHUB_TOKEN:
+      GH_TOKEN:
         required: true
     inputs:
       project-key:
@@ -18,7 +18,7 @@ on:
         default: 'production'
 
 jobs:
-  find-flags:
+  find-ff:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -30,4 +30,4 @@ jobs:
           project-key: ${{ inputs.project-key }}
           environment-key: ${{ inputs.environment-key }}
           access-token: ${{ secrets.LD_ACCESS_TOKEN }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: ${{ secrets.GH_TOKEN }}
