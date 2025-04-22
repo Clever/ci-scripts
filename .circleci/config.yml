@@ -3,7 +3,7 @@ jobs:
   build:
     working_directory: ~/Clever/ci-scripts
     docker:
-    - image: cimg/go:1.22
+    - image: cimg/go:1.24
     environment:
       GOPRIVATE: github.com/Clever/*
     steps:
