@@ -1,8 +1,6 @@
 module github.com/Clever/ci-scripts
 
-go 1.22.0
-
-toolchain go1.22.11
+go 1.24
 
 require (
 	github.com/Clever/catapult/gen-go/models v1.203.1
