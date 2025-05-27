@@ -43,13 +43,13 @@ func New() *Catapult {
 	cli.SetTimeout(15 * time.Second)
 	return &Catapult{client: cli}
 }
-func (c *Catapult) SyncCatalogEntity(ctx context.Context, entity *models.CatalogEntity) error {
-	fmt.Println("Syncing catalog entity", entity.Name)
-	err := c.client.SyncCatalogEntity(ctx, &models.SyncCatalogEntityInput{
-		Entity: entity,
-	})
+
+// SyncCatalogEntity syncs passed in entity to catalog-config by calling circle-ci-integrations
+func (c *Catapult) SyncCatalogEntity(ctx context.Context, entity *models.SyncCatalogEntityInput) error {
+	fmt.Println("Syncing catalog entity", entity.Entity)
+	err := c.client.SyncCatalogEntity(ctx, entity)
 	if err != nil {
-		return fmt.Errorf("failed to sync catalog entity %s with catalogue config: %v", entity.Name, err)
+		return fmt.Errorf("failed to sync catalog entity %s with catalogue config: %v", entity.Entity, err)
 	}
 	return nil
 }

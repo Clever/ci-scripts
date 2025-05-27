@@ -1,7 +1,8 @@
-v1.0.8
-updated goci to catch errors for no go.mod file
+v1.1.0
+goci can now publish utilities to the catalog
 
 Previously:
+- updated goci to catch errors for no go.mod file
 - bugfix: dont lazy load the oidc token
 - Updating goci warning message, including recent version release date
 - Supporting lazy loading of environment variables
