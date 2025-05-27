@@ -1,6 +1,10 @@
 github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 h1:UQHMgLO+TxOElx5B5HZ4hJQsoJ/PvUvKRhJHDQXO8P8=
 github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
+github.com/Clever/catalog-sync-service/gen-go/client v1.0.0 h1:n3K051HoD1j1gOTMlTc7UfS+RKDn9KdW2e1/PEAt+0k=
+github.com/Clever/catalog-sync-service/gen-go/client v1.0.0/go.mod h1:4ZJzqpx6Z7lYux+vmQ9gHy1F9BFt2t+Lc+R4e/jht5E=
+github.com/Clever/catalog-sync-service/gen-go/models v1.0.0 h1:dhLa4Xm8x5lrTVbLUTdiwn0uYSlByaok/HN1ol1yaYs=
+github.com/Clever/catalog-sync-service/gen-go/models v1.0.0/go.mod h1:ldv+9kfUTatgdM4MKF4ZSlRTMJaEMyJ0XG6C/7O7QHk=
 github.com/Clever/catapult/gen-go/models v1.203.1 h1:AzyUZ16aqvJPgCCz/lfgQWaUvo6ZEPzxnq55TtECS7Y=
 github.com/Clever/catapult/gen-go/models v1.203.1/go.mod h1:KycooNSZj8fMqRjzFimkzDkcllvrVQ4v30EdZRfS0tU=
 github.com/Clever/circle-ci-integrations/gen-go/client v0.0.0-20230317164210-4d554db10fa0 h1:QlgvxlCkH2wvVBPEBCTzVFnFZTlXfkqu0Q+GFaXoBWo=

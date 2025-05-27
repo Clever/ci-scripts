@@ -43,6 +43,16 @@ func New() *Catapult {
 	cli.SetTimeout(15 * time.Second)
 	return &Catapult{client: cli}
 }
+func (c *Catapult) SyncCatalogEntity(ctx context.Context, entity *models.CatalogEntity) error {
+	fmt.Println("Syncing catalog entity", entity.Name)
+	err := c.client.SyncCatalogEntity(ctx, &models.SyncCatalogEntityInput{
+		Entity: entity,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to sync catalog entity %s with catalogue config: %v", entity.Name, err)
+	}
+	return nil
+}
 
 // Publish a list of build artifacts to catapult.
 func (c *Catapult) Publish(ctx context.Context, artifacts []*Artifact) error {

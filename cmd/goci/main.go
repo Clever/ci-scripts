@@ -53,17 +53,25 @@ func main() {
 }
 
 func run(mode string) error {
-	apps, err := repo.DiscoverApplications("./launch")
-	if err != nil {
-		return err
-	}
+	var apps map[string]*models.LaunchConfig
+	var appIDs []string
+	var err error
 
-	appIDs := []string{}
-	for app := range apps {
-		appIDs = append(appIDs, app)
+	// Only discover applications for specific modes
+	if mode == "validate" || mode == "detect" || mode == "artifact-build-publish-deploy" {
+		apps, err = repo.DiscoverApplications("./launch")
+		if err != nil {
+			return err
+		}
+		appIDs = []string{}
+		for app := range apps {
+			appIDs = append(appIDs, app)
+		}
 	}
 
 	switch mode {
+	case "publish-utility":
+		return publishUtility()
 	case "validate":
 		err := validateRun()
 		if err != nil {
@@ -260,4 +268,17 @@ func allAppsBuilt(discoveredApps map[string]*models.LaunchConfig, builtApps []*c
 		}
 	}
 	return fmt.Errorf("applications %s not built", strings.Join(missing, ", "))
+}
+
+func publishUtility() error {
+	validateRun()
+	catalogInfoPath := "./catalog-info.yaml"
+	if _, err := os.Stat(catalogInfoPath); os.IsNotExist(err) {
+		return fmt.Errorf("catalog-info.yaml file not found in the current directory")
+	}
+	catalogInfo, err = backstage.GetEntityFromYaml(catalogInfoPath)
+	if err != nil {
+		return fmt.Errorf("failed to read catalog-info.yaml file: %v", err)
+	}
+	err = c.client.
 }

@@ -1,6 +1,6 @@
 module github.com/Clever/ci-scripts
 
-go 1.24
+go 1.24.0
 
 require (
 	github.com/Clever/catapult/gen-go/models v1.203.1
@@ -21,6 +21,8 @@ require (
 )
 
 require (
+	github.com/Clever/catalog-sync-service/gen-go/client v1.0.0 // indirect
+	github.com/Clever/catalog-sync-service/gen-go/models v1.0.0 // indirect
 	github.com/Clever/discovery-go v1.8.1 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5 // indirect
