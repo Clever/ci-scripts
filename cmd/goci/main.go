@@ -23,7 +23,7 @@ import (
 	ciIntegrationsModels "github.com/Clever/circle-ci-integrations/gen-go/models"
 )
 
-const usage = "usage: goci <validate|detect|artifact-build-publish-deploy>"
+const usage = "usage: goci <validate|detect|artifact-build-publish-deploy|publish-utility>"
 
 // This app assumes the code has been checked out and that the
 // repository is the working directory.
@@ -283,8 +283,6 @@ func publishUtility() error {
 		return fmt.Errorf("failed to read catalog-info.yaml file: %v", err)
 	}
 
-	cp := catapult.New()
-
 	// Check to see if type is defined on Spec
 	if catalogInfo.Spec == nil {
 		return fmt.Errorf("catalog-info.yaml file does not contain a valid spec")
@@ -296,6 +294,8 @@ func publishUtility() error {
 	if !ok {
 		return fmt.Errorf("catalog-info.yaml file does not contain a valid type in spec")
 	}
+
+	cp := catapult.New()
 
 	err = cp.SyncCatalogEntity(context.Background(), &ciIntegrationsModels.SyncCatalogEntityInput{
 		Entity: catalogInfo.GetName(),
