@@ -14,14 +14,16 @@ import (
 	"golang.org/x/mod/modfile"
 
 	"github.com/Clever/catapult/gen-go/models"
+	"github.com/Clever/ci-scripts/internal/backstage"
 	"github.com/Clever/ci-scripts/internal/catapult"
 	"github.com/Clever/ci-scripts/internal/docker"
 	"github.com/Clever/ci-scripts/internal/environment"
 	"github.com/Clever/ci-scripts/internal/lambda"
 	"github.com/Clever/ci-scripts/internal/repo"
+	ciIntegrationsModels "github.com/Clever/circle-ci-integrations/gen-go/models"
 )
 
-const usage = "usage: goci <validate|detect|artifact-build-publish-deploy>"
+const usage = "usage: goci <validate|detect|artifact-build-publish-deploy|publish-utility>"
 
 // This app assumes the code has been checked out and that the
 // repository is the working directory.
@@ -53,17 +55,25 @@ func main() {
 }
 
 func run(mode string) error {
-	apps, err := repo.DiscoverApplications("./launch")
-	if err != nil {
-		return err
-	}
+	var apps map[string]*models.LaunchConfig
+	var appIDs []string
+	var err error
 
-	appIDs := []string{}
-	for app := range apps {
-		appIDs = append(appIDs, app)
+	// Only discover applications for specific modes
+	if mode == "validate" || mode == "detect" || mode == "artifact-build-publish-deploy" {
+		apps, err = repo.DiscoverApplications("./launch")
+		if err != nil {
+			return err
+		}
+		appIDs = []string{}
+		for app := range apps {
+			appIDs = append(appIDs, app)
+		}
 	}
 
 	switch mode {
+	case "publish-utility":
+		return publishUtility()
 	case "validate":
 		err := validateRun()
 		if err != nil {
@@ -260,4 +270,41 @@ func allAppsBuilt(discoveredApps map[string]*models.LaunchConfig, builtApps []*c
 		}
 	}
 	return fmt.Errorf("applications %s not built", strings.Join(missing, ", "))
+}
+
+func publishUtility() error {
+	validateRun()
+	catalogInfoPath := "./catalog-info.yaml"
+	if _, err := os.Stat(catalogInfoPath); os.IsNotExist(err) {
+		return fmt.Errorf("catalog-info.yaml file not found in the current directory")
+	}
+	catalogInfo, err := backstage.GetEntityFromYaml(catalogInfoPath)
+	if err != nil {
+		return fmt.Errorf("failed to read catalog-info.yaml file: %v", err)
+	}
+
+	// Check to see if type is defined on Spec
+	if catalogInfo.Spec == nil {
+		return fmt.Errorf("catalog-info.yaml file does not contain a valid spec")
+	}
+	if _, ok := catalogInfo.Spec["type"]; !ok {
+		return fmt.Errorf("catalog-info.yaml file does not contain a valid type in spec")
+	}
+	typeVal, ok := catalogInfo.Spec["type"].(string)
+	if !ok {
+		return fmt.Errorf("catalog-info.yaml file does not contain a valid type in spec")
+	}
+
+	cp := catapult.New()
+
+	err = cp.SyncCatalogEntity(context.Background(), &ciIntegrationsModels.SyncCatalogEntityInput{
+		Entity: catalogInfo.GetName(),
+		Type:   typeVal,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to sync catalog entity with catapult: %v", err)
+	}
+	fmt.Printf("Successfully synced catalog entity %s \n", catalogInfo.GetName())
+	return nil
+
 }

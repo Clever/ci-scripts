@@ -44,6 +44,16 @@ func New() *Catapult {
 	return &Catapult{client: cli}
 }
 
+// SyncCatalogEntity syncs passed in entity to catalog-config by calling circle-ci-integrations
+func (c *Catapult) SyncCatalogEntity(ctx context.Context, entity *models.SyncCatalogEntityInput) error {
+	fmt.Println("Syncing catalog entity", entity.Entity)
+	err := c.client.SyncCatalogEntity(ctx, entity)
+	if err != nil {
+		return fmt.Errorf("failed to sync catalog entity %s with catalogue config: %v", entity.Entity, err)
+	}
+	return nil
+}
+
 // Publish a list of build artifacts to catapult.
 func (c *Catapult) Publish(ctx context.Context, artifacts []*Artifact) error {
 	grp, grpCtx := errgroup.WithContext(ctx)
