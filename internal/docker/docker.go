@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
@@ -33,6 +34,7 @@ import (
 type Docker struct {
 	cli      *client.Client
 	ecrCreds map[string]types.AuthConfig
+	ecrMutex sync.Mutex
 	awsCfg   aws.Config
 }
 
@@ -110,8 +112,12 @@ func (d *Docker) Push(ctx context.Context, tags []string) error {
 		grp.Go(func() error {
 			// TODO: check if the repository exists, if it doesn't this just
 			// nondescriptly endlessly retries.
+			d.ecrMutex.Lock()
+			registryAuth := encodeCreds(d.ecrCreds[region])
+			d.ecrMutex.Unlock()
+
 			res, err := d.cli.ImagePush(grpCtx, tag, types.ImagePushOptions{
-				RegistryAuth: encodeCreds(d.ecrCreds[region]),
+				RegistryAuth: registryAuth,
 			})
 			if err != nil {
 				return fmt.Errorf("unable to push image: %v", err)
@@ -154,11 +160,13 @@ func (d *Docker) ecrCredentials(ctx context.Context, region string) error {
 		return fmt.Errorf("invalid token: expected two parts, got %d", len(parts))
 	}
 
+	d.ecrMutex.Lock()
 	d.ecrCreds[region] = types.AuthConfig{
 		Username:      parts[0],
 		Password:      parts[1],
 		ServerAddress: *auth.ProxyEndpoint,
 	}
+	d.ecrMutex.Unlock()
 
 	return nil
 }
