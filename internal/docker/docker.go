@@ -112,12 +112,8 @@ func (d *Docker) Push(ctx context.Context, tags []string) error {
 		grp.Go(func() error {
 			// TODO: check if the repository exists, if it doesn't this just
 			// nondescriptly endlessly retries.
-			d.ecrMutex.Lock()
-			registryAuth := encodeCreds(d.ecrCreds[region])
-			d.ecrMutex.Unlock()
-
 			res, err := d.cli.ImagePush(grpCtx, tag, types.ImagePushOptions{
-				RegistryAuth: registryAuth,
+				RegistryAuth: encodeCreds(d.ecrCreds[region]),
 			})
 			if err != nil {
 				return fmt.Errorf("unable to push image: %v", err)
