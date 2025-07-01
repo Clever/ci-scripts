@@ -162,7 +162,9 @@ func run(mode string) error {
 	return nil
 }
 
-// gets the most recent Long Term Support (LTS) Node.js version from https://nodejs.org/dist/index.json
+// find a Long Term Support (LTS) Node.js version which is the newest major version, but the oldest minor and patch version
+// which is LTS within this major version.
+// pull releases from https://nodejs.org/dist/index.json
 func fetchLastestLTSNodeVersion() (string, string, error) {
 	resp, err := http.Get("https://nodejs.org/dist/index.json")
 	if err != nil {
@@ -187,33 +189,46 @@ func fetchLastestLTSNodeVersion() (string, string, error) {
 	}
 
 	// Find the latest LTS version
-	var latestLTSVersion string
-	var latestLTSReleaseDate string
+	var latestLTSMajorVersion string
+	var selectedRelease map[string]interface{}
 	for _, release := range nodeReleases {
 		if lts, ok := release["lts"]; ok && lts != nil {
 			ltsBool, boolOk := lts.(bool)
 			ltsString, stringOk := lts.(string)
 			if (boolOk && ltsBool) || (stringOk && ltsString != "") {
-				if version, ok := release["version"].(string); ok {
-					latestLTSVersion = version
-				} else {
+				releaseVersion, ok := release["version"].(string)
+				if !ok {
 					return "", "", fmt.Errorf("failed to parse version in Node.js release")
 				}
-				if date, ok := release["date"].(string); ok {
-					latestLTSReleaseDate = date
-
-				} else {
-					return "", "", fmt.Errorf("failed to parse date in Node.js release")
+				if latestLTSMajorVersion == "" {
+					// we found our most recent LTS version
+					latestLTSMajorVersion = strings.Split(releaseVersion, ".")[0]
 				}
-				break // We found the latest LTS version, no need to continue
+				if strings.HasPrefix(releaseVersion, latestLTSMajorVersion) {
+					// this is an earlier LTS release for the selected major version
+					selectedRelease = release
+				} else {
+					break
+				}
+			} else if selectedRelease != nil {
+				break // we have passed the earliest LTS release for this major version
 			}
 		}
 	}
 
-	if latestLTSVersion == "" {
+	if selectedRelease == nil {
 		return "", "", fmt.Errorf("no LTS version found in Node.js releases")
 	}
-	return latestLTSVersion, latestLTSReleaseDate, nil
+
+	selectedLTSVersion, ok := selectedRelease["version"].(string)
+	if !ok {
+		return "", "", fmt.Errorf("failed to parse version in Node.js release")
+	}
+	selectedLTSReleaseDate, ok := selectedRelease["date"].(string)
+	if !ok {
+		return "", "", fmt.Errorf("failed to parse release date in Node.js release")
+	}
+	return selectedLTSVersion, selectedLTSReleaseDate, nil
 }
 
 func parseCurrentNodeMajorVersion() (string, error) {
