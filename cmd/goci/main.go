@@ -255,6 +255,7 @@ func parseCurrentNodeMajorVersion() (string, error) {
 }
 
 func validateNodeVersion() error {
+	minimumEnforcementVersion := 22 
 	ltsVersion, ltsReleaseDate, err := fetchLastestLTSNodeVersion()
 	if err != nil {
 		return err
@@ -279,7 +280,9 @@ func validateNodeVersion() error {
 	if err != nil {
 		return fmt.Errorf("failed to parse LTS major version: %v", err)
 	}
-	if currentMajorVersionInt < ltsMajorVersionInt {
+	// Check if the current major version is less than the LTS major version
+	// and that we have already performed the initial migration to get to at least the minimum enforcement version
+	if currentMajorVersionInt < ltsMajorVersionInt && currentMajorVersionInt >= minimumEnforcementVersion {
 		// parse the release date of the LTS version
 		releaseDate, err := time.Parse("2006-01-02", ltsReleaseDate)
 		if err != nil {
