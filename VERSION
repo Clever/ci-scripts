@@ -1,7 +1,9 @@
-v1.1.0
-goci can now publish utilities to the catalog
+v1.2.0
+goci now supports validation of node version
+
 
 Previously:
+- goci can now publish utilities to the catalog
 - updated goci to catch errors for no go.mod file
 - bugfix: dont lazy load the oidc token
 - Updating goci warning message, including recent version release date
