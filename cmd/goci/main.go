@@ -255,7 +255,7 @@ func parseCurrentNodeMajorVersion() (string, error) {
 }
 
 func validateNodeVersion() error {
-	minimumEnforcementVersion := 22 
+	minimumEnforcementVersion := 24
 	ltsVersion, ltsReleaseDate, err := fetchLastestLTSNodeVersion()
 	if err != nil {
 		return err
