@@ -1,8 +1,8 @@
-v1.2.0
-goci now supports validation of node version
-
+v1.2.1
+reverting node version validation for now
 
 Previously:
+- goci now supports validation of node version
 - goci can now publish utilities to the catalog
 - updated goci to catch errors for no go.mod file
 - bugfix: dont lazy load the oidc token

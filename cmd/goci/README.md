@@ -10,7 +10,7 @@ goci accepts very limited arguments which merely change the mode it runs in. The
 
 1. `goci detect` detects any changed applications according to their launch configuration. This can be used to pass a name of apps to another script.
 2. `goci artifact-build-publish-deploy` builds, publishes and deploys any application artifacts.
-3. `goci validate` validates an applications go version and node version, while also checking for compatible branch naming conventions for catapult.
+3. `goci validate` validates an applications go version, while also checking for compatible branch naming conventions for catapult.
 4. `goci publish-utility` publishes catalog-info.yaml to the service catalog.
 
 
