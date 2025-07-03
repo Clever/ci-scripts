@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -11,7 +10,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"golang.org/x/mod/modfile"
 
@@ -162,144 +160,12 @@ func run(mode string) error {
 	return nil
 }
 
-// find a Long Term Support (LTS) Node.js version which is the newest major version, but the oldest minor and patch version
-// which is LTS within this major version.
-// pull releases from https://nodejs.org/dist/index.json
-func fetchLastestLTSNodeVersion() (string, string, error) {
-	resp, err := http.Get("https://nodejs.org/dist/index.json")
-	if err != nil {
-		return "", "", fmt.Errorf("failed to fetch Node.js versions: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", "", fmt.Errorf("failed to fetch Node.js versions: status code %d", resp.StatusCode)
+// validateRun checks the env.branch and go version to ensure the build is valid.
+func validateRun() error {
+	if strings.Contains(environment.Branch(), "/") {
+		return &ValidationError{Message: fmt.Sprintf("branch name %s contains a `/` character, which is not supported by catapult", environment.Branch())}
 	}
 
-	// Read the response body to json array
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to read response body: %v", err)
-	}
-
-	// Parse the JSON response
-	var nodeReleases []map[string]interface{}
-	if err := json.Unmarshal(bodyBytes, &nodeReleases); err != nil {
-		return "", "", fmt.Errorf("failed to parse JSON response: %v", err)
-	}
-
-	// Find the latest LTS version
-	var latestLTSMajorVersion string
-	var selectedRelease map[string]interface{}
-	for _, release := range nodeReleases {
-		if lts, ok := release["lts"]; ok && lts != nil {
-			ltsBool, boolOk := lts.(bool)
-			ltsString, stringOk := lts.(string)
-			if (boolOk && ltsBool) || (stringOk && ltsString != "") {
-				releaseVersion, ok := release["version"].(string)
-				if !ok {
-					return "", "", fmt.Errorf("failed to parse version in Node.js release")
-				}
-				if latestLTSMajorVersion == "" {
-					// we found our most recent LTS version
-					latestLTSMajorVersion = strings.Split(releaseVersion, ".")[0]
-				}
-				if strings.HasPrefix(releaseVersion, latestLTSMajorVersion) {
-					// this is an earlier LTS release for the selected major version
-					selectedRelease = release
-				} else {
-					break
-				}
-			} else if selectedRelease != nil {
-				break // we have passed the earliest LTS release for this major version
-			}
-		}
-	}
-
-	if selectedRelease == nil {
-		return "", "", fmt.Errorf("no LTS version found in Node.js releases")
-	}
-
-	selectedLTSVersion, ok := selectedRelease["version"].(string)
-	if !ok {
-		return "", "", fmt.Errorf("failed to parse version in Node.js release")
-	}
-	selectedLTSReleaseDate, ok := selectedRelease["date"].(string)
-	if !ok {
-		return "", "", fmt.Errorf("failed to parse release date in Node.js release")
-	}
-	return selectedLTSVersion, selectedLTSReleaseDate, nil
-}
-
-func parseCurrentNodeMajorVersion() (string, error) {
-	dockerfilePath := "./Dockerfile"
-	fileBytes, err := os.ReadFile(dockerfilePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to read Dockerfile: %v", err)
-	}
-
-	// Use a regex to find the Node.js version in the Dockerfile
-	re := regexp.MustCompile(`FROM node:([0-9]+)`)
-	matches := re.FindStringSubmatch(string(fileBytes))
-	if len(matches) == 2 {
-		return matches[1], nil
-	}
-	// look for an explicit download of a Node.js version in the Dockerfile
-	// This is a fallback in case the Dockerfile does not use the standard Node.js image
-	re = regexp.MustCompile(`deb\.nodesource\.com\/setup_([0-9]+)\.`)
-	matches = re.FindStringSubmatch(string(fileBytes))
-	if len(matches) == 2 {
-		return matches[1], nil
-	}
-	return "", fmt.Errorf("failed to find Node.js version in Dockerfile")
-}
-
-func validateNodeVersion() error {
-	minimumEnforcementVersion := 24
-	ltsVersion, ltsReleaseDate, err := fetchLastestLTSNodeVersion()
-	if err != nil {
-		return err
-	}
-	re := regexp.MustCompile(`v([0-9]+)\.`)
-	var ltsMajorVersion string
-	if matches := re.FindStringSubmatch(ltsVersion); len(matches) == 2 {
-		ltsMajorVersion = matches[1]
-	} else {
-		return fmt.Errorf("failed to parse LTS major version from %s", ltsVersion)
-	}
-	currentMajorVersion, err := parseCurrentNodeMajorVersion()
-	if err != nil {
-		return err
-	}
-	// compare the major version of the current Node.js version with the latest LTS version
-	currentMajorVersionInt, err := strconv.Atoi(currentMajorVersion)
-	if err != nil {
-		return fmt.Errorf("failed to parse current major version: %v", err)
-	}
-	ltsMajorVersionInt, err := strconv.Atoi(ltsMajorVersion)
-	if err != nil {
-		return fmt.Errorf("failed to parse LTS major version: %v", err)
-	}
-	// Check if the current major version is less than the LTS major version
-	// and that we have already performed the initial migration to get to at least the minimum enforcement version
-	if currentMajorVersionInt < ltsMajorVersionInt && currentMajorVersionInt >= minimumEnforcementVersion {
-		// parse the release date of the LTS version
-		releaseDate, err := time.Parse("2006-01-02", ltsReleaseDate)
-		if err != nil {
-			return fmt.Errorf("failed to parse LTS release date: %v", err)
-		}
-		if time.Since(releaseDate) > 6*30*24*time.Hour { // 6 months in hours
-			return &ValidationError{
-				Message: fmt.Sprintf("Your current Node.js version %s is no longer supported. Please upgrade to the latest Long Term Support version %s or later", currentMajorVersion, ltsVersion),
-			}
-		} else {
-			fmt.Printf("A new Node.js Long Term Support version is out, released on (%s). After 6 months of release, Your current Node.js version v%d will fail CI workflows if it is not upgraded to v%d.\n", ltsReleaseDate, currentMajorVersionInt, ltsMajorVersionInt)
-		}
-	}
-	return nil
-}
-
-func validateGoVersion() error {
 	latestGoVersion, releaseDate, err := fetchLatestGoVersion()
 	if err != nil {
 		return fmt.Errorf("failed to fetch latest Go version: %v", err)
@@ -349,31 +215,6 @@ func validateGoVersion() error {
 	} else if repoVersion <= newestGoVersion-0.01 {
 		// We'll give a PR comment to the Author to warn them about the need to upgrade
 		fmt.Printf("A new Go version is out, released on (%v). After 6 months of release, Your current Go version (%v) will fail CI workflows if it is not upgraded.\n", releaseDate, f.Go.Version)
-	}
-
-	return nil
-}
-
-// validateRun checks the env.branch and go version to ensure the build is valid.
-func validateRun() error {
-	if strings.Contains(environment.Branch(), "/") {
-		return &ValidationError{Message: fmt.Sprintf("branch name %s contains a `/` character, which is not supported by catapult", environment.Branch())}
-	}
-
-	// if package.json exists, we will validate the Node.js version
-	if _, err := os.Stat("./package.json"); err == nil {
-		err = validateNodeVersion()
-		if err != nil {
-			return fmt.Errorf("failed to validate Node.js version: %v", err)
-		}
-	}
-
-	// if go.mod exists, we will validate the Go version
-	if _, err := os.Stat("./go.mod"); err == nil {
-		err = validateGoVersion()
-		if err != nil {
-			return fmt.Errorf("failed to validate Go version: %v", err)
-		}
 	}
 	return nil
 }

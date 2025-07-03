@@ -43,8 +43,8 @@ REPO_NAME=$CIRCLE_PROJECT_REPONAME
 SHORT_SHA=${CIRCLE_SHA1:0:7}
 FULL_SHA=${CIRCLE_SHA1}
 
-# If file go.mod or package.json exists
-if [ -f go.mod ] || [ -f package.json ]; then
+# If file go.mod exists
+if [ -f go.mod ]; then
   . $DIR/install-goci
 
   set +e
