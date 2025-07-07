@@ -1,7 +1,8 @@
-v1.2.1
-reverting node version validation for now
+v1.3.0
+upgrade all aws sdk v2 modules
 
 Previously:
+- reverting node version validation for now
 - goci now supports validation of node version
 - goci can now publish utilities to the catalog
 - updated goci to catch errors for no go.mod file
@@ -11,8 +12,3 @@ Previously:
 - updated parsing of go version from go.mod
 - goci now supports validation of go version
 - variable MASTER_COMPARE is now required for local dev
-- Instead of emitting an error on failed catalog syncs, simply warn
-- Begin publishing goci binaries
-- Call catalogue config with goci
-- build with goci
-- deploy with goci
