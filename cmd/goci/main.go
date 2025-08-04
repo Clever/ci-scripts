@@ -89,11 +89,6 @@ func run(mode string) error {
 		return fmt.Errorf("unknown mode %s. %s", mode, usage)
 	}
 
-	// We want to validate on every run, not just when the mode is "validate".
-	if err = validateRun(); err != nil {
-		return err
-	}
-
 	if len(apps) == 0 {
 		fmt.Println("No applications have buildable changes. If this is unexpected, " +
 			"double check your artifact dependency configuration in the launch yaml.")
@@ -155,9 +150,13 @@ func run(mode string) error {
 	}
 
 	if environment.Branch() == "master" {
-		return cp.Deploy(ctx, appIDs)
+		if err := cp.Deploy(ctx, appIDs); err != nil {
+			return err
+		}
 	}
-	return nil
+
+	// We want to validate on every run, not just when the mode is "validate".
+	return validateRun()
 }
 
 // validateRun checks the env.branch and go version to ensure the build is valid.
