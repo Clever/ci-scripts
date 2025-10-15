@@ -1,8 +1,7 @@
-v1.5.0
-catalog sync is now uses entity endpoint for everything
+v1.4.0
+run validate as last step on artifact-build-publish-deploy
 
 Previously:
-- run validate as last step on artifact-build-publish-deploy
 - upgrade all aws sdk v2 modules
 - reverting node version validation for now
 - goci now supports validation of node version
@@ -12,3 +11,4 @@ Previously:
 - Updating goci warning message, including recent version release date
 - Supporting lazy loading of environment variables
 - updated parsing of go version from go.mod
+- goci now supports validation of go version

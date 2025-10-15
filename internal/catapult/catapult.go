@@ -46,7 +46,7 @@ func New() *Catapult {
 
 // SyncCatalogEntity syncs passed in entity to catalog-config by calling circle-ci-integrations
 func (c *Catapult) SyncCatalogEntity(ctx context.Context, entity *models.SyncCatalogEntityInput) error {
-	fmt.Printf("Syncing catalog entity %s with type %s\n", entity.Entity, entity.Type)
+	fmt.Println("Syncing catalog entity", entity.Entity)
 	err := c.client.SyncCatalogEntity(ctx, entity)
 	if err != nil {
 		return fmt.Errorf("failed to sync catalog entity %s with catalogue config: %v", entity.Entity, err)
@@ -71,9 +71,8 @@ func (c *Catapult) Publish(ctx context.Context, artifacts []*Artifact) error {
 				return fmt.Errorf("failed to publish %s with catapult: %v", art.ID, err)
 			}
 
-			err = c.SyncCatalogEntity(grpCtx, &models.SyncCatalogEntityInput{
-				Entity: art.ID,
-				Type:   "application",
+			err = c.client.SyncCatalogApp(grpCtx, &models.SyncCatalogAppInput{
+				App: art.ID,
 			})
 			if err != nil {
 				fmt.Println("failed to sync catalog app", art.ID, "with catalogue config:", err)
