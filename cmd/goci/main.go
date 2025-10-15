@@ -282,23 +282,11 @@ func publishUtility() error {
 		return fmt.Errorf("failed to read catalog-info.yaml file: %v", err)
 	}
 
-	// Check to see if type is defined on Spec
-	if catalogInfo.Spec == nil {
-		return fmt.Errorf("catalog-info.yaml file does not contain a valid spec")
-	}
-	if _, ok := catalogInfo.Spec["type"]; !ok {
-		return fmt.Errorf("catalog-info.yaml file does not contain a valid type in spec")
-	}
-	typeVal, ok := catalogInfo.Spec["type"].(string)
-	if !ok {
-		return fmt.Errorf("catalog-info.yaml file does not contain a valid type in spec")
-	}
-
 	cp := catapult.New()
 
 	err = cp.SyncCatalogEntity(context.Background(), &ciIntegrationsModels.SyncCatalogEntityInput{
 		Entity: catalogInfo.GetName(),
-		Type:   typeVal,
+		Type:   "utility",
 	})
 	if err != nil {
 		return fmt.Errorf("failed to sync catalog entity with catapult: %v", err)
