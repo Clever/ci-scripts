@@ -35,7 +35,7 @@ SC=$(curl -u $USER:$PASS \
   -w "%{http_code}" \
   -H "Content-Type: application/json" \
   -X POST \
-  $CIRCLE_CI_INTEGRATIONS_URL/catalogEntity?entity=$ENTITY_NAME&type=$TYPE)
+  "$CIRCLE_CI_INTEGRATIONS_URL/catalogEntity?entity=$ENTITY_NAME&type=$TYPE")
 
 if [ "$SC" -eq 200 ]; then
   echo "Successfully published app catalog config"
