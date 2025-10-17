@@ -128,7 +128,7 @@ fi
 
 # publish catalog app config
 CATALOG_SYNC_SCRIPT="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )/catalog-sync"
-"${CATALOG_SYNC_SCRIPT}" $CIRCLE_CI_INTEGRATIONS_URL $CATAPULT_USER $CATAPULT_PASS $APP_NAME
+"${CATALOG_SYNC_SCRIPT}" $CIRCLE_CI_INTEGRATIONS_URL $CATAPULT_USER $CATAPULT_PASS $APP_NAME "application"
 
 # publish dep info
 BREAKDOWN_SYNC_SCRIPT="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )/breakdown-sync"
