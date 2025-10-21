@@ -29,13 +29,17 @@ if [[ -z $ENTITY_NAME ]]; then echo "Missing arg4 ENTITY_NAME" && exit 1; fi
 TYPE=$5
 if [[ -z $TYPE ]]; then echo "Missing arg5 TYPE" && exit 1; fi
 
+
+# Extract base URL (protocol + domain) as sometimes users might include a path after the domain
+BASE_URL=$(echo "$CIRCLE_CI_INTEGRATIONS_URL" | awk -F'/' '{print $1"//"$3}')
+
 echo "Posting to catalog sync service..."
 SC=$(curl -u $USER:$PASS \
   --retry 5 \
   -w "%{http_code}" \
   -H "Content-Type: application/json" \
   -X POST \
-  "$CIRCLE_CI_INTEGRATIONS_URL/catalogEntity?entity=$ENTITY_NAME&type=$TYPE")
+  "$BASE_URL/catalogEntity?entity=$ENTITY_NAME&type=$TYPE")
 
 if [ "$SC" -eq 200 ]; then
   echo "Successfully published app catalog config"
