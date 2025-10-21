@@ -1,14 +1,5 @@
-v1.5.0
-catalog sync is now uses entity endpoint for everything
+v1.5.1
+add shared workflow for Claude actions
 
 Previously:
-- run validate as last step on artifact-build-publish-deploy
-- upgrade all aws sdk v2 modules
-- reverting node version validation for now
-- goci now supports validation of node version
-- goci can now publish utilities to the catalog
-- updated goci to catch errors for no go.mod file
-- bugfix: dont lazy load the oidc token
-- Updating goci warning message, including recent version release date
-- Supporting lazy loading of environment variables
-- updated parsing of go version from go.mod
+- catalog sync is now uses entity endpoint for everything
