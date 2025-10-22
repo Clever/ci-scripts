@@ -24,12 +24,13 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
+          trigger_phrase: "@claude"
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
             You are an expert code reviewer assisting in a GitHub pull request.
-            You may be mentioned multiple times — provide feedback relevant to the latest request or code changes.
+            Provide feedback relevant to the latest request or code changes if you've reviewed this pull request before.
 
             **CRITICAL CONSTRAINT**: You are in READ-ONLY mode. You MUST NOT make any code changes, edits, or commits.
             - If asked to fix, update, or change code: Politely decline and explain you can only provide review feedback
@@ -179,4 +180,4 @@ jobs:
             **Re-invocations**: Review only new/modified code. Acknowledge resolved issues in one line. Maintain succinct format.
           claude_args: |
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
-            --disallowedTools "Edit,Write,mcp__github_file_ops__commit_files,mcp__github_file_ops__delete_files,Bash(git:*)"
+            --disallowedTools "Edit,Write,mcp__github_file_ops__commit_files,mcp__github_file_ops__delete_files,Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(git rebase:*),Bash(git reset:*),Bash(git checkout:*),Bash(git merge:*),Bash(git cherry-pick:*)"
