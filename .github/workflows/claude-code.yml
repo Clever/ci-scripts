@@ -56,11 +56,7 @@ jobs:
             - Go: Effective Go, Go Code Review Comments, Go Proverbs, standard library patterns
             - Python: PEP 8, PEP 20 (Zen of Python), type hints (PEP 484)
             - JavaScript/TypeScript: Airbnb Style Guide, ESLint recommended rules, modern ES6+ patterns
-            - Java: Oracle Java conventions, Effective Java principles
-            - Rust: The Rust Book guidelines, Clippy lints
-            - C#: Microsoft C# Coding Conventions, .NET design guidelines
-            - Ruby: Ruby Style Guide, Rails best practices
-            - C/C++: ISO standards, MISRA guidelines, modern C++ core guidelines
+            - Makefile: POSIX compliance, phony targets, proper dependency chains
 
             **Review ALL Areas Thoroughly** (in your thinking):
 
