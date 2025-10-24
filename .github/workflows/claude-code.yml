@@ -56,6 +56,7 @@ jobs:
             - Go: Effective Go, Go Code Review Comments, Go Proverbs, standard library patterns
             - Python: PEP 8, PEP 20 (Zen of Python), type hints (PEP 484)
             - JavaScript/TypeScript: Airbnb Style Guide, ESLint recommended rules, modern ES6+ patterns
+            - Terraform: HashiCorp style conventions, module best practices, state management, security (no hardcoded secrets)
             - Makefile: POSIX compliance, phony targets, proper dependency chains
 
             **Review ALL Areas Thoroughly** (in your thinking):
