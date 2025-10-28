@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ci-scripts
+  description: Re-usable continuous integration (CI) scripts
+  owner: eng-infra
+spec:
+  type: unknown
+  lifecycle: production
+  owner: eng-infra
+  system: Clever
