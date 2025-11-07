@@ -3,10 +3,11 @@ jobs:
   build:
     working_directory: ~/Clever/ci-scripts
     docker:
-    - image: cimg/go:1.24
+      - image: cimg/go:1.24
     environment:
       GOPRIVATE: github.com/Clever/*
     steps:
-    - checkout
-    - run: make release
-    - run: if [ "${CIRCLE_BRANCH}" == "master" ]; then ./circleci/github-release $GH_RELEASE_TOKEN artifacts; fi;
+      - checkout
+      - run: make release
+      - run: if [ "${CIRCLE_BRANCH}" == "master" ]; then ./circleci/github-release $GH_RELEASE_TOKEN artifacts; fi;
+      - run: ../ci-scripts/circleci/catalog-sync $CATAPULT_URL $CATAPULT_USER $CATAPULT_PASS ci-scripts utility
