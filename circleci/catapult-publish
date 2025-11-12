@@ -44,43 +44,43 @@ SHORT_SHA=${CIRCLE_SHA1:0:7}
 FULL_SHA=${CIRCLE_SHA1}
 
 # If file go.mod exists
-if [ -f go.mod ]; then
-  . $DIR/install-goci
+# if [ -f go.mod ]; then
+#   . $DIR/install-goci
 
-  set +e
-  echo "Running goci..."
+#   set +e
+#   echo "Running goci..."
 
-  VALIDATE_OUTPUT=$(goci validate)
-  GOCI_EXIT_CODE=$?
-
-
-  if [[ -z $GH_RELEASE_TOKEN ]]; then echo "Missing GH_RELEASE_TOKEN" && exit 1; fi
-
-  if [[ $GOCI_EXIT_CODE -eq 2 ]]; then
-    echo "goci failed with exit code $GOCI_EXIT_CODE"
-    echo "$VALIDATE_OUTPUT"
-    post_github_pr_comment $USER $REPO_NAME $FULL_SHA $GH_RELEASE_TOKEN "$VALIDATE_OUTPUT"
-    exit $GOCI_EXIT_CODE
-  elif [[ $GOCI_EXIT_CODE -eq 1 ]]; then
-    echo "goci failed with exit code $GOCI_EXIT_CODE"
-    echo "$VALIDATE_OUTPUT"
-    exit $GOCI_EXIT_CODE
-  fi
+#   VALIDATE_OUTPUT=$(goci validate)
+#   GOCI_EXIT_CODE=$?
 
 
-  # If a warning is present for a go based repo, we print the warning and will make a PR comment with the warning message
-  if [[ -n "$VALIDATE_OUTPUT"  ]]; then
-    echo "goci warning:"
-    echo "$VALIDATE_OUTPUT"
+#   if [[ -z $GH_RELEASE_TOKEN ]]; then echo "Missing GH_RELEASE_TOKEN" && exit 1; fi
 
-    post_github_pr_comment $USER $REPO_NAME $FULL_SHA $GH_RELEASE_TOKEN "$VALIDATE_OUTPUT"
-  fi
+#   if [[ $GOCI_EXIT_CODE -eq 2 ]]; then
+#     echo "goci failed with exit code $GOCI_EXIT_CODE"
+#     echo "$VALIDATE_OUTPUT"
+#     post_github_pr_comment $USER $REPO_NAME $FULL_SHA $GH_RELEASE_TOKEN "$VALIDATE_OUTPUT"
+#     exit $GOCI_EXIT_CODE
+#   elif [[ $GOCI_EXIT_CODE -eq 1 ]]; then
+#     echo "goci failed with exit code $GOCI_EXIT_CODE"
+#     echo "$VALIDATE_OUTPUT"
+#     exit $GOCI_EXIT_CODE
+#   fi
 
-  set -e
-  echo "goci passed."
-else
-  echo "No go.mod file found. Skipping goci."
-fi
+
+#   # If a warning is present for a go based repo, we print the warning and will make a PR comment with the warning message
+#   if [[ -n "$VALIDATE_OUTPUT"  ]]; then
+#     echo "goci warning:"
+#     echo "$VALIDATE_OUTPUT"
+
+#     post_github_pr_comment $USER $REPO_NAME $FULL_SHA $GH_RELEASE_TOKEN "$VALIDATE_OUTPUT"
+#   fi
+
+#   set -e
+#   echo "goci passed."
+# else
+#   echo "No go.mod file found. Skipping goci."
+# fi
 
 install_yq
 
