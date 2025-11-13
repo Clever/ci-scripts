@@ -4,8 +4,8 @@ go 1.24.0
 
 require (
 	github.com/Clever/catapult/gen-go/models v1.206.0
-	github.com/Clever/circle-ci-integrations/gen-go/client v0.0.0-20250515140338-c4907a8ff0c0
-	github.com/Clever/circle-ci-integrations/gen-go/models v0.0.0-20250515140338-c4907a8ff0c0
+	github.com/Clever/circle-ci-integrations/gen-go/client v0.0.0-20251112223700-5c855479cbac
+	github.com/Clever/circle-ci-integrations/gen-go/models v0.0.0-20251112223700-5c855479cbac
 	github.com/Clever/wag/logging/wagclientlogger v0.0.0-20250514163731-344287ef8d81
 	github.com/aws/aws-sdk-go-v2 v1.36.5
 	github.com/aws/aws-sdk-go-v2/config v1.29.17
