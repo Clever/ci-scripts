@@ -1,0 +1,32 @@
+name: Atlantis
+
+on:
+  workflow_call:
+    inputs:
+      atlantis_url:
+        default: "http://atlantis.ops-default-us-west-2-prod.local"
+        required: false
+        type: string
+    secrets:
+      TWINGATE_ATLANTIS_SERVICE_KEY:
+        required: true
+        description: "Twingate service account key with access to Atlantis resources "
+
+jobs:
+  atlantis:
+    name: Atlantis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure Twingate
+        uses: twingate/github-action@v1
+        with:
+          service-key: ${{ secrets.TWINGATE_ATLANTIS_SERVICE_KEY }}
+      - name: Call Atlantis
+        timeout-minutes: 1
+        run: |
+          curl --request POST \
+            --header 'Content-Type: application/json' \
+            --header 'X-GitHub-Event: ${{ github.event_name }}' \
+            --header 'X-GitHub-Delivery: ${{ github.run_id }}' \
+            --data '${{ toJson(github.event) }}' \
+            ${{ inputs.atlantis_url }}/events
