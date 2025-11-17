@@ -1,5 +1,5 @@
-v1.5.1
-add shared workflow for Claude actions
+v1.5.2
+add option to pass branch name and dryRun to catalog-sync
 
 Previously:
-- catalog sync is now uses entity endpoint for everything
+- add shared workflow for Claude actions
