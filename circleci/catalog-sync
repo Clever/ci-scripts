@@ -40,7 +40,7 @@ SC=$(curl -u $USER:$PASS \
   -w "%{http_code}" \
   -H "Content-Type: application/json" \
   -X POST \
-  "$BASE_URL/catalogEntity?entity=$ENTITY_NAME&type=$TYPE&branch=$BRANCH&dryRun=$DRY_RUN"
+  "$BASE_URL/catalogEntity?entity=$ENTITY_NAME&type=$TYPE&branch=$BRANCH&dryRun=$DRY_RUN")
 
 if [ "$SC" -eq 200 ]; then
   echo "Successfully published app catalog config"
