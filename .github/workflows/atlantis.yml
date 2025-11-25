@@ -17,10 +17,14 @@ jobs:
     name: Atlantis
     runs-on: ubuntu-latest
     steps:
+      # Atlantis TG resource: https://github.com/Clever/k8-addons/blob/main/addons/atlantis/templates/atlantis-twingateresource.yaml
+      #.TG connector: https://github.com/Clever/k8-addons/blob/main/addons/twingate/templates/default-twingateconnector.yaml
+      # TG operator config: https://github.com/Clever/k8s-terraform/blob/main/modules/addons/twingate.tf
       - name: Configure Twingate
         uses: twingate/github-action@v1
         with:
           service-key: ${{ secrets.TWINGATE_ATLANTIS_SERVICE_KEY }}
+      # call atlantis webhook: https://www.runatlantis.io/docs/configuring-webhooks
       - name: Call Atlantis
         timeout-minutes: 1
         run: |
