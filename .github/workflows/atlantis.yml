@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Atlantis TG resource: https://github.com/Clever/k8-addons/blob/main/addons/atlantis/templates/atlantis-twingateresource.yaml
-      #.TG connector: https://github.com/Clever/k8-addons/blob/main/addons/twingate/templates/default-twingateconnector.yaml
+      # TG connector: https://github.com/Clever/k8-addons/blob/main/addons/twingate/templates/default-twingateconnector.yaml
       # TG operator config: https://github.com/Clever/k8s-terraform/blob/main/modules/addons/twingate.tf
       - name: Configure Twingate
         uses: twingate/github-action@v1
@@ -27,10 +27,13 @@ jobs:
       # call atlantis webhook: https://www.runatlantis.io/docs/configuring-webhooks
       - name: Call Atlantis
         timeout-minutes: 1
+        env:
+          # set github event to json as env variable to properly escape: https://github.com/actions/runner/issues/1656#issuecomment-1030077729
+          GITHUB_EVENT_JSON: ${{ toJson(github.event) }}
         run: |
           curl --request POST \
             --header 'Content-Type: application/json' \
             --header 'X-GitHub-Event: ${{ github.event_name }}' \
             --header 'X-GitHub-Delivery: ${{ github.run_id }}' \
-            --data '${{ toJson(github.event) }}' \
+            --data "$GITHUB_EVENT_JSON" \
             ${{ inputs.atlantis_url }}/events
