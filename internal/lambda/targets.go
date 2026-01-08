@@ -66,7 +66,7 @@ func s3Key(artifactName string) string {
 
 func s3Buckets() string {
 	out := []string{}
-	for _, r := range environment.Regions {
+	for _, r := range environment.LambdaRegions {
 		out = append(out, fmt.Sprintf("S3Buckets={%[1]s=\"%[2]s-%[1]s", r, environment.LambdaArtifactBucketPrefix()))
 	}
 	return strings.Join(out, ",")

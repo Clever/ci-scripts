@@ -56,13 +56,12 @@ func BuildTargets(apps map[string]*models.LaunchConfig) (map[string]DockerTarget
 		done[artifact] = struct{}{}
 
 		tags := []string{}
-		for _, region := range environment.Regions {
-			tag := fmt.Sprintf(
-				"%s.dkr.ecr.%s.amazonaws.com/%s:%s",
-				environment.ECRAccountID(), region, artifact, environment.ShortSHA1(),
-			)
-			tags = append(tags, tag)
-		}
+		// Only push to ecrRootRegion, images are replicated to other regions
+		tag := fmt.Sprintf(
+			"%s.dkr.ecr.%s.amazonaws.com/%s:%s",
+			environment.ECRAccountID(), ecrRootRegion, artifact, environment.ShortSHA1(),
+		)
+		tags = append(tags, tag)
 
 		targets[repo.Dockerfile(launch)] = DockerTarget{
 			Tags:    tags,
