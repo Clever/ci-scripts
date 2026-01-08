@@ -42,17 +42,11 @@ image_exists() {
 }
 
 check_ecr_vars() {
-  # ECR required env vars. If OIDC_ECR_UPLOAD_ROLE is defined via context, then use it to login to aws.
-  if [[ -z $OIDC_ECR_UPLOAD_ROLE ]]; then
-    if [[ -z $ECR_ACCOUNT_ID ]]; then echo "Missing var for ECR: ECR_ACCOUNT_ID" && exit 1; fi
-    if [[ -z $ECR_PUSH_SECRET ]]; then echo "Missing var for ECR: ECR_PUSH_SECRET" && exit 1; fi
-  else
-    if [ -z "${CIRCLE_OIDC_TOKEN_V2}" ]; then
-      echo "OIDC Token cannot be found. A CircleCI context must be specified."
-      exit 1
-    fi
-    echo "Using AWS role defined in \$OIDC_ECR_UPLOAD_ROLE to login to aws ecr"
+  if [ -z "${CIRCLE_OIDC_TOKEN_V2}" ]; then
+    echo "OIDC Token cannot be found. A CircleCI context must be specified."
+    exit 1
   fi
+  echo "Using AWS role defined in \$OIDC_ECR_UPLOAD_ROLE to login to aws ecr"
 }
 
 ecr_login(){
@@ -88,6 +82,7 @@ ORG=clever
 
 # Only push to us-west-2, images are replicated to other regions
 ECR_REGION_US_WEST_2=us-west-2
+ECR_REGION_US_WEST_1=us-west-1
 AWS_ECR_PROFILE=oidc-ecr-profile
 
 echo "Docker version..."
@@ -101,17 +96,11 @@ install_awscli
 # Some Dockerfiles for private repos depend on public images (and vice
 # versa) in us-west-1. This login allows us to pull the images for the
 # final image build.
-echo "If necessary, add the ECR_BUILD_ID and ECR_BUILD_SECRET env vars to circle manually."
-echo "They can be found in init-service as CI_ECR_XXX_KEY and CI_ECR_XXX_SECRET."
+echo "If necessary, add the ECR_BUILD_ID env var to circle manually."
 if [[ -n $ECR_BUILD_ID ]]; then
-  if [[ -z $OIDC_ECR_UPLOAD_ROLE ]]; then
-    echo "Logging into ECR in us-west-1 using static credentials..."
-    ecr_login us-west-1 $ECR_BUILD_ID $ECR_BUILD_SECRET
-  else
-    echo "Logging into ECR using role credentials..."
-    assume_role_with_web_identity $OIDC_ECR_UPLOAD_ROLE $AWS_ECR_PROFILE
-    ecr_login_with_profile $ECR_REGION_US_WEST_1
-  fi
+  echo "Logging into ECR using role credentials..."
+  assume_role_with_web_identity $OIDC_ECR_UPLOAD_ROLE $AWS_ECR_PROFILE
+  ecr_login_with_profile $ECR_REGION_US_WEST_1
 fi
 
 if [ -z "$(docker images -q $ORG/$REPO:$SHORT_SHA)" ]; then
@@ -127,14 +116,9 @@ else
 fi
 
 # ECR login. Only push to us-west-2, images are replicated to other regions.
-if [[ -z $OIDC_ECR_UPLOAD_ROLE ]]; then
-  echo "Logging into ECR using static credentials..."
-  ecr_login $ECR_REGION_US_WEST_2 $ECR_PUSH_ID $ECR_PUSH_SECRET
-else
-  echo "Logging into ECR using role credentials..."
-  assume_role_with_web_identity $OIDC_ECR_UPLOAD_ROLE $AWS_ECR_PROFILE
-  ecr_login_with_profile $ECR_REGION_US_WEST_2
-fi
+echo "Logging into ECR using role credentials..."
+assume_role_with_web_identity $OIDC_ECR_UPLOAD_ROLE $AWS_ECR_PROFILE
+ecr_login_with_profile $ECR_REGION_US_WEST_2
 
 echo "Pushing to ECR (us-west-2 only, images replicated to other regions)..."
 push_ecr_image $ECR_REGION_US_WEST_2
