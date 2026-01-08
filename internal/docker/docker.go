@@ -24,7 +24,7 @@ import (
 	"github.com/Clever/ci-scripts/internal/environment"
 )
 
-ecrRootRegion = "us-west-2"
+const ecrRootRegion = "us-west-2"
 
 // Dockers documentation doesn't provide any examples for using their
 // daemon client. This blog post is very helpful for reference:
