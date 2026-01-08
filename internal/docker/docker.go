@@ -24,6 +24,8 @@ import (
 	"github.com/Clever/ci-scripts/internal/environment"
 )
 
+ecrRootRegion = "us-west-2"
+
 // Dockers documentation doesn't provide any examples for using their
 // daemon client. This blog post is very helpful for reference:
 // https://www.loginradius.com/blog/engineering/build-push-docker-images-golang/
@@ -32,12 +34,12 @@ import (
 // complexity in a simple API.
 type Docker struct {
 	cli      *client.Client
-	ecrCreds map[string]types.AuthConfig
+	ecrCreds types.AuthConfig
 	awsCfg   aws.Config
 }
 
 // New initializes a new docker daemon client and caches ecr credentials
-// for all 4 regions.
+// for us-west-2 (images are replicated to other regions).
 func New(ctx context.Context, ecrUploadRole string) (*Docker, error) {
 	cl, err := client.NewClientWithOpts(client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -48,14 +50,8 @@ func New(ctx context.Context, ecrUploadRole string) (*Docker, error) {
 		awsCfg: environment.AWSCfg(ctx, ecrUploadRole),
 	}
 
-	grp, ctx := errgroup.WithContext(ctx)
-	d.ecrCreds = map[string]types.AuthConfig{}
-	for _, r := range environment.Regions {
-		r := r
-		grp.Go(func() error { return d.ecrCredentials(ctx, r) })
-	}
-
-	if err := grp.Wait(); err != nil {
+	// Only fetch credentials for us-west-2, images are replicated to other regions
+	if err := d.ecrCredentials(ctx, ecrRootRegion); err != nil {
 		return nil, err
 	}
 
@@ -104,14 +100,12 @@ func (d *Docker) Push(ctx context.Context, tags []string) error {
 	for _, tag := range tags {
 		tag := tag
 		fmt.Println("pushing", tag)
-		parts := strings.Split(tag, ".")
-		region := parts[3]
 
 		grp.Go(func() error {
 			// TODO: check if the repository exists, if it doesn't this just
 			// nondescriptly endlessly retries.
 			res, err := d.cli.ImagePush(grpCtx, tag, types.ImagePushOptions{
-				RegistryAuth: encodeCreds(d.ecrCreds[region]),
+				RegistryAuth: encodeCreds(d.ecrCreds),
 			})
 			if err != nil {
 				return fmt.Errorf("unable to push image: %v", err)
@@ -154,7 +148,7 @@ func (d *Docker) ecrCredentials(ctx context.Context, region string) error {
 		return fmt.Errorf("invalid token: expected two parts, got %d", len(parts))
 	}
 
-	d.ecrCreds[region] = types.AuthConfig{
+	d.ecrCreds = types.AuthConfig{
 		Username:      parts[0],
 		Password:      parts[1],
 		ServerAddress: *auth.ProxyEndpoint,

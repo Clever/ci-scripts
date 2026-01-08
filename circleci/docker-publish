@@ -5,7 +5,7 @@
 #
 # Usage:
 #
-#   docker-publish 
+#   docker-publish
 #   optional flag "-r private-repos" enables Docker Build Kit to allow ssh socket mounting to pull private modules/repos
 
 
@@ -42,7 +42,7 @@ image_exists() {
 }
 
 check_ecr_vars() {
-  # ECR required env vars. If OIDC_ECR_UPLOAD_ROLE is defined via context, then use it to login to aws. 
+  # ECR required env vars. If OIDC_ECR_UPLOAD_ROLE is defined via context, then use it to login to aws.
   if [[ -z $OIDC_ECR_UPLOAD_ROLE ]]; then
     if [[ -z $ECR_ACCOUNT_ID ]]; then echo "Missing var for ECR: ECR_ACCOUNT_ID" && exit 1; fi
     if [[ -z $ECR_PUSH_SECRET ]]; then echo "Missing var for ECR: ECR_PUSH_SECRET" && exit 1; fi
@@ -86,9 +86,8 @@ SHORT_SHA=${CIRCLE_SHA1:0:7}
 
 ORG=clever
 
-ECR_REGION_US_WEST_1=us-west-1
+# Only push to us-west-2, images are replicated to other regions
 ECR_REGION_US_WEST_2=us-west-2
-ECR_REGION_US_EAST_1=us-east-1
 AWS_ECR_PROFILE=oidc-ecr-profile
 
 echo "Docker version..."
@@ -99,7 +98,9 @@ check_ecr_vars
 
 install_awscli
 
-# Some Dockerfiles for private repos depend on public images (and vice versa) in us-west-1
+# Some Dockerfiles for private repos depend on public images (and vice
+# versa) in us-west-1. This login allows us to pull the images for the
+# final image build.
 echo "If necessary, add the ECR_BUILD_ID and ECR_BUILD_SECRET env vars to circle manually."
 echo "They can be found in init-service as CI_ECR_XXX_KEY and CI_ECR_XXX_SECRET."
 if [[ -n $ECR_BUILD_ID ]]; then
@@ -108,16 +109,16 @@ if [[ -n $ECR_BUILD_ID ]]; then
     ecr_login us-west-1 $ECR_BUILD_ID $ECR_BUILD_SECRET
   else
     echo "Logging into ECR using role credentials..."
-    assume_role_with_web_identity $OIDC_ECR_UPLOAD_ROLE $AWS_ECR_PROFILE 
+    assume_role_with_web_identity $OIDC_ECR_UPLOAD_ROLE $AWS_ECR_PROFILE
     ecr_login_with_profile $ECR_REGION_US_WEST_1
   fi
 fi
 
-if [ -z "$(docker images -q $ORG/$REPO:$SHORT_SHA)" ]; then 
-  echo "Building docker image..." 
+if [ -z "$(docker images -q $ORG/$REPO:$SHORT_SHA)" ]; then
+  echo "Building docker image..."
   if [ $readopt == "private-repos" ]; then
     echo "With Private Repos..."
-    DOCKER_BUILDKIT=1 docker build --ssh default -t $ORG/$REPO:$SHORT_SHA . 
+    DOCKER_BUILDKIT=1 docker build --ssh default -t $ORG/$REPO:$SHORT_SHA .
   else
     docker build -t $ORG/$REPO:$SHORT_SHA .
   fi
@@ -125,21 +126,15 @@ else
   echo "Image already exists... skipping build"
 fi
 
-# ECR login.
+# ECR login. Only push to us-west-2, images are replicated to other regions.
 if [[ -z $OIDC_ECR_UPLOAD_ROLE ]]; then
   echo "Logging into ECR using static credentials..."
-  ecr_login $ECR_REGION_US_WEST_1 $ECR_PUSH_ID $ECR_PUSH_SECRET
   ecr_login $ECR_REGION_US_WEST_2 $ECR_PUSH_ID $ECR_PUSH_SECRET
-  ecr_login $ECR_REGION_US_EAST_1 $ECR_PUSH_ID $ECR_PUSH_SECRET
 else
   echo "Logging into ECR using role credentials..."
-  assume_role_with_web_identity $OIDC_ECR_UPLOAD_ROLE $AWS_ECR_PROFILE 
-  ecr_login_with_profile $ECR_REGION_US_WEST_1
+  assume_role_with_web_identity $OIDC_ECR_UPLOAD_ROLE $AWS_ECR_PROFILE
   ecr_login_with_profile $ECR_REGION_US_WEST_2
-  ecr_login_with_profile $ECR_REGION_US_EAST_1
 fi
 
-echo "Pushing to ECR..."
-push_ecr_image $ECR_REGION_US_WEST_1
+echo "Pushing to ECR (us-west-2 only, images replicated to other regions)..."
 push_ecr_image $ECR_REGION_US_WEST_2
-push_ecr_image $ECR_REGION_US_EAST_1

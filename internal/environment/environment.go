@@ -56,9 +56,9 @@ var (
 	// upload role.
 	oidcEcrUploadRole = ""
 
-	// Regions is the set of regions this app should perform
-	// operations in.
-	Regions = []string{"us-west-1", "us-west-2", "us-east-1"}
+	// LambdaRegions is the set of regions to upload Lambda artifacts to.
+	// Lambda artifacts are not replicated and must be uploaded to each region.
+	LambdaRegions = []string{"us-west-1", "us-west-2", "us-east-1"}
 
 	// Local is a boolean which should be set to true when running
 	// locally on a developers machine.
