@@ -1,5 +1,6 @@
-v1.5.2
-add option to pass branch name and dryRun to catalog-sync
+v1.5.3
+Push Docker images to one ECR region
 
 Previously:
+- add option to pass branch name and dryRun to catalog-sync
 - add shared workflow for Claude actions
