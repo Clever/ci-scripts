@@ -27,11 +27,11 @@ func New(ctx context.Context, bucketPrefix string) *Lambda {
 }
 
 // Publish an already built lambda artifact archive to s3 using the
-// artifact name as the key. The archive is pushed to each of the 4 aws
+// artifact name as the key. The archive is pushed to each of the aws
 // regions. Each region is pushed in it's own goroutine.
 func (l *Lambda) Publish(ctx context.Context, binaryPath, artifactName string) error {
 	grp, grpCtx := errgroup.WithContext(ctx)
-	for _, region := range environment.Regions {
+	for _, region := range environment.LambdaRegions {
 		region := region
 		bucket := fmt.Sprintf("%s-%s", l.artifactBucketPrefix, region)
 		key := s3Key(artifactName)
