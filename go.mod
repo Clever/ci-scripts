@@ -16,7 +16,6 @@ require (
 	github.com/docker/docker v23.0.2+incompatible
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/moby/buildkit v0.11.5
-	golang.org/x/mod v0.25.0
 	golang.org/x/sync v0.15.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -69,6 +68,7 @@ require (
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	go.mongodb.org/mongo-driver v1.17.4 // indirect
+	golang.org/x/mod v0.25.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
