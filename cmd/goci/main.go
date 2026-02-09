@@ -2,16 +2,12 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
-
-	"golang.org/x/mod/modfile"
 
 	"github.com/Clever/catapult/gen-go/models"
 	"github.com/Clever/ci-scripts/internal/backstage"
@@ -165,56 +161,60 @@ func validateRun() error {
 		return &ValidationError{Message: fmt.Sprintf("branch name %s contains a `/` character, which is not supported by catapult", environment.Branch())}
 	}
 
-	latestGoVersion, releaseDate, err := fetchLatestGoVersion()
-	if err != nil {
-		return fmt.Errorf("failed to fetch latest Go version: %v", err)
-	}
+	// TODO: Re-enable Go version check after golden images project is complete
+	// Go version check temporarily disabled for golden images project
+	/*
+		latestGoVersion, releaseDate, err := fetchLatestGoVersion()
+		if err != nil {
+			return fmt.Errorf("failed to fetch latest Go version: %v", err)
+		}
 
-	goModPath := "./go.mod"
-	fileBytes, err := os.ReadFile(goModPath)
-	// If the go.mod file is not found, we will skip the go version check
-	if errors.Is(err, os.ErrNotExist) {
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("failed to read go.mod file: %v", err)
-	}
+		goModPath := "./go.mod"
+		fileBytes, err := os.ReadFile(goModPath)
+		// If the go.mod file is not found, we will skip the go version check
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		} else if err != nil {
+			return fmt.Errorf("failed to read go.mod file: %v", err)
+		}
 
-	f, err := modfile.Parse("./go.mod", fileBytes, nil)
-	if err != nil {
-		return fmt.Errorf("failed to parse go.mod file: %v", err)
-	}
+		f, err := modfile.Parse("./go.mod", fileBytes, nil)
+		if err != nil {
+			return fmt.Errorf("failed to parse go.mod file: %v", err)
+		}
 
-	// trim the patch value from the authoring repositories go version - if 2 dots are present
-	var trimmedVersion string
-	if strings.Count(f.Go.Version, ".") == 2 {
-		trimmedVersion = f.Go.Version[:len(f.Go.Version)-2]
-	} else {
-		trimmedVersion = f.Go.Version
-	}
+		// trim the patch value from the authoring repositories go version - if 2 dots are present
+		var trimmedVersion string
+		if strings.Count(f.Go.Version, ".") == 2 {
+			trimmedVersion = f.Go.Version[:len(f.Go.Version)-2]
+		} else {
+			trimmedVersion = f.Go.Version
+		}
 
-	repoVersion, e := strconv.ParseFloat(trimmedVersion, 64)
+		repoVersion, e := strconv.ParseFloat(trimmedVersion, 64)
 
-	if e != nil {
-		return fmt.Errorf("failed to parse go version: %v", e)
-	}
+		if e != nil {
+			return fmt.Errorf("failed to parse go version: %v", e)
+		}
 
-	// We will begin enforcing this policy for go version 1.24 and above, for now set the minimum version to 1.23
-	var enforceGoVersionUpgrade float64 = 1.23
+		// We will begin enforcing this policy for go version 1.24 and above, for now set the minimum version to 1.23
+		var enforceGoVersionUpgrade float64 = 1.23
 
-	// trim the patch value from the latest go version
-	latestGoVersion = latestGoVersion[:len(latestGoVersion)-2]
-	newestGoVersion, e := strconv.ParseFloat(latestGoVersion, 64)
-	if e != nil {
-		return fmt.Errorf("failed to parse go version: %v", e)
-	}
+		// trim the patch value from the latest go version
+		latestGoVersion = latestGoVersion[:len(latestGoVersion)-2]
+		newestGoVersion, e := strconv.ParseFloat(latestGoVersion, 64)
+		if e != nil {
+			return fmt.Errorf("failed to parse go version: %v", e)
+		}
 
-	// Once 1.23 is no longer supported, we will enforce the policy for 1.24 and above
-	if (repoVersion <= enforceGoVersionUpgrade) && (enforceGoVersionUpgrade < newestGoVersion-0.01) {
-		return &ValidationError{Message: fmt.Sprintf("Your applications go version %v is no longer supported. Please upgrade to version %v.", repoVersion, newestGoVersion)}
-	} else if repoVersion <= newestGoVersion-0.01 {
-		// We'll give a PR comment to the Author to warn them about the need to upgrade
-		fmt.Printf("A new Go version is out, released on (%v). After 6 months of release, Your current Go version (%v) will fail CI workflows if it is not upgraded.\n", releaseDate, f.Go.Version)
-	}
+		// Once 1.23 is no longer supported, we will enforce the policy for 1.24 and above
+		if (repoVersion <= enforceGoVersionUpgrade) && (enforceGoVersionUpgrade < newestGoVersion-0.01) {
+			return &ValidationError{Message: fmt.Sprintf("Your applications go version %v is no longer supported. Please upgrade to version %v.", repoVersion, newestGoVersion)}
+		} else if repoVersion <= newestGoVersion-0.01 {
+			// We'll give a PR comment to the Author to warn them about the need to upgrade
+			fmt.Printf("A new Go version is out, released on (%v). After 6 months of release, Your current Go version (%v) will fail CI workflows if it is not upgraded.\n", releaseDate, f.Go.Version)
+		}
+	*/
 	return nil
 }
 

@@ -3,16 +3,8 @@ github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1/go.mod h1:xomTg6
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Clever/catapult/gen-go/models v1.206.0 h1:O338A6BsJXawrcj1YRDzceapfv7kWhGSo2n91S47Uoo=
 github.com/Clever/catapult/gen-go/models v1.206.0/go.mod h1:a2Mjvx842kCgdnwgCbF8S361vdrDTeeDG/iowbCjkB0=
-github.com/Clever/circle-ci-integrations/gen-go/client v0.0.0-20250515140338-c4907a8ff0c0 h1:hFKnyXa1O9DdMA270JK+8QLtEljl4p1VxMh3qHFmN6s=
-github.com/Clever/circle-ci-integrations/gen-go/client v0.0.0-20250515140338-c4907a8ff0c0/go.mod h1:zfaHIz55lTkvsMS9jIL11l9szB8ThG0RenysMz35/e4=
-github.com/Clever/circle-ci-integrations/gen-go/client v0.0.0-20251112223700-5c855479cbac h1:rWhJx24guNjw33aa3c/CHtCKpqqsak+uUvWlOOMGm6Y=
-github.com/Clever/circle-ci-integrations/gen-go/client v0.0.0-20251112223700-5c855479cbac/go.mod h1:wpdliPGHx46byqcV9J05VN7JUoGb5NDZFxVt7PQpMQ0=
 github.com/Clever/circle-ci-integrations/gen-go/client v0.14.0 h1:O4XAIg8zcree7X7WVqjc2+z1a9Z13eXiiFXE6xa5hEs=
 github.com/Clever/circle-ci-integrations/gen-go/client v0.14.0/go.mod h1:wpdliPGHx46byqcV9J05VN7JUoGb5NDZFxVt7PQpMQ0=
-github.com/Clever/circle-ci-integrations/gen-go/models v0.0.0-20250515140338-c4907a8ff0c0 h1:8Dz3nDusLZlF2Te4FdmLO2/J9WJ1rdCsd+7BuE/UCjw=
-github.com/Clever/circle-ci-integrations/gen-go/models v0.0.0-20250515140338-c4907a8ff0c0/go.mod h1:mHbAHSsROUodDWapy/Po6KKrpmXzTl1DKIpRKTY2Yz0=
-github.com/Clever/circle-ci-integrations/gen-go/models v0.0.0-20251112223700-5c855479cbac h1:NdpzsAyAzCmZMt+YQsEk6hHtAsf128qSmOuFbLRCsS4=
-github.com/Clever/circle-ci-integrations/gen-go/models v0.0.0-20251112223700-5c855479cbac/go.mod h1:t6kpy0bDHmkDfPkxpoc1DE49mBfo0DbEh9e5MZAJDTc=
 github.com/Clever/circle-ci-integrations/gen-go/models v0.14.0 h1:5Ys+a5lnL/GxEMxHHTu3BEjGcChQ/bFzlAHBP4zfoAo=
 github.com/Clever/circle-ci-integrations/gen-go/models v0.14.0/go.mod h1:t6kpy0bDHmkDfPkxpoc1DE49mBfo0DbEh9e5MZAJDTc=
 github.com/Clever/discovery-go v1.9.1 h1:4swV6hvVOeEVVVHkSaArczkrLlWfjXF+EtUfErcrFro=

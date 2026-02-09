@@ -1,6 +1,7 @@
-v1.5.3
-Push Docker images to one ECR region
+v1.5.4
+Temporarily disable Go version checks
 
 Previously:
+- Push Docker images to one ECR region
 - add option to pass branch name and dryRun to catalog-sync
 - add shared workflow for Claude actions
