@@ -16,10 +16,11 @@ import (
 	"github.com/Clever/ci-scripts/internal/environment"
 	"github.com/Clever/ci-scripts/internal/lambda"
 	"github.com/Clever/ci-scripts/internal/repo"
+	"github.com/Clever/ci-scripts/internal/slingshot"
 	ciIntegrationsModels "github.com/Clever/circle-ci-integrations/gen-go/models"
 )
 
-const usage = "usage: goci <validate|detect|artifact-build-publish-deploy|publish-utility>"
+const usage = "usage: goci <validate|detect|artifact-build-publish-deploy|publish-utility|deploy-apps>"
 
 // This app assumes the code has been checked out and that the
 // repository is the working directory.
@@ -56,7 +57,7 @@ func run(mode string) error {
 	var err error
 
 	// Only discover applications for specific modes
-	if mode == "validate" || mode == "detect" || mode == "artifact-build-publish-deploy" {
+	if mode == "validate" || mode == "detect" || mode == "artifact-build-publish-deploy" || mode == "deploy-apps" {
 		apps, err = repo.DiscoverApplications("./launch")
 		if err != nil {
 			return err
@@ -79,6 +80,8 @@ func run(mode string) error {
 	case "detect":
 		fmt.Println(strings.Join(appIDs, " "))
 		return nil
+	case "deploy-apps":
+		return deployApps(appIDs)
 	case "artifact-build-publish-deploy":
 		// continue
 	default:
@@ -294,4 +297,20 @@ func publishUtility() error {
 	fmt.Printf("Successfully synced catalog entity %s \n", catalogInfo.GetName())
 	return nil
 
+}
+
+func deployApps(appIds []string) error {
+	if len(appIds) == 0 {
+		fmt.Println("No applications have buildable changes. If this is unexpected, " +
+			"double check your artifact dependency configuration in the launch yaml.")
+		return nil
+	}
+	ctx := context.Background()
+
+	if environment.Branch() == "master" {
+		if err := slingshot.New().DeployApps(ctx, appIds); err != nil {
+			return err
+		}
+	}
+	return validateRun()
 }
