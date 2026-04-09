@@ -10,7 +10,7 @@ import (
 	"github.com/Clever/ci-scripts/internal/environment"
 	"github.com/Clever/circle-ci-integrations/gen-go/client"
 	"github.com/Clever/circle-ci-integrations/gen-go/models"
-	"github.com/Clever/ci-scripts/internal/service-util"
+	"github.com/Clever/ci-scripts/internal/logger"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -38,7 +38,7 @@ func New() *Catapult {
 	url := strings.TrimSuffix(environment.CatapultURL(), "/v2/catapult")
 	url = strings.TrimSuffix(url, "/catapult")
 	var rt http.RoundTripper = &basicAuthTransport{}
-	cli := client.New(url, serviceutil.FmtPrinlnLogger{}, &rt)
+	cli := client.New(url, logger.FmtPrinlnLogger{}, &rt)
 	cli.SetTimeout(15 * time.Second)
 	return &Catapult{client: cli}
 }

@@ -1,4 +1,4 @@
-package serviceutil
+package logger
 
 import (
 	"encoding/json"

@@ -41,20 +41,3 @@ func AutoDeployEnvs(app string) ([]string, error) {
 	}
 	return stack.AutoDeployEnvs, nil
 }
-
-// AppType reads the run.type from config/<app>/values.yaml.
-func AppType(app string) (string, error) {	
-	path := fmt.Sprintf(appValuesConfigPath, app)
-	b, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return "", nil
-		}
-		return "", err
-	}
-	var values appValuesYAML
-	if err := yaml.Unmarshal(b, &values); err != nil {
-		return "", fmt.Errorf("failed to unmarshal values.yaml for %s: %w", path, err)
-	}
-	return values.Run.Type, nil
-}

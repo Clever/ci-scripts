@@ -8,7 +8,7 @@ import (
 	"github.com/Clever/ci-scripts/internal/environment"
 	slingshotModels "github.com/Clever/slingshot/gen-go/models"
 	slingshotClient "github.com/Clever/slingshot/gen-go/client"
-	"github.com/Clever/ci-scripts/internal/service-util"
+	"github.com/Clever/ci-scripts/internal/logger"
 	"github.com/Clever/ci-scripts/internal/repo"
 )
 
@@ -18,7 +18,7 @@ type Slingshot struct {
 
 func New() *Slingshot {
 	return &Slingshot{
-		client: slingshotClient.New(environment.SlingshotURL(), serviceutil.FmtPrinlnLogger{}, nil),
+		client: slingshotClient.New(environment.SlingshotURL(), logger.FmtPrinlnLogger{}, nil),
 	}
 }
 
@@ -43,10 +43,6 @@ func (s *Slingshot) deployApp(ctx context.Context, app, env string) error {
 	repoName := environment.Repo()
 	githubUser := environment.CircleTriggeredBy()
 	clusterEnvironment := getSlingshotClusterEnvironment(env)
-	appType, err := repo.AppType(app)
-	if err != nil {
-		return err
-	}
 
 	fmt.Println("Deploying", app, "to", env, "with build ID", buildID)
 
@@ -59,7 +55,6 @@ func (s *Slingshot) deployApp(ctx context.Context, app, env string) error {
 		User: &slingshotModels.User{
 			GithubUsername: githubUser,
 		},
-		Type: appType,
 	})
 }
 
