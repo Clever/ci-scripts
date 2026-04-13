@@ -9,17 +9,10 @@ import (
 
 const (
 	appStackConfigPath = "config/%s/stack.yaml"
-	appValuesConfigPath = "config/%s/values.yaml"
 )
 
 type appStackYAML struct {
 	AutoDeployEnvs []string `json:"autoDeployEnvs"`
-}
-
-type appValuesYAML struct {
-	Run struct {
-		Type string `json:"type"`
-	} `json:"run"`
 }
 
 // ReadAppStackAutoDeployEnvs reads autoDeployEnvs from config/<app>/stack.yaml.
