@@ -63,6 +63,11 @@ var (
 	// Local is a boolean which should be set to true when running
 	// locally on a developers machine.
 	Local = os.Getenv("LOCAL") == "true"
+	// SlingshotURL is the DNS of the slingshot service.
+	slingshotURL = ""
+
+	// CircleTriggeredBy is the username of the user who triggered the CI run.
+	circleTriggeredBy = ""
 )
 
 func ECRAccountID() string {
@@ -135,6 +140,13 @@ func CircleUser() string {
 	return circleUser
 }
 
+func CircleTriggeredBy() string {
+	if circleTriggeredBy == "" {
+		circleTriggeredBy = envMustString("CIRCLE_USERNAME", true)
+	}
+	return circleTriggeredBy
+}
+
 func Repo() string {
 	if repo == "" {
 		repo = envMustString("CIRCLE_PROJECT_REPONAME", true)
@@ -168,6 +180,13 @@ func OidcEcrUploadRole() string {
 		oidcEcrUploadRole = envMustString("OIDC_ECR_UPLOAD_ROLE", false)
 	}
 	return oidcEcrUploadRole
+}
+
+func SlingshotURL() string {
+	if slingshotURL == "" {
+		slingshotURL = envMustString("SLINGSHOT_URL", true)
+	}
+	return slingshotURL
 }
 
 // AWS doesn't provide a way to get the token from a string so we will

@@ -2,7 +2,6 @@ package catapult
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -11,7 +10,7 @@ import (
 	"github.com/Clever/ci-scripts/internal/environment"
 	"github.com/Clever/circle-ci-integrations/gen-go/client"
 	"github.com/Clever/circle-ci-integrations/gen-go/models"
-	"github.com/Clever/wag/logging/wagclientlogger"
+	"github.com/Clever/ci-scripts/internal/logger"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -39,7 +38,7 @@ func New() *Catapult {
 	url := strings.TrimSuffix(environment.CatapultURL(), "/v2/catapult")
 	url = strings.TrimSuffix(url, "/catapult")
 	var rt http.RoundTripper = &basicAuthTransport{}
-	cli := client.New(url, fmtPrinlnLogger{}, &rt)
+	cli := client.New(url, logger.FmtPrinlnLogger{}, &rt)
 	cli.SetTimeout(15 * time.Second)
 	return &Catapult{client: cli}
 }
@@ -115,33 +114,4 @@ type basicAuthTransport struct{}
 func (ba *basicAuthTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	r.SetBasicAuth(environment.CatapultUser(), environment.CatapultPassword())
 	return http.DefaultTransport.RoundTrip(r)
-}
-
-// A lightweight logger which prints the wag client logs to standard out.
-type fmtPrinlnLogger struct{}
-
-func (fmtPrinlnLogger) Log(level wagclientlogger.LogLevel, title string, data map[string]interface{}) {
-	bs, _ := json.Marshal(data)
-	fmt.Printf("%s - %s %s\n", levelString(level), title, string(bs))
-}
-
-func levelString(l wagclientlogger.LogLevel) string {
-	switch l {
-	case 0:
-		return "TRACE"
-	case 1:
-		return "DEBUG"
-	case 2:
-		return "INFO"
-	case 3:
-		return "WARNING"
-	case 4:
-		return "ERROR"
-	case 5:
-		return "CRITICAL"
-	case 6:
-		return "FROM_ENV"
-	default:
-		return "INFO"
-	}
 }

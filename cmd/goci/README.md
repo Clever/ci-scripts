@@ -42,5 +42,42 @@ go build -o ./bin/goci ./cmd/goci
 
 cp ./bin/goci ./testApp
 
-cd testApp && goci
+cd testApp && ./goci validate
 ```
+
+Running goci fully locally is awkward: most behavior depends on Clever CI **contexts and environment variables** (AWS, Catapult, etc.). For realistic validation, prefer testing **in CircleCI** using the orb parameter below.
+
+### Testing a goci branch in CircleCI (`build_goci_from_branch`)
+
+The [circleci-orbs](https://github.com/Clever/circleci-orbs) jobs that invoke goci accept an optional parameter **`build_goci_from_branch`**. When set to a **branch name on this repo (`ci-scripts`)**, the job clones that branch and runs `go install ./cmd/goci` instead of installing the latest released goci binary.
+
+**Steps**
+
+1. **Push your goci changes** to a branch of `github.com/Clever/ci-scripts`
+2. **Pick a test application** whose `.circleci/config.yml` already uses `clever/circleci-orbs`
+3. **Set `build_goci_from_branch`** on each orb job that should use your in-development goci, using the ci-scripts branch name:
+
+   ```yaml
+   - circleci-orbs/build_publish_deploy:
+       name: build_publish_deploy
+       working_directory: ~/project
+       build_goci_from_branch: YOUR_CI_SCRIPTS_BRANCH
+       # ... contexts, requires, etc.
+   - circleci-orbs/deploy_apps:
+       name: deploy_apps
+       working_directory: ~/project
+       build_goci_from_branch: YOUR_CI_SCRIPTS_BRANCH
+       requires:
+         - build_publish_deploy
+       # ... contexts, filters, etc.
+   ```
+
+4. **If you also changed the orb YAML or scripts**, publish or reference a **dev** orb version from your `circleci-orbs` branch (for example `clever/circleci-orbs@dev:<git-sha>`) so the pipeline runs your updated job definitions, not only a new goci binary.
+
+**Jobs that support `build_goci_from_branch`**
+
+| Job | What it runs |
+| --- | --- |
+| `build_publish_deploy` | `goci artifact-build-publish-deploy` |
+| `deploy_apps` | goci in deploy-apps mode (after artifacts exist) |
+| `publish_utility` | goci `publish-utility` flow |

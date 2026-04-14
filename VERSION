@@ -1,7 +1,7 @@
-v1.5.4
-Temporarily disable Go version checks
+v1.6.0
+Add new deploy-apps command
 
 Previously:
+- Temporarily disable Go version checks
 - Push Docker images to one ECR region
 - add option to pass branch name and dryRun to catalog-sync
-- add shared workflow for Claude actions

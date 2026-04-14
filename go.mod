@@ -6,6 +6,8 @@ require (
 	github.com/Clever/catapult/gen-go/models v1.206.0
 	github.com/Clever/circle-ci-integrations/gen-go/client v0.14.0
 	github.com/Clever/circle-ci-integrations/gen-go/models v0.14.0
+	github.com/Clever/slingshot/gen-go/client v1.1.0
+	github.com/Clever/slingshot/gen-go/models v1.1.0
 	github.com/Clever/wag/logging/wagclientlogger v0.0.0-20250514163731-344287ef8d81
 	github.com/aws/aws-sdk-go-v2 v1.36.5
 	github.com/aws/aws-sdk-go-v2/config v1.29.17
