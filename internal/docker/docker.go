@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -66,6 +67,12 @@ func (d *Docker) Build(ctx context.Context, contextDir, dockerfile string, tags 
 		dockerfile = "Dockerfile"
 	}
 	fmt.Println("building", tags, "from", dockerfile, "...")
+
+	// If DOCKER_BUILDKIT is enabled, use docker buildx build instead of docker build
+	if os.Getenv("DOCKER_BUILDKIT") == "1" {
+		return d.buildWithBuildkit(ctx, contextDir, dockerfile, tags)
+	}
+
 	excludes, err := readDockerignore(contextDir)
 	if err != nil {
 		return fmt.Errorf("failed to read docker ignore: %v", err)
@@ -85,16 +92,37 @@ func (d *Docker) Build(ctx context.Context, contextDir, dockerfile string, tags 
 		Remove: true,
 	}
 
-	if os.Getenv("DOCKER_BUILDKIT") == "1" {
-		buildOpts.Version = types.BuilderBuildKit
-	}
-
 	res, err := d.cli.ImageBuild(ctx, tar, buildOpts)
 	if err != nil {
 		return fmt.Errorf("unable to build image: %v", err)
 	}
 	defer res.Body.Close()
 	return print(res.Body)
+}
+
+// buildWithBuildkit uses docker buildx build with --load to support BuildKit features
+func (d *Docker) buildWithBuildkit(ctx context.Context, contextDir, dockerfile string, tags []string) error {
+	cmd := "docker"
+	args := []string{"buildx", "build", "--load", "-f", dockerfile}
+
+	for _, tag := range tags {
+		args = append(args, "-t", tag)
+	}
+
+	args = append(args, contextDir)
+
+	fmt.Println("building with buildx:", strings.Join(append([]string{cmd}, args...), " "))
+
+	buildCmd := exec.CommandContext(ctx, cmd, args...)
+	buildCmd.Dir = contextDir
+	buildCmd.Stdout = os.Stdout
+	buildCmd.Stderr = os.Stderr
+
+	if err := buildCmd.Run(); err != nil {
+		return fmt.Errorf("docker buildx build failed: %v", err)
+	}
+
+	return nil
 }
 
 // Push the tags to their private ecr repository. If a tag is not for a
