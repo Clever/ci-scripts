@@ -78,12 +78,18 @@ func (d *Docker) Build(ctx context.Context, contextDir, dockerfile string, tags 
 		return fmt.Errorf("failed to build docker context: %v", err)
 	}
 
-	res, err := d.cli.ImageBuild(ctx, tar, types.ImageBuildOptions{
+	buildOpts := types.ImageBuildOptions{
 		Tags:       tags,
 		Dockerfile: dockerfile,
 		// Removes any intermediary build images.
 		Remove: true,
-	})
+	}
+
+	if os.Getenv("DOCKER_BUILDKIT") == "1" {
+		buildOpts.Version = types.BuilderBuildKit
+	}
+
+	res, err := d.cli.ImageBuild(ctx, tar, buildOpts)
 	if err != nil {
 		return fmt.Errorf("unable to build image: %v", err)
 	}
