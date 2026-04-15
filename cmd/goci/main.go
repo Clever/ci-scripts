@@ -307,10 +307,26 @@ func deployApps(appIds []string) error {
 	}
 	ctx := context.Background()
 
-	if environment.Branch() == "master" {
+	if shouldDeploy() {
 		if err := slingshot.New().DeployApps(ctx, appIds); err != nil {
 			return err
 		}
 	}
 	return validateRun()
+}
+
+func shouldDeploy() bool {
+	allowedBranches := os.Getenv("DEPLOY_BRANCHES")
+	if allowedBranches == "" {
+		allowedBranches = "master"
+	}
+
+	currentBranch := environment.Branch()
+	branches := strings.Split(allowedBranches, ",")
+	for _, branch := range branches {
+		if strings.TrimSpace(branch) == currentBranch {
+			return true
+		}
+	}
+	return false
 }
