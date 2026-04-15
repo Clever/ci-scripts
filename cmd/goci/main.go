@@ -307,10 +307,10 @@ func deployApps(appIds []string) error {
 	}
 	ctx := context.Background()
 
-	if environment.Branch() == "master" {
-		if err := slingshot.New().DeployApps(ctx, appIds); err != nil {
-			return err
-		}
+	// if environment.Branch() == "master" {
+	if err := slingshot.New().DeployApps(ctx, appIds); err != nil {
+		return err
+		// }
 	}
 	return validateRun()
 }
