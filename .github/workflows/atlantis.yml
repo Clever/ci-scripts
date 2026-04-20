@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       atlantis_url:
-        default: "http://atlantis.infra-us-west-2-prod.local"
+        default: "http://atlantis.infradev-us-west-2-dev.local"
         required: false
         type: string
     secrets:
