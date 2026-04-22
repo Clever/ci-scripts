@@ -142,7 +142,7 @@ do
     STATUS=$(cat integration-tests.out | jq '.status')
     echo "Tests status: $STATUS"
     if [[ $STATUS == '"testing"' ]]; then
-      echo "Workflow IDs: $(cat integration-tests.out | jq -r '.testWorkflowIds | join(", ")')"
+      echo "Workflow IDs: $(cat integration-tests.out | jq -r '.testWorkflowIds // [] | join(", ")')"
     elif [[ $STATUS == '"succeeded"' ]]; then
       download_test_artifacts
       rm -f integration-tests.out
