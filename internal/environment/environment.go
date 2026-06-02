@@ -68,6 +68,12 @@ var (
 
 	// CircleTriggeredBy is the username of the user who triggered the CI run.
 	circleTriggeredBy = ""
+	// URL for circle-ci-integrations
+	ciIntegrationsURL = ""
+	// username for basic authentication to circle-ci-integrations
+	ciIntegrationsUser = ""
+	// password for basic authentication to circle-ci-integrations
+	ciIntegrationsPassword = ""
 )
 
 func ECRAccountID() string {
@@ -187,6 +193,27 @@ func SlingshotURL() string {
 		slingshotURL = envMustString("SLINGSHOT_URL", true)
 	}
 	return slingshotURL
+}
+
+func CIIntegrationsUrl() string {
+	if ciIntegrationsURL == "" {
+		ciIntegrationsURL = envMustString("CIRCLE_CI_INTEGRATIONS_URL", true)
+	}
+	return ciIntegrationsURL
+}
+
+func CIIntegrationsUser() string {
+	if ciIntegrationsUser == "" {
+		ciIntegrationsUser = envMustString("CIRCLE_CI_INTEGRATIONS_USER", true)
+	}
+	return ciIntegrationsUser
+}
+
+func CIIntegrationsPassword() string {
+	if ciIntegrationsPassword == "" {
+		ciIntegrationsPassword = envMustString("CIRCLE_CI_INTEGRATIONS_PASS", true)
+	}
+	return ciIntegrationsPassword
 }
 
 // AWS doesn't provide a way to get the token from a string so we will

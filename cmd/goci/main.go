@@ -11,6 +11,7 @@ import (
 
 	"github.com/Clever/catapult/gen-go/models"
 	"github.com/Clever/ci-scripts/internal/backstage"
+	"github.com/Clever/ci-scripts/internal/catalogsync"
 	"github.com/Clever/ci-scripts/internal/catapult"
 	"github.com/Clever/ci-scripts/internal/docker"
 	"github.com/Clever/ci-scripts/internal/environment"
@@ -306,6 +307,18 @@ func deployApps(appIds []string) error {
 		return nil
 	}
 	ctx := context.Background()
+
+	cs := catalogsync.New()
+	repo := environment.Repo()
+	for _, appID := range appIds {
+		if err := cs.SyncEntity(ctx, &ciIntegrationsModels.SyncCatalogEntityInput{
+			Entity: appID,
+			Type:   "application",
+			Repo:   &repo,
+		}); err != nil {
+			fmt.Println("failed to sync catalog app", appID, "with catalog-sync-service:", err)
+		}
+	}
 
 	if shouldDeploy() {
 		if err := slingshot.New().DeployApps(ctx, appIds); err != nil {
