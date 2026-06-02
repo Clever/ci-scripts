@@ -1,7 +1,7 @@
-v1.7.0
-Support configurable deployment branches
+v1.8.0
+Add add SyncEntity call to k8s deployApps command
 
 Previously:
+- Support configurable deployment branches
 - Add new deploy-apps command
 - Temporarily disable Go version checks
-- Push Docker images to one ECR region

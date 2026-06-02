@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/Clever/ci-scripts/internal/environment"
+	"github.com/Clever/ci-scripts/internal/logger"
 	"github.com/Clever/circle-ci-integrations/gen-go/client"
 	"github.com/Clever/circle-ci-integrations/gen-go/models"
-	"github.com/Clever/ci-scripts/internal/logger"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -74,9 +74,11 @@ func (c *Catapult) Publish(ctx context.Context, artifacts []*Artifact) error {
 				return fmt.Errorf("failed to publish %s with catapult: %v", art.ID, err)
 			}
 
+			repo := environment.Repo()
 			err = c.SyncCatalogEntity(grpCtx, &models.SyncCatalogEntityInput{
 				Entity: art.ID,
 				Type:   "application",
+				Repo:   &repo,
 			})
 			if err != nil {
 				fmt.Println("failed to sync catalog app", art.ID, "with catalogue config:", err)

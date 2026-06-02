@@ -4,8 +4,8 @@ go 1.24.0
 
 require (
 	github.com/Clever/catapult/gen-go/models v1.206.0
-	github.com/Clever/circle-ci-integrations/gen-go/client v0.14.0
-	github.com/Clever/circle-ci-integrations/gen-go/models v0.14.0
+	github.com/Clever/circle-ci-integrations/gen-go/client v0.15.0
+	github.com/Clever/circle-ci-integrations/gen-go/models v0.15.0
 	github.com/Clever/slingshot/gen-go/client v1.1.0
 	github.com/Clever/slingshot/gen-go/models v1.1.0
 	github.com/Clever/wag/logging/wagclientlogger v0.0.0-20250514163731-344287ef8d81
