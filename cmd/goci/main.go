@@ -16,8 +16,8 @@ import (
 	"github.com/Clever/ci-scripts/internal/docker"
 	"github.com/Clever/ci-scripts/internal/environment"
 	"github.com/Clever/ci-scripts/internal/lambda"
+	"github.com/Clever/ci-scripts/internal/platformevents"
 	"github.com/Clever/ci-scripts/internal/repo"
-	"github.com/Clever/ci-scripts/internal/slingshot"
 	ciIntegrationsModels "github.com/Clever/circle-ci-integrations/gen-go/models"
 )
 
@@ -321,7 +321,7 @@ func deployApps(appIds []string) error {
 	}
 
 	if shouldDeploy() {
-		if err := slingshot.New().DeployApps(ctx, appIds); err != nil {
+		if err := platformevents.NewDeployPublisher(ctx).DeployApps(ctx, appIds); err != nil {
 			return err
 		}
 	}

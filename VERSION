@@ -1,7 +1,7 @@
-v1.8.0
-Add add SyncEntity call to k8s deployApps command
+v1.9.0
+Move k8s deploys to platform events
 
 Previously:
+- Add SyncEntity call to k8s deployApps command
 - Support configurable deployment branches
 - Add new deploy-apps command
-- Temporarily disable Go version checks

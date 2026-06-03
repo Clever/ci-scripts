@@ -79,3 +79,11 @@ Publishes a workflow to [workflow-manager](https://github.com/clever/workflow-ma
 ```
 $ ./circleci/workflow-publish [WF_URL] [WF_USER] [WF_PASS] [WF_JSON]
 ```
+
+## Platform Events Schema Management
+
+### Updating deploy.created Schema
+
+The `deploy.created` event schema is managed in the [EventBridge Schema Registry](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-schema-registry.html). Go code bindings are generated from the schema registry and committed to the repository.
+
+To regenerate the schema bindings when the schema has been updated in the registry use the schemabindings CLI in Slingshot ([instructions here](https://app.getguru.com/card/Taq46GGc/Platform-Events#kNyrF1btlJhv)).
