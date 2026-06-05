@@ -58,7 +58,7 @@ func (d *DeployPublisher) deployApp(ctx context.Context, app, env string) error 
 	event := deploycreated.Detail{
 		App:                app,
 		Repo:               repoName,
-		User:               deploycreated.User{GithubUsername: githubUser},
+		User:               deploycreated.User{GithubUsername: strPtr(githubUser)},
 		Environment:        env,
 		TargetRevision:     buildID,
 		ClusterEnvironment: clusterEnvironment,

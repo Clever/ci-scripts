@@ -1,6 +1,9 @@
-.PHONY: release
+.PHONY: release generate
 SHELL := /bin/bash
 VERSION := $(shell head -n 1 VERSION)
+
+generate:
+	go generate ./...
 
 release:
 	@GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.version=$(VERSION)" \
