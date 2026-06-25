@@ -4,18 +4,14 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/Clever/catapult/gen-go/models"
 	"github.com/Clever/ci-scripts/internal/environment"
 )
 
-// DetectArtifactDependencyChange checks if the artifact dependency
-// globs defined in the launch config have changed by using git diff for
-// only the specified file globs. The dependencies are always checked
-// against the primary branch. More advanced dependency checking is
-// hard and involves persisted caching of some sort which should be
-// left to a build system later on.
-func DetectArtifactDependencyChange(lc *models.LaunchConfig) (bool, error) {
-	if lc.Build == nil || lc.Build.Artifact == nil || lc.Build.Artifact.Dependencies == nil {
+// DetectArtifactDependencyChange checks if any of the given file globs have
+// changed since the primary branch. An empty slice means no filtering —
+// the app is always considered changed.
+func DetectArtifactDependencyChange(dependencies []string) (bool, error) {
+	if len(dependencies) == 0 {
 		return true, nil
 	}
 
@@ -24,7 +20,7 @@ func DetectArtifactDependencyChange(lc *models.LaunchConfig) (bool, error) {
 		compareRange = environment.PreviousPipelineCompare()
 	}
 
-	args := append([]string{"diff", "--name-only", compareRange, "--"}, lc.Build.Artifact.Dependencies...)
+	args := append([]string{"diff", "--name-only", compareRange, "--"}, dependencies...)
 	gitCmd := exec.Command("git", args...)
 	fmt.Println("Checking for changes with:", gitCmd.String())
 

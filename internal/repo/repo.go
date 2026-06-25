@@ -13,13 +13,45 @@ import (
 	"github.com/Clever/catapult/gen-go/models"
 )
 
-// DiscoverApplications finds any launch config files in the specified
-// directory and returns a map with the application name as the key and
-// the corresponding launch config file as the value. DB launch configs
-// are ignored. Any applications that do not have changes detected
-// according to the launch config dependencies are filtered from the
-// result set.
-func DiscoverApplications(dir string) (map[string]*models.LaunchConfig, error) {
+// DiscoverApplications returns buildable apps with detected changes. It reads
+// from both ./config (Kubernetes) and ./launch (Catapult), merging results with
+// the Kubernetes config winning when the same app appears in both.
+func DiscoverApplications() (map[string]*AppConfig, error) {
+	catapultApps, catapultErr := discoverCatapultApplications("./launch")
+	if catapultErr != nil && !errors.Is(catapultErr, os.ErrNotExist) {
+		return nil, catapultErr
+	}
+	fmt.Println("Discovered Catapult apps:", len(catapultApps))
+	
+
+	kubernetesApps, kubernetesErr := discoverKubernetesApplications("./config")
+	if kubernetesErr != nil && !errors.Is(kubernetesErr, os.ErrNotExist) {
+		return nil, kubernetesErr
+	}
+	fmt.Println("Discovered Kubernetes apps:", len(kubernetesApps))
+
+	if errors.Is(catapultErr, os.ErrNotExist) && errors.Is(kubernetesErr, os.ErrNotExist) {
+		return nil, fmt.Errorf("no app configs found: expected a launch/ or config/ directory at the repo root")
+	}
+
+	apps := catapultApps
+	if apps == nil {
+		apps = map[string]*AppConfig{}
+	}
+	for name, kubernetesAC := range kubernetesApps {
+		if catapultAC, exists := apps[name]; exists {
+			if kubernetesAC.BuildCommand == "" && catapultAC.BuildCommand != "" {
+				return nil, fmt.Errorf("%s has no build.command in config/%s/stack.yaml but one exists in launch/%s.yml — add build.command to stack.yaml to complete the migration", name, name, name)
+			}
+		}
+		apps[name] = kubernetesAC
+	}
+	return apps, nil
+}
+
+// discoverCatapultApplications reads launch/*.yml files, skips DB configs, filters
+// by change detection, and converts each to AppConfig.
+func discoverCatapultApplications(dir string) (map[string]*AppConfig, error) {
 	fe, err := os.ReadDir(dir)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -28,7 +60,7 @@ func DiscoverApplications(dir string) (map[string]*models.LaunchConfig, error) {
 		return nil, fmt.Errorf("failed to read launch directory: %v", err)
 	}
 
-	m := map[string]*models.LaunchConfig{}
+	apps := map[string]*AppConfig{}
 	for _, f := range fe {
 		if f.IsDir() {
 			continue
@@ -52,81 +84,65 @@ func DiscoverApplications(dir string) (map[string]*models.LaunchConfig, error) {
 			continue
 		}
 
-		if changed, err := DetectArtifactDependencyChange(&lc); err != nil {
+		appName := strings.TrimSuffix(f.Name(), ".yml")
+		ac := appConfigForCatapult(appName, &lc)
+		if changed, err := DetectArtifactDependencyChange(ac.Dependencies); err != nil {
 			return nil, fmt.Errorf("failed to detect artifact dependency change for %s: %v", f.Name(), err)
 		} else if !changed {
 			continue
 		}
 
-		m[strings.TrimSuffix(f.Name(), ".yml")] = &lc
+		apps[appName] = ac
 	}
-
-	return m, nil
+	return apps, nil
 }
 
-// Dockerfile returns the dockerfile name specified in the launch config
-// if any is present, otherwise it returns an empty string.
-func Dockerfile(lc *models.LaunchConfig) string {
-	if lc.Build != nil && lc.Build.Docker != nil {
-		return lc.Build.Docker.File
-	}
-	return ""
-}
-
-// IsDockerRunType returns true if the launch config specifies a run
-// type of docker.
-func IsDockerRunType(lc *models.LaunchConfig) bool {
-	if r := lc.Run; r != nil {
-		switch r.Type {
-		case models.RunTypeDocker:
-			return true
-		// for legacy support reasons, an empty run type is treated as a
-		// run type of docker.
-		case "":
-			return true
-		default:
-			return false
+// discoverKubernetesApplications reads config/<app>/stack.yaml for each app
+// directory under the given dir, filters out apps with no detected changes,
+// and returns a map of app name to AppConfig.
+func discoverKubernetesApplications(dir string) (map[string]*AppConfig, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, fmt.Errorf("directory %s not found: %w", dir, err)
 		}
+		return nil, fmt.Errorf("failed to read config directory: %v", err)
 	}
-	// no run object also counts as docker.
-	return true
-}
 
-// IsLambdaRunType returns true if the launch config specifies a run
-// type of lambda.
-func IsLambdaRunType(lc *models.LaunchConfig) bool {
-	if r := lc.Run; r != nil {
-		switch r.Type {
-		case models.RunTypeLambda:
-			return true
-		default:
-			return false
+	apps := map[string]*AppConfig{}
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
 		}
+
+		appName := entry.Name()
+		ac, err := appConfigForKubernetes(appName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read app config for %s: %v", appName, err)
+		}
+
+		changed, err := DetectArtifactDependencyChange(ac.Dependencies)
+		if err != nil {
+			return nil, fmt.Errorf("failed to detect artifact dependency change for %s: %v", appName, err)
+		}
+		if !changed {
+			continue
+		}
+
+		apps[appName] = ac
 	}
-	return false
+	return apps, nil
 }
 
-// ArtifactName returns the correct artifact name for the application.
-// The default pattern is the app name. There is an optional launch
-// config override in order to enable sharing one artifact between
-// multiple applications. This may happen with for example, sso and
-// non-sso, where the application is the same or only differs at run
-// time based on environmental configuration.
-func ArtifactName(appName string, lc *models.LaunchConfig) string {
-	artifactName := appName
-	if lc.Build != nil && lc.Build.Artifact != nil && lc.Build.Artifact.Name != "" {
-		artifactName = lc.Build.Artifact.Name
-	}
-	return artifactName
+// IsDockerRunType returns true if the app should be built as a Docker image.
+// An empty RunType defaults to docker.
+func IsDockerRunType(ac *AppConfig) bool {
+	return ac.RunType == RunTypeDocker || ac.RunType == ""
 }
 
-// BuildCommand returns the build command for the application artifact,
-// if any is specified. Otherwise it returns an empty string.
-func BuildCommand(lc *models.LaunchConfig) string {
-	if lc.Build == nil || lc.Build.Artifact == nil {
-		return ""
-	}
-	return lc.Build.Artifact.Command
+// IsLambdaRunType returns true if the app should be built as a Lambda artifact.
+func IsLambdaRunType(ac *AppConfig) bool {
+	return ac.RunType == RunTypeLambda
 }
 
 // ExecBuild runs the build command for the application artifact, if any

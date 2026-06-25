@@ -3,3 +3,4 @@ vendor
 bin
 tmp
 artifacts
+**/*.code-workspace
