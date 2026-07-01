@@ -9,7 +9,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Clever/catapult/gen-go/models"
 	"github.com/Clever/ci-scripts/internal/backstage"
 	"github.com/Clever/ci-scripts/internal/catalogsync"
 	"github.com/Clever/ci-scripts/internal/catapult"
@@ -53,13 +52,13 @@ func main() {
 }
 
 func run(mode string) error {
-	var apps map[string]*models.LaunchConfig
+	var apps map[string]*repo.AppConfig
 	var appIDs []string
 	var err error
 
 	// Only discover applications for specific modes
 	if mode == "validate" || mode == "detect" || mode == "artifact-build-publish-deploy" || mode == "deploy-apps" {
-		apps, err = repo.DiscoverApplications("./launch")
+		apps, err = repo.DiscoverApplications()
 		if err != nil {
 			return err
 		}
@@ -91,7 +90,7 @@ func run(mode string) error {
 
 	if len(apps) == 0 {
 		fmt.Println("No applications have buildable changes. If this is unexpected, " +
-			"double check your artifact dependency configuration in the launch yaml.")
+			"double check your artifact dependency configuration in the launch.yaml or stack.yaml.")
 		return nil
 	}
 
@@ -143,15 +142,24 @@ func run(mode string) error {
 			}
 		}
 	}
-	cp := catapult.New()
-
-	if err = cp.Publish(ctx, artifacts); err != nil {
-		return err
+	catapultArtifacts := make([]*catapult.Artifact, 0, len(artifacts))
+	catapultAppIDs := make([]string, 0, len(artifacts))
+	for _, art := range artifacts {
+		if ac, ok := apps[art.ID]; ok && ac.HasLaunchConfig {
+			catapultArtifacts = append(catapultArtifacts, art)
+			catapultAppIDs = append(catapultAppIDs, art.ID)
+		}
 	}
 
-	if environment.Branch() == "master" {
-		if err := cp.Deploy(ctx, appIDs); err != nil {
+	if len(catapultArtifacts) > 0 {
+		cp := catapult.New()
+		if err = cp.Publish(ctx, catapultArtifacts); err != nil {
 			return err
+		}
+		if environment.Branch() == "master" {
+			if err := cp.Deploy(ctx, catapultAppIDs); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -254,7 +262,7 @@ func fetchLatestGoVersion() (string, string, error) {
 }
 
 // allAppsBuilt returns an error if any apps are missing a build artifact.
-func allAppsBuilt(discoveredApps map[string]*models.LaunchConfig, builtApps []*catapult.Artifact) error {
+func allAppsBuilt(discoveredApps map[string]*repo.AppConfig, builtApps []*catapult.Artifact) error {
 	if len(discoveredApps) == len(builtApps) {
 		return nil
 	}
@@ -303,7 +311,7 @@ func publishUtility() error {
 func deployApps(appIds []string) error {
 	if len(appIds) == 0 {
 		fmt.Println("No applications have buildable changes. If this is unexpected, " +
-			"double check your artifact dependency configuration in the launch yaml.")
+			"double check your artifact dependency configuration in the launch yaml or stack.yaml.")
 		return nil
 	}
 	ctx := context.Background()

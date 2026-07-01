@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Clever/catapult/gen-go/models"
 	"github.com/Clever/ci-scripts/internal/catapult"
 	"github.com/Clever/ci-scripts/internal/environment"
 	"github.com/Clever/ci-scripts/internal/repo"
@@ -26,7 +25,7 @@ type LambdaTarget struct {
 // destination zip file in the value struct. Any apps with a shared
 // artifact will have only one entry in the map, but will still have
 // individual entries in the catapult build artifacts
-func BuildTargets(apps map[string]*models.LaunchConfig) (map[string]LambdaTarget, []*catapult.Artifact) {
+func BuildTargets(apps map[string]*repo.AppConfig) (map[string]LambdaTarget, []*catapult.Artifact) {
 	var (
 		targets   = map[string]LambdaTarget{}
 		done      = map[string]struct{}{}
@@ -38,9 +37,9 @@ func BuildTargets(apps map[string]*models.LaunchConfig) (map[string]LambdaTarget
 			continue
 		}
 
-		artifact := repo.ArtifactName(name, launch)
+		artifact := launch.ArtifactName
 		artifacts = append(artifacts, &catapult.Artifact{
-			RunType:   string(models.RunTypeLambda),
+			RunType:   launch.RunType,
 			ID:        name,
 			Branch:    environment.Branch(),
 			Source:    fmt.Sprintf("github:Clever/%s@%s", environment.Repo(), environment.FullSHA1()),
@@ -54,7 +53,7 @@ func BuildTargets(apps map[string]*models.LaunchConfig) (map[string]LambdaTarget
 		done[artifact] = struct{}{}
 		targets[artifact] = LambdaTarget{
 			Zip:     fmt.Sprintf("./bin/%s.zip", artifact),
-			Command: repo.BuildCommand(launch),
+			Command: launch.BuildCommand,
 		}
 	}
 	return targets, artifacts

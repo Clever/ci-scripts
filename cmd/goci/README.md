@@ -4,11 +4,18 @@
 
 ## Configuration
 
-goci accepts very limited arguments which merely change the mode it runs in. The rest of the configuration is entirely through environment variables and launch config settings. See the[environment](../../internal/environment/environment.go) package for detailed documentation of environment variables for configuration. goci reads it's configuration from the `build` section of the launch config of each application. See the [build section](https://github.com/Clever/catapult/blob/master/swagger.yml#L1773) of the launch yaml to learn about the various parameters which configure goci.
+goci accepts very limited arguments which merely change the mode it runs in. The rest of the configuration is entirely through environment variables and app config files. See the [environment](../../internal/environment/environment.go) package for detailed documentation of environment variables for configuration.
+
+goci supports two config paths:
+
+- **Kubernetes apps** (preferred): `config/<app>/stack.yaml` — goci reads the `build` block and determines run type from `stack.helm.chart` (`clever-lambda` → lambda, anything else → docker).
+- **Catapult apps** (legacy): `launch/<app>.yml` — goci reads from the `build` section of the launch config of each application. See the [build section](https://github.com/Clever/catapult/blob/master/swagger.yml#L1773) of the launch yaml to learn about the various parameters which configure goci. 
+
+goci reads from **both** paths and merges the results. If the same app appears in both `config/` and `launch/`, the Kubernetes config wins.
 
 ## Modes
 
-1. `goci detect` detects any changed applications according to their launch configuration. This can be used to pass a name of apps to another script.
+1. `goci detect` detects any changed applications according to their stack.yaml or launch.yaml configuration. This can be used to pass a name of apps to another script.
 2. `goci artifact-build-publish-deploy` builds, publishes and deploys any application artifacts.
 3. `goci validate` validates an applications go version, while also checking for compatible branch naming conventions for catapult.
 4. `goci publish-utility` publishes catalog-info.yaml to the service catalog.
@@ -16,8 +23,7 @@ goci accepts very limited arguments which merely change the mode it runs in. The
 
 ## Multi-app Support
 
-goci will automatically detect all launch configs in the `launch`
-directory, then perform the following actions as needed.
+goci will automatically detect all applications in the `config` directory (falling back to `launch` for legacy repos), then perform the following actions as needed.
 
 1. detect the run type of the application
 2. Run any configured build commands
@@ -25,8 +31,8 @@ directory, then perform the following actions as needed.
 4. publish all built docker images to all ECR regions
 5. publish all lambdas to s3 in all regions.
 6. Sync all changed apps with catalog config
-7. Publish new application versions to catapult
-8. Deploy any changed applications.
+7. [launch.yaml only]Publish new application versions to catapult
+8. [launch.yaml only] Deploy any changed applications.
 
 ## Development
 

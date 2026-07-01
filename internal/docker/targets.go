@@ -3,7 +3,6 @@ package docker
 import (
 	"fmt"
 
-	"github.com/Clever/catapult/gen-go/models"
 	"github.com/Clever/ci-scripts/internal/catapult"
 	"github.com/Clever/ci-scripts/internal/environment"
 	"github.com/Clever/ci-scripts/internal/repo"
@@ -24,7 +23,7 @@ type DockerTarget struct {
 // Dockerfile and its set of tags will be in the final list. This is an
 // optimization so we do not build multiple copies of the same
 // Dockerfile which only differ at runtime.
-func BuildTargets(apps map[string]*models.LaunchConfig) (map[string]DockerTarget, []*catapult.Artifact) {
+func BuildTargets(apps map[string]*repo.AppConfig) (map[string]DockerTarget, []*catapult.Artifact) {
 	var (
 		targets   = map[string]DockerTarget{}
 		done      = map[string]struct{}{}
@@ -36,9 +35,9 @@ func BuildTargets(apps map[string]*models.LaunchConfig) (map[string]DockerTarget
 			continue
 		}
 
-		artifact := repo.ArtifactName(name, launch)
+		artifact := launch.ArtifactName
 		artifacts = append(artifacts, &catapult.Artifact{
-			RunType:   string(models.RunTypeDocker),
+			RunType:   launch.RunType,
 			ID:        name,
 			Branch:    environment.Branch(),
 			Source:    fmt.Sprintf("github:Clever/%s@%s", environment.Repo(), environment.FullSHA1()),
@@ -63,9 +62,9 @@ func BuildTargets(apps map[string]*models.LaunchConfig) (map[string]DockerTarget
 		)
 		tags = append(tags, tag)
 
-		targets[repo.Dockerfile(launch)] = DockerTarget{
+		targets[launch.Dockerfile] = DockerTarget{
 			Tags:    tags,
-			Command: repo.BuildCommand(launch),
+			Command: launch.BuildCommand,
 		}
 	}
 	return targets, artifacts
