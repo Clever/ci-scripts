@@ -43,6 +43,7 @@ func DiscoverApplications() (map[string]*AppConfig, error) {
 			if kubernetesAC.BuildCommand == "" && catapultAC.BuildCommand != "" {
 				return nil, fmt.Errorf("%s has no build.command in config/%s/stack.yaml but one exists in launch/%s.yml — add build.command to stack.yaml to complete the migration", name, name, name)
 			}
+			kubernetesAC.HasLaunchConfig = true
 		}
 		apps[name] = kubernetesAC
 	}

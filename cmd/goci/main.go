@@ -143,9 +143,9 @@ func run(mode string) error {
 		}
 	}
 	catapultArtifacts := make([]*catapult.Artifact, 0, len(artifacts))
-	catapultAppIDs := make([]string, 0, len(appIDs))
+	catapultAppIDs := make([]string, 0, len(artifacts))
 	for _, art := range artifacts {
-		if ac, ok := apps[art.ID]; ok && !ac.IsKubernetes {
+		if ac, ok := apps[art.ID]; ok && !ac.HasLaunchConfig {
 			catapultArtifacts = append(catapultArtifacts, art)
 			catapultAppIDs = append(catapultAppIDs, art.ID)
 		}

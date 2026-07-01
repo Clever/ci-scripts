@@ -39,13 +39,13 @@ type appStackYAML struct {
 
 // AppConfig holds build and runtime configuration
 type AppConfig struct {
-	Name         string
-	RunType      string
-	ArtifactName string
-	BuildCommand string
-	Dockerfile   string
-	Dependencies []string
-	IsKubernetes bool
+	Name            string
+	RunType         string
+	ArtifactName    string
+	BuildCommand    string
+	Dockerfile      string
+	Dependencies    []string
+	HasLaunchConfig bool
 }
 
 // ReadAppStackAutoDeployEnvs reads autoDeployEnvs from config/<app>/stack.yaml.
@@ -91,12 +91,13 @@ func appConfigForCatapult(appName string, lc *models.LaunchConfig) *AppConfig {
 	}
 
 	return &AppConfig{
-		Name:         appName,
-		RunType:      runType,
-		ArtifactName: artifactName,
-		BuildCommand: buildCommand,
-		Dockerfile:   dockerfile,
-		Dependencies: dependencies,
+		Name:            appName,
+		RunType:         runType,
+		ArtifactName:    artifactName,
+		BuildCommand:    buildCommand,
+		Dockerfile:      dockerfile,
+		Dependencies:    dependencies,
+		HasLaunchConfig: true,
 	}
 }
 
@@ -128,6 +129,6 @@ func appConfigForKubernetes(appName string) (*AppConfig, error) {
 		BuildCommand: stack.Build.Command,
 		Dockerfile:   stack.Build.Dockerfile,
 		Dependencies: stack.Build.Dependencies,
-		IsKubernetes: true,
+
 	}, nil
 }
