@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -175,6 +176,23 @@ func Branch() string {
 		branch = envMustString("CIRCLE_BRANCH", true)
 	}
 	return branch
+}
+
+// IsAllowedDeployBranch reports whether the current branch is in the
+// comma-separated DEPLOY_BRANCHES env var (defaults to "master").
+func IsAllowedDeployBranch() bool {
+	allowedBranches := os.Getenv("DEPLOY_BRANCHES")
+	if allowedBranches == "" {
+		allowedBranches = "master"
+	}
+
+	currentBranch := Branch()
+	for _, allowedBranch := range strings.Split(allowedBranches, ",") {
+		if strings.TrimSpace(allowedBranch) == currentBranch {
+			return true
+		}
+	}
+	return false
 }
 
 func OidcLambdaRole() string {

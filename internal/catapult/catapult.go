@@ -46,7 +46,7 @@ func New() *Catapult {
 // SyncCatalogEntity syncs passed in entity to catalog-config by calling circle-ci-integrations
 func (c *Catapult) SyncCatalogEntity(ctx context.Context, entity *models.SyncCatalogEntityInput) error {
 	branch := environment.Branch()
-	dryRun := branch != "master"
+	dryRun := !environment.IsAllowedDeployBranch()
 	entity.Branch = &branch
 	entity.DryRun = &dryRun
 	fmt.Printf("Syncing catalog entity %s with type %s on branch %s with dry run %t\n", entity.Entity, entity.Type, branch, dryRun)

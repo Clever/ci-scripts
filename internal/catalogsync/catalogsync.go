@@ -26,7 +26,7 @@ func New() *Client {
 
 func (c *Client) SyncEntity(ctx context.Context, entity *models.SyncCatalogEntityInput) error {
 	branch := environment.Branch()
-	dryRun := branch != "master"
+	dryRun := !environment.IsAllowedDeployBranch()
 	entity.Branch = &branch
 	entity.DryRun = &dryRun
 

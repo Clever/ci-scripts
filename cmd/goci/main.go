@@ -328,26 +328,10 @@ func deployApps(appIds []string) error {
 		}
 	}
 
-	if shouldDeploy() {
+	if environment.IsAllowedDeployBranch() {
 		if err := platformevents.NewDeployPublisher(ctx).DeployApps(ctx, appIds); err != nil {
 			return err
 		}
 	}
 	return validateRun()
-}
-
-func shouldDeploy() bool {
-	allowedBranches := os.Getenv("DEPLOY_BRANCHES")
-	if allowedBranches == "" {
-		allowedBranches = "master"
-	}
-
-	currentBranch := environment.Branch()
-	branches := strings.Split(allowedBranches, ",")
-	for _, branch := range branches {
-		if strings.TrimSpace(branch) == currentBranch {
-			return true
-		}
-	}
-	return false
 }
