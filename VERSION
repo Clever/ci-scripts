@@ -1,8 +1,7 @@
-v1.10.0
-Support repos with no launch.yaml
-Move k8s deploys to platform events
+v1.11.0
+Route @claude-beta reviews through the shared pr-review skill
 
 Previously:
+- Support repos with no launch.yaml
 - Move k8s deploys to platform events
 - Add SyncEntity call to k8s deployApps command
-- Support configurable deployment branches

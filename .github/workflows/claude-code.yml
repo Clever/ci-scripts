@@ -21,12 +21,33 @@ jobs:
       issues: write
       id-token: write
       actions: read # Required for Claude to read CI results on PRs
+    env:
+      BETA: ${{ contains(github.event.comment.body, '@claude-beta') || contains(github.event.review.body, '@claude-beta') || contains(github.event.issue.body, '@claude-beta') || contains(github.event.issue.title, '@claude-beta') }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - uses: anthropics/claude-code-action@v1
+      # The pr-review skill lives in the private Clever/eng-ai-tools repo. A
+      # reusable workflow runs with the caller's repo-scoped GITHUB_TOKEN, so it
+      # cannot check that repo out; referencing it as an action works because the
+      # runner fetches org-accessible actions with its own token, no secret needed.
+      - name: Load the shared clever-core plugin
+        id: skills
+        if: env.BETA == 'true'
+        uses: Clever/eng-ai-tools/.github/actions/load-plugins@master
+        with:
+          plugins: clever-core
+
+      - name: Verify the pr-review skill is present
+        if: env.BETA == 'true'
+        run: test -f "${{ steps.skills.outputs.plugin-dir }}/skills/pr-review/SKILL.md"
+
+      # @claude-beta opts into the shared clever-core pr-review skill; @claude keeps
+      # today's inline prompt. Delete the inline path once the skill path is proven.
+      - name: Review (inline prompt)
+        if: env.BETA != 'true'
+        uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
@@ -181,5 +202,22 @@ jobs:
 
             **Re-invocations**: Review only new/modified code. Acknowledge resolved issues in one line. Maintain succinct format.
           claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+            --disallowedTools "Edit,Write,mcp__github_file_ops__commit_files,mcp__github_file_ops__delete_files,Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(git rebase:*),Bash(git reset:*),Bash(git checkout:*),Bash(git merge:*),Bash(git cherry-pick:*)"
+
+      - name: Review (shared pr-review skill)
+        if: env.BETA == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: true
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            /pr-review
+          # --strict-mcp-config stops the plugin's declared MCP servers (linear, guru, chrome-devtools) from starting on the runner
+          claude_args: |
+            ${{ steps.skills.outputs.plugin-args }}
+            --strict-mcp-config
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
             --disallowedTools "Edit,Write,mcp__github_file_ops__commit_files,mcp__github_file_ops__delete_files,Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(git rebase:*),Bash(git reset:*),Bash(git checkout:*),Bash(git merge:*),Bash(git cherry-pick:*)"
