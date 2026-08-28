@@ -37,7 +37,7 @@ jobs:
         if: env.BETA == 'true'
         uses: Clever/eng-ai-tools/.github/actions/load-plugins@master
         with:
-          plugins: clever-core
+          plugin: clever-core
 
       - name: Verify the pr-review skill is present
         if: env.BETA == 'true'
