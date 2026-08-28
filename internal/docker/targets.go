@@ -19,14 +19,25 @@ type DockerTarget struct {
 
 // BuildTargets returns a map of dockerfile path keys with their build
 // command and associated tags for pushing to a remote repository. If
-// multiple apps share a repository then only the first matching
+// multiple apps share an artifact name then only the first matching
 // Dockerfile and its set of tags will be in the final list. This is an
-// optimization so we do not build multiple copies of the same
-// Dockerfile which only differ at runtime.
-func BuildTargets(apps map[string]*repo.AppConfig) (map[string]DockerTarget, []*catapult.Artifact) {
+// optimization so we do not build multiple copies of the same image
+// which only differ at runtime.
+//
+// It returns an error when two apps publish to different artifacts but
+// resolve to the same Dockerfile path. The targets map is keyed by
+// Dockerfile path, so the second app would silently overwrite the
+// first and one image would never be built or pushed. Because each app
+// compiles and copies in its own binary, a shared Dockerfile path
+// cannot produce the distinct images those apps need, so we fail loudly
+// instead. Give each app its own build.docker.file to resolve it.
+func BuildTargets(apps map[string]*repo.AppConfig) (map[string]DockerTarget, []*catapult.Artifact, error) {
+	// dockerfileOwner is the first app/artifact to claim a Dockerfile path.
+	type dockerfileOwner struct{ app, artifact string }
 	var (
 		targets   = map[string]DockerTarget{}
 		done      = map[string]struct{}{}
+		owner     = map[string]dockerfileOwner{}
 		artifacts []*catapult.Artifact
 	)
 
@@ -54,6 +65,20 @@ func BuildTargets(apps map[string]*repo.AppConfig) (map[string]DockerTarget, []*
 		}
 		done[artifact] = struct{}{}
 
+		// Two apps publishing to different artifacts cannot share a
+		// Dockerfile path: keyed by path, the second would overwrite the
+		// first and one image would never ship. Fail loudly.
+		if prev, ok := owner[launch.Dockerfile]; ok {
+			return nil, nil, fmt.Errorf(
+				"apps %q and %q both build Dockerfile %q but publish to different "+
+					"artifacts (%q and %q); goci cannot build distinct images from a "+
+					"shared Dockerfile path. Give each app its own build.docker.file",
+				prev.app, name, dockerfileDisplayName(launch.Dockerfile),
+				prev.artifact, artifact,
+			)
+		}
+		owner[launch.Dockerfile] = dockerfileOwner{app: name, artifact: artifact}
+
 		tags := []string{}
 		// Only push to ecrRootRegion, images are replicated to other regions
 		tag := fmt.Sprintf(
@@ -67,5 +92,15 @@ func BuildTargets(apps map[string]*repo.AppConfig) (map[string]DockerTarget, []*
 			Command: launch.BuildCommand,
 		}
 	}
-	return targets, artifacts
+	return targets, artifacts, nil
+}
+
+// dockerfileDisplayName returns a human-readable Dockerfile name for
+// error messages. An empty path is the default that docker.Build
+// resolves to "Dockerfile".
+func dockerfileDisplayName(path string) string {
+	if path == "" {
+		return "Dockerfile"
+	}
+	return path
 }
