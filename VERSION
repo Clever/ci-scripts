@@ -1,7 +1,7 @@
-v1.11.0
+v1.12.0
 Error when apps share a Dockerfile path but publish different artifacts
 
 Previously:
+- Route @claude-beta reviews through the shared pr-review skill
 - Support repos with no launch.yaml
 - Move k8s deploys to platform events
-- Add SyncEntity call to k8s deployApps command
