@@ -69,12 +69,16 @@ func BuildTargets(apps map[string]*repo.AppConfig) (map[string]DockerTarget, []*
 		// Dockerfile path: keyed by path, the second would overwrite the
 		// first and one image would never ship. Fail loudly.
 		if prev, ok := owner[launch.Dockerfile]; ok {
+			// Lead with the diagnosis, the Dockerfile path, and the fix so the
+			// message stays actionable even if CircleCI secret-masking blanks
+			// the app or artifact names at the end (they can match APP_NAME).
 			return nil, nil, fmt.Errorf(
-				"apps %q and %q both build Dockerfile %q but publish to different "+
-					"artifacts (%q and %q); goci cannot build distinct images from a "+
-					"shared Dockerfile path. Give each app its own build.docker.file",
-				prev.app, name, dockerfileDisplayName(launch.Dockerfile),
-				prev.artifact, artifact,
+				"shared Dockerfile path collision: %q is claimed by two apps that "+
+					"publish to different artifacts, so goci cannot build distinct "+
+					"images from it. Give each app its own build.docker.file. "+
+					"Conflicting apps: %q (artifact %q) and %q (artifact %q)",
+				dockerfileDisplayName(launch.Dockerfile),
+				prev.app, prev.artifact, name, artifact,
 			)
 		}
 		owner[launch.Dockerfile] = dockerfileOwner{app: name, artifact: artifact}

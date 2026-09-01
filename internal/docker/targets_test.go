@@ -138,3 +138,33 @@ func TestBuildTargets(t *testing.T) {
 		})
 	}
 }
+
+// TestBuildTargets_CollisionErrorMessage pins the exact rendered collision
+// error so we can see the app and artifact names print as readable quoted
+// strings rather than pointer addresses. The two colliding apps can be
+// visited in either map-iteration order, so either ordering of the names is
+// acceptable; both goldens are spelled out literally so a formatting change
+// is caught rather than mirrored.
+func TestBuildTargets_CollisionErrorMessage(t *testing.T) {
+	setBuildEnv(t)
+
+	apps := map[string]*repo.AppConfig{
+		"worker-a": {
+			Name: "worker-a", RunType: repo.RunTypeDocker,
+			ArtifactName: "worker-a", Dockerfile: "Dockerfile.worker",
+		},
+		"worker-b": {
+			Name: "worker-b", RunType: repo.RunTypeDocker,
+			ArtifactName: "worker-b", Dockerfile: "Dockerfile.worker",
+		},
+	}
+
+	targets, artifacts, err := BuildTargets(apps)
+	require.Error(t, err)
+	assert.Nil(t, targets)
+	assert.Nil(t, artifacts)
+
+	aFirst := `shared Dockerfile path collision: "Dockerfile.worker" is claimed by two apps that publish to different artifacts, so goci cannot build distinct images from it. Give each app its own build.docker.file. Conflicting apps: "worker-a" (artifact "worker-a") and "worker-b" (artifact "worker-b")`
+	bFirst := `shared Dockerfile path collision: "Dockerfile.worker" is claimed by two apps that publish to different artifacts, so goci cannot build distinct images from it. Give each app its own build.docker.file. Conflicting apps: "worker-b" (artifact "worker-b") and "worker-a" (artifact "worker-a")`
+	assert.Contains(t, []string{aFirst, bFirst}, err.Error())
+}
