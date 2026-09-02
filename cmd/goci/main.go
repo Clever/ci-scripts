@@ -99,7 +99,12 @@ func run(mode string) error {
 		artifacts []*catapult.Artifact
 	)
 
-	dockerTargets, dockerArtifacts := docker.BuildTargets(apps)
+	dockerTargets, dockerArtifacts, err := docker.BuildTargets(apps)
+	if err != nil {
+		// A build-target collision is a launch.yaml misconfiguration the
+		// developer must fix, so surface it as a validation error.
+		return &ValidationError{Message: err.Error()}
+	}
 	lambdaTargets, lambdaArtifacts := lambda.BuildTargets(apps)
 	artifacts = append(artifacts, dockerArtifacts...)
 	artifacts = append(artifacts, lambdaArtifacts...)
