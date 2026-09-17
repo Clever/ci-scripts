@@ -159,61 +159,120 @@ func CircleTriggeredBy() string {
 }
 
 // FleetAutomationUser is the who-is-who service-account identity we attribute a
-// fleet campaign merge's deploy to. Fleet stamps every campaign merge commit
-// with a clever-fleet[bot] co-author trailer (see isFleetMerge), and this
-// identity is registered in who-is-who so downstream deploy services (Slingshot,
-// dapple) resolve it. See INFRA-1076.
+// fleet campaign merge's deploy to when the merge has no resolvable run owner.
+// It is registered in who-is-who so downstream deploy services resolve it.
+// See INFRA-1076.
 const FleetAutomationUser = "clever-fleet[bot]"
 
-// fleetMergeCoAuthorLogin is the GitHub App login fleet stamps as a co-author on
-// every campaign merge commit (matched case-insensitively).
-const fleetMergeCoAuthorLogin = "clever-fleet[bot]"
+// fleetBotLogin is the GitHub App login that authors fleet campaign merge
+// commits: GitHub's squash sets the PR opener (clever-fleet[bot]) as the commit
+// author and demotes the real author to a Co-authored-by trailer. Matched
+// case-insensitively against the commit author name+email — this is the
+// positive, git-readable signal that a merge came from fleet. See INFRA-1076.
+const fleetBotLogin = "clever-fleet[bot]"
+
+// DeployActor identifies who a deploy is attributed to. At most one of
+// GithubUsername / Email is set.
+type DeployActor struct {
+	GithubUsername string
+	Email          string
+}
 
 var (
-	fleetMergeChecked bool
-	fleetMergeResult  bool
+	deployActorComputed bool
+	deployActorResult   DeployActor
 )
 
-// DeployUser returns the identity to attribute a deploy to. A fleet campaign
-// merge is performed by automation — the CircleCI trigger user is a bot (e.g.
-// backstage-clever[bot], which does the bulk merge), not a person — so
-// CIRCLE_USERNAME never resolves in who-is-who. We positively detect a fleet
-// merge by the clever-fleet[bot] co-author trailer that fleet stamps on every
-// campaign merge commit, and attribute those deploys to the fleet service
-// account. Every other pipeline keeps CIRCLE_USERNAME and its existing hard-fail
-// on an empty/unresolvable trigger, so a non-fleet automation merge is never
-// misattributed to fleet. See INFRA-1076.
-func DeployUser() string {
+// DeployUser returns the identity to attribute a deploy to.
+//
+//   - A normal human merge sets CIRCLE_USERNAME → use it.
+//   - A fleet campaign merge is authored by clever-fleet[bot] (GitHub's squash
+//     makes the PR opener the commit author) and leaves CIRCLE_USERNAME empty
+//     (the merge is done by automation). Attribute it to the run owner — the
+//     Co-authored-by trailer fleet stamps on the commit — falling back to the
+//     clever-fleet[bot] service account when there is no usable co-author.
+//   - Any other empty-CIRCLE_USERNAME trigger (scheduled, API, a non-fleet bot)
+//     keeps CIRCLE_USERNAME's existing hard-fail, so it is never misattributed to
+//     fleet.
+//
+// The result is memoized. See INFRA-1076.
+func DeployUser() DeployActor {
+	if !deployActorComputed {
+		deployActorResult = computeDeployActor()
+		deployActorComputed = true
+	}
+	return deployActorResult
+}
+
+func computeDeployActor() DeployActor {
+	if u := os.Getenv("CIRCLE_USERNAME"); u != "" {
+		return DeployActor{GithubUsername: u}
+	}
 	if isFleetMerge() {
-		return FleetAutomationUser
+		if owner := fleetRunOwnerEmail(); owner != "" {
+			return DeployActor{Email: owner}
+		}
+		return DeployActor{GithubUsername: FleetAutomationUser}
 	}
-	return CircleTriggeredBy()
+	// Not a fleet merge and no CIRCLE_USERNAME: preserve the existing hard-fail.
+	return DeployActor{GithubUsername: CircleTriggeredBy()}
 }
 
-// isFleetMerge reports whether HEAD was produced by a fleet campaign merge,
-// detected by a clever-fleet[bot] co-author trailer on the commit message. The
-// result is memoized; any git error (not a checkout, etc.) is treated as "not a
-// fleet merge" so we fall back to CIRCLE_USERNAME.
+// isFleetMerge reports whether HEAD is a fleet campaign merge, detected by a
+// clever-fleet[bot] commit author. Any git error is treated as "not fleet".
 func isFleetMerge() bool {
-	if !fleetMergeChecked {
-		fleetMergeResult = detectFleetMerge()
-		fleetMergeChecked = true
-	}
-	return fleetMergeResult
-}
-
-func detectFleetMerge() bool {
-	out, err := exec.Command("git", "log", "-1", "--format=%B", "HEAD").Output()
+	out, err := gitLogHead("%an%n%ae")
 	if err != nil {
 		return false
 	}
-	for _, line := range strings.Split(string(out), "\n") {
-		l := strings.ToLower(strings.TrimSpace(line))
-		if strings.HasPrefix(l, "co-authored-by:") && strings.Contains(l, fleetMergeCoAuthorLogin) {
-			return true
-		}
+	return authorIsFleetBot(out)
+}
+
+func authorIsFleetBot(authorNameAndEmail string) bool {
+	return strings.Contains(strings.ToLower(authorNameAndEmail), fleetBotLogin)
+}
+
+// fleetRunOwnerEmail returns the first non-bot email from HEAD's Co-authored-by
+// trailers — the fleet run owner — or "" if none.
+func fleetRunOwnerEmail() string {
+	out, err := gitLogHead("%(trailers:key=Co-authored-by,valueonly)")
+	if err != nil {
+		return ""
 	}
-	return false
+	return runOwnerFromCoAuthors(out)
+}
+
+func runOwnerFromCoAuthors(trailers string) string {
+	for _, line := range strings.Split(trailers, "\n") {
+		email := emailBetweenAngles(line)
+		if email == "" {
+			continue
+		}
+		le := strings.ToLower(email)
+		if strings.Contains(le, "[bot]") || strings.Contains(le, "users.noreply.github.com") {
+			continue // skip bot co-authors
+		}
+		return email
+	}
+	return ""
+}
+
+// emailBetweenAngles pulls "addr" out of a "Name <addr>" string, or "".
+func emailBetweenAngles(s string) string {
+	lt := strings.IndexByte(s, '<')
+	gt := strings.IndexByte(s, '>')
+	if lt < 0 || gt < 0 || gt <= lt+1 {
+		return ""
+	}
+	return strings.TrimSpace(s[lt+1 : gt])
+}
+
+func gitLogHead(format string) (string, error) {
+	out, err := exec.Command("git", "log", "-1", "--format="+format, "HEAD").Output()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
 }
 
 func Repo() string {
