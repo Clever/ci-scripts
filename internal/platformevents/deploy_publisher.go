@@ -50,7 +50,7 @@ func (d *DeployPublisher) DeployApps(ctx context.Context, apps []string) error {
 func (d *DeployPublisher) deployApp(ctx context.Context, app, env string) error {
 	buildID := environment.ShortSHA1()
 	repoName := environment.Repo()
-	githubUser := environment.CircleTriggeredBy()
+	githubUser := environment.DeployUser()
 	clusterEnvironment := getClusterEnvironment(env)
 
 	fmt.Println("Deploying", app, "to", env, "with build ID", buildID)

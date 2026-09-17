@@ -14,6 +14,17 @@ async function runAction() {
   const state = core.getInput("state");
   const targetURL = core.getInput("targetURL");
 
+  // A bot/GitHub-App author (e.g. a fleet campaign merge, dependabot) has no
+  // person behind it to DM. Resolving them would 404 and fail this job, masking
+  // the very CI failure it's meant to surface. Skip the notification entirely
+  // for bot authors — fleet tracks per-repo CI status separately. See INFRA-1076.
+  if (!githubUsername || githubUsername.endsWith("[bot]")) {
+    core.info(
+      `Skipping CI notification: author "${githubUsername}" is a bot/automation identity with no Slack user.`
+    );
+    return;
+  }
+
   let slackID = "";
   try {
     slackID = await getSlackIDFromEmail(githubUsername);

@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -154,6 +156,64 @@ func CircleTriggeredBy() string {
 		circleTriggeredBy = envMustString("CIRCLE_USERNAME", true)
 	}
 	return circleTriggeredBy
+}
+
+// FleetAutomationUser is the who-is-who service-account identity we attribute a
+// fleet campaign merge's deploy to. Fleet stamps every campaign merge commit
+// with a clever-fleet[bot] co-author trailer (see isFleetMerge), and this
+// identity is registered in who-is-who so downstream deploy services (Slingshot,
+// dapple) resolve it. See INFRA-1076.
+const FleetAutomationUser = "clever-fleet[bot]"
+
+// fleetMergeCoAuthorLogin is the GitHub App login fleet stamps as a co-author on
+// every campaign merge commit (matched case-insensitively).
+const fleetMergeCoAuthorLogin = "clever-fleet[bot]"
+
+var (
+	fleetMergeChecked bool
+	fleetMergeResult  bool
+)
+
+// DeployUser returns the identity to attribute a deploy to. A fleet campaign
+// merge is performed by automation — the CircleCI trigger user is a bot (e.g.
+// backstage-clever[bot], which does the bulk merge), not a person — so
+// CIRCLE_USERNAME never resolves in who-is-who. We positively detect a fleet
+// merge by the clever-fleet[bot] co-author trailer that fleet stamps on every
+// campaign merge commit, and attribute those deploys to the fleet service
+// account. Every other pipeline keeps CIRCLE_USERNAME and its existing hard-fail
+// on an empty/unresolvable trigger, so a non-fleet automation merge is never
+// misattributed to fleet. See INFRA-1076.
+func DeployUser() string {
+	if isFleetMerge() {
+		return FleetAutomationUser
+	}
+	return CircleTriggeredBy()
+}
+
+// isFleetMerge reports whether HEAD was produced by a fleet campaign merge,
+// detected by a clever-fleet[bot] co-author trailer on the commit message. The
+// result is memoized; any git error (not a checkout, etc.) is treated as "not a
+// fleet merge" so we fall back to CIRCLE_USERNAME.
+func isFleetMerge() bool {
+	if !fleetMergeChecked {
+		fleetMergeResult = detectFleetMerge()
+		fleetMergeChecked = true
+	}
+	return fleetMergeResult
+}
+
+func detectFleetMerge() bool {
+	out, err := exec.Command("git", "log", "-1", "--format=%B", "HEAD").Output()
+	if err != nil {
+		return false
+	}
+	for _, line := range strings.Split(string(out), "\n") {
+		l := strings.ToLower(strings.TrimSpace(line))
+		if strings.HasPrefix(l, "co-authored-by:") && strings.Contains(l, fleetMergeCoAuthorLogin) {
+			return true
+		}
+	}
+	return false
 }
 
 func Repo() string {
