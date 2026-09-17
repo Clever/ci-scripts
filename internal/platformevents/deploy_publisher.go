@@ -23,7 +23,6 @@ type DeployPublisher struct {
 	client *eventbridge.Client
 }
 
-
 func NewDeployPublisher(ctx context.Context) *DeployPublisher {
 	cfg := environment.AWSCfg(ctx, environment.OidcEventBridgeRole())
 	return &DeployPublisher{
@@ -50,15 +49,24 @@ func (d *DeployPublisher) DeployApps(ctx context.Context, apps []string) error {
 func (d *DeployPublisher) deployApp(ctx context.Context, app, env string) error {
 	buildID := environment.ShortSHA1()
 	repoName := environment.Repo()
-	githubUser := environment.DeployUser()
+	actor := environment.DeployUser()
 	clusterEnvironment := getClusterEnvironment(env)
 
 	fmt.Println("Deploying", app, "to", env, "with build ID", buildID)
 
+	// A fleet merge attributes to the run owner's email; everything else to a
+	// GitHub username. At most one of these is set (see environment.DeployUser).
+	user := deploycreated.User{}
+	if actor.Email != "" {
+		user.Email = strPtr(actor.Email)
+	} else {
+		user.GithubUsername = strPtr(actor.GithubUsername)
+	}
+
 	event := deploycreated.Detail{
 		App:                app,
 		Repo:               repoName,
-		User:               deploycreated.User{GithubUsername: strPtr(githubUser)},
+		User:               user,
 		Environment:        env,
 		TargetRevision:     buildID,
 		ClusterEnvironment: clusterEnvironment,
