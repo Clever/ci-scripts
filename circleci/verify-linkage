@@ -1,0 +1,87 @@
+#!/bin/bash
+
+# Verifies that a built docker image's entrypoint binary can resolve all
+# of its shared libraries (including glibc symbol versions) against the
+# image's own runtime base. Catches the case where a binary is compiled
+# in a newer CI image than the Dockerfile's runtime base, which otherwise
+# only fails at deploy time with e.g. "version `GLIBC_2.38' not found".
+#
+# Usage:
+#
+#   verify-linkage IMAGE
+#
+# Mode is read from CI_LINKAGE_CHECK:
+#   warn    (default) print a warning on failure but exit 0
+#   enforce exit 1 on failure
+#   off     skip the check entirely
+#
+# The in-container check is kept in sync with
+# internal/docker/linkage_check.sh (goci's copy of the same check).
+
+set -e
+
+IMAGE=$1
+: ${IMAGE:?"Usage: verify-linkage IMAGE"}
+MODE=${CI_LINKAGE_CHECK:-warn}
+
+case "$MODE" in
+  off)
+    echo "Skipping linkage check (CI_LINKAGE_CHECK=off)"
+    exit 0
+    ;;
+  warn|enforce) ;;
+  *)
+    echo "Invalid CI_LINKAGE_CHECK=$MODE, expected warn, enforce, or off"
+    exit 1
+    ;;
+esac
+
+# The binary docker would exec: the first Entrypoint element, falling
+# back to the first Cmd element.
+BIN=$(docker image inspect --format '{{if .Config.Entrypoint}}{{index .Config.Entrypoint 0}}{{else if .Config.Cmd}}{{index .Config.Cmd 0}}{{end}}' "$IMAGE")
+if [ -z "$BIN" ]; then
+  echo "Skipping linkage check: $IMAGE has no Entrypoint or Cmd"
+  exit 0
+fi
+
+# Runs inside the image with the image's WORKDIR, so relative and $PATH
+# entrypoints resolve the same way docker would resolve them. Exit 0 means
+# pass or skip, exit 1 means the binary will not load.
+read -r -d '' CHECK <<'EOF' || true
+BIN="$1"
+command -v ldd >/dev/null 2>&1 || { echo "SKIP: no ldd in image"; exit 0; }
+P=$(command -v "$BIN" 2>/dev/null) || { echo "FAIL: entrypoint $BIN not found in image"; exit 1; }
+head -c 4 "$P" | grep -q ELF || { echo "SKIP: $P is not an ELF binary"; exit 0; }
+rc=0
+out=$(ldd "$P" 2>&1) || rc=$?
+echo "$out"
+case "$out" in
+  *"not a dynamic executable"*|*"Not a valid dynamic program"*)
+    echo "OK: $P is statically linked"; exit 0 ;;
+esac
+[ "$rc" -eq 0 ] || { echo "FAIL: ldd exited $rc for $P"; exit 1; }
+if echo "$out" | grep -q "not found"; then
+  echo "FAIL: $P has unresolved shared libraries or symbol versions"; exit 1
+fi
+echo "OK: $P resolves all shared libraries against the runtime image"
+EOF
+
+echo "Verifying $BIN in $IMAGE links against the image's runtime base..."
+rc=0
+docker run --rm --entrypoint /bin/sh "$IMAGE" -c "$CHECK" linkage-check "$BIN" || rc=$?
+
+# 126/127 come from docker itself when the image has no usable /bin/sh
+# (e.g. scratch or distroless). Those images need static binaries anyway.
+if [ "$rc" -eq 126 ] || [ "$rc" -eq 127 ]; then
+  echo "Skipping linkage check: $IMAGE has no /bin/sh"
+  exit 0
+fi
+
+if [ "$rc" -ne 0 ]; then
+  if [ "$MODE" == "enforce" ]; then
+    echo "Linkage check failed. The binary was likely built on a newer OS than the Dockerfile's runtime base."
+    exit 1
+  fi
+  echo "WARNING: linkage check failed. This image will likely fail to start in production."
+  echo "WARNING: this will fail the build once CI_LINKAGE_CHECK=enforce becomes the default."
+fi

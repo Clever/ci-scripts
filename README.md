@@ -28,6 +28,15 @@ Docker image is tagged with 7 character git commit SHA.
 $ ./circleci/docker-publish [DOCKER_USER] [DOCKER_PASS] [DOCKER_EMAIL] [ORG]
 ```
 
+Before pushing, `docker-publish` runs `verify-linkage` against the built image. It checks that the
+image's entrypoint binary resolves all of its shared libraries (including glibc symbol versions) on
+the image's own OS, which catches binaries compiled on a newer CI image than the Dockerfile's
+runtime base. Set `CI_LINKAGE_CHECK` to `warn` (default), `enforce`, or `off`.
+
+```
+$ ./circleci/verify-linkage [IMAGE]
+```
+
 #### NPM Publish
 
 Authenticates to NPM and publishes a package.
