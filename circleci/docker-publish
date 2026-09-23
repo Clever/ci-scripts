@@ -115,6 +115,9 @@ else
   echo "Image already exists... skipping build"
 fi
 
+# Fail (or warn) before pushing if the binary can't load on the image's own OS.
+$DIR/verify-linkage $ORG/$REPO:$SHORT_SHA
+
 # ECR login. Only push to us-west-2, images are replicated to other regions.
 echo "Logging into ECR using role credentials..."
 assume_role_with_web_identity $OIDC_ECR_UPLOAD_ROLE $AWS_ECR_PROFILE
