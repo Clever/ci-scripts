@@ -128,6 +128,9 @@ func run(mode string) error {
 			if err = dkr.Build(ctx, ".", dockerfile, t.Tags); err != nil {
 				return err
 			}
+			if err = dkr.VerifyLinkage(ctx, t.Tags[0], environment.LinkageCheckMode()); err != nil {
+				return err
+			}
 			if err = dkr.Push(ctx, t.Tags); err != nil {
 				return err
 			}
