@@ -258,6 +258,16 @@ func OidcEventBridgeRole() string {
 	return oidcEventBridgeRole
 }
 
+// LinkageCheckMode is how a failed linkage check on a built docker
+// image is handled: "warn" (default), "enforce", or "off". Set via
+// CI_LINKAGE_CHECK.
+func LinkageCheckMode() string {
+	if v := os.Getenv("CI_LINKAGE_CHECK"); v != "" {
+		return v
+	}
+	return "warn"
+}
+
 func SlingshotURL() string {
 	if slingshotURL == "" {
 		slingshotURL = envMustString("SLINGSHOT_URL", true)

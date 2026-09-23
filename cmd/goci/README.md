@@ -28,11 +28,22 @@ goci will automatically detect all applications in the `config` directory (falli
 1. detect the run type of the application
 2. Run any configured build commands
 3. build any docker images
-4. publish all built docker images to all ECR regions
-5. publish all lambdas to s3 in all regions.
-6. Sync all changed apps with catalog config
-7. [launch.yaml only]Publish new application versions to catapult
-8. [launch.yaml only] Deploy any changed applications.
+4. verify each docker image's entrypoint binary links against the image's runtime base (see [Linkage check](#linkage-check))
+5. publish all built docker images to all ECR regions
+6. publish all lambdas to s3 in all regions.
+7. Sync all changed apps with catalog config
+8. [launch.yaml only] Publish new application versions to catapult
+9. [launch.yaml only] Deploy any changed applications.
+
+## Linkage check
+
+After building each docker image and before pushing it, goci runs `ldd` on the image's entrypoint binary inside the image itself. This catches a binary compiled in a newer CI image (e.g. `cimg/go`) than the Dockerfile's runtime base, which otherwise only fails at deploy time with errors like ``version `GLIBC_2.38' not found``.
+
+Images with no `/bin/sh` or `ldd` (scratch, distroless), non-ELF entrypoints, and static binaries are skipped. Configure with `CI_LINKAGE_CHECK`:
+
+- `warn` (default): print a warning on failure and continue
+- `enforce`: fail the build
+- `off`: skip the check
 
 ## Development
 
