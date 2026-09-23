@@ -1,5 +1,5 @@
 v1.15.0
-docker-publish: verify the image's entrypoint binary resolves its shared libraries (incl. glibc symbol versions) against the runtime base before pushing. Warn-only by default; set CI_LINKAGE_CHECK=enforce|off
+docker-publish: verify the image's entrypoint binary resolves its shared libraries (incl. glibc symbol versions) against the runtime base, and that it starts without a crash signature, before pushing. Warn-only by default; set CI_LINKAGE_CHECK=enforce|off
 
 Previously:
 - INFRA-1076 make CI bot-tolerant: attribute a fleet-merge deploy (detected by the clever-fleet[bot] co-author trailer) to the fleet bot, and skip the CI-failure notify for bot authors instead of failing the job
