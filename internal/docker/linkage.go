@@ -12,9 +12,10 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 )
 
-// linkageCheck runs inside the built image and resolves the entrypoint
-// binary's shared libraries with ldd. It exits 1 only when the binary
-// will not load; unsupported images (no ldd, non-ELF entrypoint) exit 0.
+// linkageCheck runs inside the built image. It resolves the entrypoint
+// binary's shared libraries with ldd, then briefly starts the binary and
+// looks for crash signatures. It exits 1 only when the binary can never
+// start; unsupported images (no ldd or timeout, non-ELF entrypoint) exit 0.
 //
 //go:embed linkage_check.sh
 var linkageCheck string
@@ -26,9 +27,10 @@ const (
 	LinkageOff     = "off"
 )
 
-// VerifyLinkage checks that the image's entrypoint binary resolves all
-// of its shared libraries, including glibc symbol versions, against the
-// image's own runtime base. This catches binaries compiled in a newer CI
+// VerifyLinkage checks that the image's entrypoint binary can start on
+// the image's own runtime base: its shared libraries and glibc symbol
+// versions resolve, it matches the image's architecture, and it doesn't
+// panic during package init. This catches binaries compiled in a newer CI
 // image than the Dockerfile's runtime base, which otherwise only fail at
 // deploy time with e.g. "version `GLIBC_2.38' not found".
 //
@@ -83,7 +85,10 @@ func (d *Docker) runLinkageCheck(ctx context.Context, image, bin string) (int64,
 		Image:      image,
 		Entrypoint: []string{"/bin/sh", "-c", linkageCheck, "linkage-check"},
 		Cmd:        []string{bin},
-	}, nil, nil, nil, "")
+	}, &container.HostConfig{
+		// The check starts the service binary; keep it off every network.
+		NetworkMode: "none",
+	}, nil, nil, "")
 	if err != nil {
 		return 0, fmt.Errorf("failed to create linkage check container: %v", err)
 	}

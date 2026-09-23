@@ -37,7 +37,7 @@ goci will automatically detect all applications in the `config` directory (falli
 
 ## Linkage check
 
-After building each docker image and before pushing it, goci runs `ldd` on the image's entrypoint binary inside the image itself. This catches a binary compiled in a newer CI image (e.g. `cimg/go`) than the Dockerfile's runtime base, which otherwise only fails at deploy time with errors like ``version `GLIBC_2.38' not found``.
+After building each docker image and before pushing it, goci runs `ldd` on the image's entrypoint binary inside the image itself, then starts the binary for up to 5s with no config and no network. Missing-config exits are expected and pass; only crash signatures fail (loader or architecture errors, a panic during package init, a native crash). This catches a binary compiled in a newer CI image (e.g. `cimg/go`) than the Dockerfile's runtime base, which otherwise only fails at deploy time with errors like ``version `GLIBC_2.38' not found``.
 
 Images with no `/bin/sh` or `ldd` (scratch, distroless), non-ELF entrypoints, and static binaries are skipped. Configure with `CI_LINKAGE_CHECK`:
 

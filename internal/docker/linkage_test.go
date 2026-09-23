@@ -68,17 +68,22 @@ func TestVerifyLinkageModes(t *testing.T) {
 }
 
 // TestLinkageCheckScript runs the embedded in-container script against a
-// fake ldd, covering each outcome the real ldd can produce.
+// fake ldd and a fake timeout, covering each outcome of the load and exec
+// checks.
 func TestLinkageCheckScript(t *testing.T) {
 	dir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "app"), []byte("\x7fELFbinary"), 0o755))
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "script.sh"), []byte("#!/bin/sh\n"), 0o755))
 
 	tests := []struct {
-		name     string
-		bin      string
-		lddOut   string
-		lddExit  int
+		name    string
+		bin     string
+		lddOut  string
+		lddExit int
+		// runOut and runExit fake `timeout 5 <bin>`. Defaults to a
+		// service that is still running at the timeout.
+		runOut   string
+		runExit  int
 		wantExit int
 	}{
 		{name: "resolves", bin: "./app", lddOut: "libc.so.6 => /lib/libc.so.6 (0x1)"},
@@ -94,6 +99,30 @@ func TestLinkageCheckScript(t *testing.T) {
 		{name: "library name contains error", bin: "./app", lddOut: "libgpg-error.so.0 => /lib/libgpg-error.so.0"},
 		{name: "non-ELF entrypoint", bin: "./script.sh"},
 		{name: "missing entrypoint", bin: "./missing", wantExit: 1},
+		{name: "exits on missing config", bin: "./app", runOut: "missing env var PORT", runExit: 1},
+		{
+			name:    "panic in main on missing config",
+			bin:     "./app",
+			runOut:  "panic: PORT not set\n\ngoroutine 1 [running]:\nmain.main()",
+			runExit: 2,
+		},
+		{
+			name:     "panic during package init",
+			bin:      "./app",
+			runOut:   "panic: boom\n\ngoroutine 1 [running]:\nmain.init.0()\nruntime.doInit1(0x1)",
+			runExit:  2,
+			wantExit: 1,
+		},
+		{name: "wrong architecture", bin: "./app", runOut: "./app: Exec format error", runExit: 126, wantExit: 1},
+		{
+			name:     "loader missing library",
+			bin:      "./app",
+			runOut:   "./app: error while loading shared libraries: libduckdb.so: cannot open shared object file",
+			runExit:  127,
+			wantExit: 1,
+		},
+		{name: "illegal instruction", bin: "./app", runOut: "SIGILL: illegal instruction", runExit: 2, wantExit: 1},
+		{name: "killed by signal", bin: "./app", runExit: 139, wantExit: 1},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -101,6 +130,14 @@ func TestLinkageCheckScript(t *testing.T) {
 			require.NoError(t, os.WriteFile(filepath.Join(binDir, "out"), []byte(tt.lddOut+"\n"), 0o644))
 			fakeLdd := "#!/bin/sh\ncat " + filepath.Join(binDir, "out") + "\nexit " + strconv.Itoa(tt.lddExit) + "\n"
 			require.NoError(t, os.WriteFile(filepath.Join(binDir, "ldd"), []byte(fakeLdd), 0o755))
+
+			runExit := tt.runExit
+			if tt.runOut == "" && runExit == 0 {
+				runExit = 124
+			}
+			require.NoError(t, os.WriteFile(filepath.Join(binDir, "run"), []byte(tt.runOut+"\n"), 0o644))
+			fakeTimeout := "#!/bin/sh\ncat " + filepath.Join(binDir, "run") + "\nexit " + strconv.Itoa(runExit) + "\n"
+			require.NoError(t, os.WriteFile(filepath.Join(binDir, "timeout"), []byte(fakeTimeout), 0o755))
 
 			cmd := exec.Command("/bin/sh", "-c", linkageCheck, "linkage-check", tt.bin)
 			cmd.Dir = dir
