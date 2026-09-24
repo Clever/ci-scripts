@@ -1,7 +1,8 @@
-v1.14.0
-INFRA-1076 make CI bot-tolerant: attribute a fleet-merge deploy (detected by the clever-fleet[bot] co-author trailer) to the fleet bot, and skip the CI-failure notify for bot authors instead of failing the job
+v1.15.0
+Namespace the pr-review skill invocation and allow the Skill tool, so the claude-code action runs Clever's review instead of Claude's built-in one
 
 Previously:
+- INFRA-1076 make CI bot-tolerant: attribute a fleet-merge deploy (detected by the clever-fleet[bot] co-author trailer) to the fleet bot, and skip the CI-failure notify for bot authors instead of failing the job
 - Make the shared pr-review skill the only review path, dropping the inline prompt and @claude-beta gate
 - Error when apps share a Dockerfile path but publish different artifacts
 - Route @claude-beta reviews through the shared pr-review skill
