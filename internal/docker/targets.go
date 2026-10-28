@@ -22,7 +22,9 @@ type DockerTarget struct {
 // multiple apps share an artifact name then only the first matching
 // Dockerfile and its set of tags will be in the final list. This is an
 // optimization so we do not build multiple copies of the same image
-// which only differ at runtime.
+// which only differ at runtime. A Kubernetes app pulls an image named
+// after itself, so a Kubernetes app that shares another artifact also
+// gets the shared image pushed under its own name.
 //
 // It returns an error when two apps publish to different artifacts but
 // resolve to the same Dockerfile path. The targets map is keyed by
@@ -35,10 +37,11 @@ func BuildTargets(apps map[string]*repo.AppConfig) (map[string]DockerTarget, []*
 	// dockerfileOwner is the first app/artifact to claim a Dockerfile path.
 	type dockerfileOwner struct{ app, artifact string }
 	var (
-		targets   = map[string]DockerTarget{}
-		done      = map[string]struct{}{}
-		owner     = map[string]dockerfileOwner{}
-		artifacts []*catapult.Artifact
+		targets = map[string]DockerTarget{}
+		// artifactDockerfile maps each built artifact to its target key.
+		artifactDockerfile = map[string]string{}
+		owner              = map[string]dockerfileOwner{}
+		artifacts          []*catapult.Artifact
 	)
 
 	for name, launch := range apps {
@@ -59,11 +62,12 @@ func BuildTargets(apps map[string]*repo.AppConfig) (map[string]DockerTarget, []*
 		// tagged once. Short-circuit after we assemble our catapult
 		// artifacts because catapult still needs an artifact reference
 		// for every app.
-		if _, ok := done[artifact]; ok {
+		if dockerfile, ok := artifactDockerfile[artifact]; ok {
 			fmt.Println(name, "shares artifact with", artifact)
+			targets[dockerfile] = withAppTag(targets[dockerfile], name, launch)
 			continue
 		}
-		done[artifact] = struct{}{}
+		artifactDockerfile[artifact] = launch.Dockerfile
 
 		// Two apps publishing to different artifacts cannot share a
 		// Dockerfile path: keyed by path, the second would overwrite the
@@ -83,20 +87,30 @@ func BuildTargets(apps map[string]*repo.AppConfig) (map[string]DockerTarget, []*
 		}
 		owner[launch.Dockerfile] = dockerfileOwner{app: name, artifact: artifact}
 
-		tags := []string{}
-		// Only push to ecrRootRegion, images are replicated to other regions
-		tag := fmt.Sprintf(
-			"%s.dkr.ecr.%s.amazonaws.com/%s:%s",
-			environment.ECRAccountID(), ecrRootRegion, artifact, environment.ShortSHA1(),
-		)
-		tags = append(tags, tag)
-
-		targets[launch.Dockerfile] = DockerTarget{
-			Tags:    tags,
+		targets[launch.Dockerfile] = withAppTag(DockerTarget{
+			Tags:    []string{ecrTag(artifact)},
 			Command: launch.BuildCommand,
-		}
+		}, name, launch)
 	}
 	return targets, artifacts, nil
+}
+
+// withAppTag adds a tag under the app's own name when a Kubernetes app
+// publishes to an artifact with a different name.
+func withAppTag(target DockerTarget, name string, launch *repo.AppConfig) DockerTarget {
+	if launch.IsKubernetes && name != launch.ArtifactName {
+		target.Tags = append(target.Tags, ecrTag(name))
+	}
+	return target
+}
+
+// ecrTag returns the image tag for repository at the current commit. Only
+// push to ecrRootRegion, images are replicated to other regions.
+func ecrTag(repository string) string {
+	return fmt.Sprintf(
+		"%s.dkr.ecr.%s.amazonaws.com/%s:%s",
+		environment.ECRAccountID(), ecrRootRegion, repository, environment.ShortSHA1(),
+	)
 }
 
 // dockerfileDisplayName returns a human-readable Dockerfile name for
