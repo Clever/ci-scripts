@@ -168,3 +168,62 @@ func TestBuildTargets_CollisionErrorMessage(t *testing.T) {
 	bFirst := `shared Dockerfile path collision: "Dockerfile.worker" is claimed by two apps that publish to different artifacts, so goci cannot build distinct images from it. Give each app its own build.docker.file. Conflicting apps: "worker-b" (artifact "worker-b") and "worker-a" (artifact "worker-a")`
 	assert.Contains(t, []string{aFirst, bFirst}, err.Error())
 }
+
+func TestBuildTargets_SharedArtifactTags(t *testing.T) {
+	setBuildEnv(t)
+	const registry = "123456789012.dkr.ecr.us-west-2.amazonaws.com/"
+
+	tests := []struct {
+		name     string
+		apps     map[string]*repo.AppConfig
+		wantTags []string
+	}{
+		{
+			name: "kubernetes app sharing an artifact is also tagged under its own name",
+			apps: map[string]*repo.AppConfig{
+				"my-service": {
+					Name: "my-service", RunType: repo.RunTypeDocker,
+					ArtifactName: "my-service", IsKubernetes: true,
+				},
+				"my-service-xl": {
+					Name: "my-service-xl", RunType: repo.RunTypeDocker,
+					ArtifactName: "my-service", IsKubernetes: true,
+				},
+			},
+			wantTags: []string{registry + "my-service:abcdef1", registry + "my-service-xl:abcdef1"},
+		},
+		{
+			name: "catapult app sharing an artifact pushes only the artifact",
+			apps: map[string]*repo.AppConfig{
+				"my-service": {
+					Name: "my-service", RunType: repo.RunTypeDocker, ArtifactName: "my-service",
+				},
+				"sso-my-service": {
+					Name: "sso-my-service", RunType: repo.RunTypeDocker, ArtifactName: "my-service",
+				},
+			},
+			wantTags: []string{registry + "my-service:abcdef1"},
+		},
+		{
+			name: "kubernetes app alone on a renamed artifact is tagged under both names",
+			apps: map[string]*repo.AppConfig{
+				"sso-my-service": {
+					Name: "sso-my-service", RunType: repo.RunTypeDocker,
+					ArtifactName: "my-service", IsKubernetes: true,
+				},
+			},
+			wantTags: []string{registry + "my-service:abcdef1", registry + "sso-my-service:abcdef1"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			targets, _, err := BuildTargets(tt.apps)
+			require.NoError(t, err)
+			require.Len(t, targets, 1)
+			for _, target := range targets {
+				assert.ElementsMatch(t, tt.wantTags, target.Tags)
+			}
+		})
+	}
+}

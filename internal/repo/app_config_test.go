@@ -191,6 +191,7 @@ stack:
 				Name:         "my-service",
 				RunType:      RunTypeDocker,
 				ArtifactName: "my-service",
+				IsKubernetes: true,
 			},
 		},
 		{
@@ -205,6 +206,7 @@ stack:
 				Name:         "my-lambda",
 				RunType:      RunTypeLambda,
 				ArtifactName: "my-lambda",
+				IsKubernetes: true,
 			},
 		},
 		{
@@ -221,6 +223,7 @@ build:
 				Name:         "sso-my-service",
 				RunType:      RunTypeDocker,
 				ArtifactName: "my-service",
+				IsKubernetes: true,
 			},
 		},
 		{
@@ -238,6 +241,7 @@ build:
 				RunType:      RunTypeDocker,
 				ArtifactName: "my-service",
 				BuildCommand: "make build",
+				IsKubernetes: true,
 			},
 		},
 		{
@@ -255,6 +259,7 @@ build:
 				RunType:      RunTypeDocker,
 				ArtifactName: "my-service",
 				Dockerfile:   "Dockerfile.api",
+				IsKubernetes: true,
 			},
 		},
 		{
@@ -275,6 +280,7 @@ build:
 				RunType:      RunTypeDocker,
 				ArtifactName: "my-service",
 				Dependencies: []string{"*.go", "go.mod", "go.sum"},
+				IsKubernetes: true,
 			},
 		},
 		{
@@ -299,6 +305,7 @@ build:
 				BuildCommand: "make build",
 				Dockerfile:   "Dockerfile.sso",
 				Dependencies: []string{"*.go", "Makefile"},
+				IsKubernetes: true,
 			},
 		},
 		{
@@ -356,12 +363,14 @@ build:
 			Name:         "app-one",
 			RunType:      RunTypeDocker,
 			ArtifactName: "app-one",
+			IsKubernetes: true,
 		}, apps["app-one"])
 		assert.Equal(t, &AppConfig{
 			Name:         "app-two",
 			RunType:      RunTypeLambda,
 			ArtifactName: "app-two",
 			BuildCommand: "make build",
+			IsKubernetes: true,
 		}, apps["app-two"])
 	})
 

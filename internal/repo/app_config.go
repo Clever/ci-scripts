@@ -46,6 +46,7 @@ type AppConfig struct {
 	Dockerfile      string
 	Dependencies    []string
 	HasLaunchConfig bool
+	IsKubernetes    bool
 }
 
 // ReadAppStackAutoDeployEnvs reads autoDeployEnvs from config/<app>/stack.yaml.
@@ -129,6 +130,6 @@ func appConfigForKubernetes(appName string) (*AppConfig, error) {
 		BuildCommand: stack.Build.Command,
 		Dockerfile:   stack.Build.Dockerfile,
 		Dependencies: stack.Build.Dependencies,
-
+		IsKubernetes: true,
 	}, nil
 }
