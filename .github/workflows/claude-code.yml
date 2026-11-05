@@ -6,6 +6,15 @@ on:
       ANTHROPIC_API_KEY:
         required: true
         description: 'Anthropic API key for Claude Code'
+    inputs:
+      extra_plugins:
+        description: 'Space-separated eng-ai-tools plugins to load in addition to clever-core (e.g. "clever-frontend")'
+        type: string
+        default: ''
+      extra_allowed_tools:
+        description: 'Extra tools to allow, comma-separated (e.g. "Skill(clever-frontend:review-crowdin-translation-pr)")'
+        type: string
+        default: ''
 
 jobs:
   claude:
@@ -36,6 +45,25 @@ jobs:
         with:
           plugin: clever-core
 
+      - name: Load extra plugins
+        id: extra
+        if: inputs.extra_plugins != ''
+        env:
+          PLUGINS: ${{ inputs.extra_plugins }}
+          CORE_DIR: ${{ steps.skills.outputs.plugin-dir }}
+        run: |
+          set -euo pipefail
+          root="$(dirname "$CORE_DIR")"
+          args=""
+          for p in $PLUGINS; do
+            if [[ ! "$p" =~ ^[A-Za-z0-9_-]+$ ]] || [ ! -f "$root/$p/.claude-plugin/plugin.json" ]; then
+              echo "extra_plugins: plugin '$p' not found under $root" >&2
+              exit 1
+            fi
+            args="$args --plugin-dir $root/$p"
+          done
+          echo "plugin-args=$args" >> "$GITHUB_OUTPUT"
+
       - name: Verify the pr-review skill is present
         run: test -f "${{ steps.skills.outputs.plugin-dir }}/skills/pr-review/SKILL.md"
 
@@ -48,9 +76,11 @@ jobs:
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
             /clever-core:pr-review
+            ${{ inputs.extra_plugins != '' && 'If this PR was opened by the Crowdin GitHub Action (title "New Crowdin Translations"), run the review-crowdin-translation-pr skill instead of pr-review.' || '' }}
           # --strict-mcp-config stops the plugin's declared MCP servers (linear, guru, chrome-devtools) from starting on the runner
           claude_args: |
             ${{ steps.skills.outputs.plugin-args }}
+            ${{ steps.extra.outputs.plugin-args }}
             --strict-mcp-config
-            --allowedTools "Skill(clever-core:pr-review),mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+            --allowedTools "Skill(clever-core:pr-review),mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)${{ inputs.extra_allowed_tools != '' && format(',{0}', inputs.extra_allowed_tools) || '' }}"
             --disallowedTools "Edit,Write,mcp__github_file_ops__commit_files,mcp__github_file_ops__delete_files,Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(git rebase:*),Bash(git reset:*),Bash(git checkout:*),Bash(git merge:*),Bash(git cherry-pick:*)"
