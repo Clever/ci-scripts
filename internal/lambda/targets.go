@@ -43,7 +43,7 @@ func BuildTargets(apps map[string]*repo.AppConfig) (map[string]LambdaTarget, []*
 			ID:        name,
 			Branch:    environment.Branch(),
 			Source:    fmt.Sprintf("github:Clever/%s@%s", environment.Repo(), environment.FullSHA1()),
-			Artifacts: fmt.Sprintf("lambda:clever/%s@%s;S3Key=\"%s,%s", artifact, environment.ShortSHA1(), s3Key(artifact), s3Buckets()),
+			Artifacts: fmt.Sprintf("lambda:clever/%s@%s;S3Key=\"%s,%s", artifact, environment.ShortSHA1(), S3Key(artifact), s3Buckets()),
 		})
 
 		if _, ok := done[artifact]; ok {
@@ -59,7 +59,7 @@ func BuildTargets(apps map[string]*repo.AppConfig) (map[string]LambdaTarget, []*
 	return targets, artifacts
 }
 
-func s3Key(artifactName string) string {
+func S3Key(artifactName string) string {
 	return fmt.Sprintf("%[1]s/%[2]s/%[1]s.zip", artifactName, environment.ShortSHA1())
 }
 

@@ -153,6 +153,7 @@ func TestAppConfigForCatapult(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.expected.HasLaunchConfig = true
 			got := appConfigForCatapult(tt.appName, tt.lc)
 			assert.Equal(t, tt.expected, got)
 		})

@@ -60,6 +60,9 @@ var (
 	// OidcEventBridgeRole is the ARN of the role used to publish platform
 	// events to EventBridge.
 	oidcEventBridgeRole = ""
+	// OidcArtifactReadRole is the ARN of the read-only role used to check
+	// that ECR images and lambda zips exist before a deploy.
+	oidcArtifactReadRole = ""
 
 	// LambdaRegions is the set of regions to upload Lambda artifacts to.
 	// Lambda artifacts are not replicated and must be uploaded to each region.
@@ -315,6 +318,13 @@ func OidcEventBridgeRole() string {
 		oidcEventBridgeRole = envMustString("OIDC_EVENTBRIDGE_ROLE", false)
 	}
 	return oidcEventBridgeRole
+}
+
+func OidcArtifactReadRole() string {
+	if oidcArtifactReadRole == "" {
+		oidcArtifactReadRole = envMustString("OIDC_ARTIFACT_READ_ROLE", false)
+	}
+	return oidcArtifactReadRole
 }
 
 func SlingshotURL() string {

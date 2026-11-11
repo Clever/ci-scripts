@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/Clever/ci-scripts/internal/artifactcheck"
 	"github.com/Clever/ci-scripts/internal/backstage"
 	"github.com/Clever/ci-scripts/internal/catalogsync"
 	"github.com/Clever/ci-scripts/internal/catapult"
@@ -81,7 +82,7 @@ func run(mode string) error {
 		fmt.Println(strings.Join(appIDs, " "))
 		return nil
 	case "deploy-apps":
-		return deployApps(appIDs)
+		return deployApps(apps, appIDs)
 	case "artifact-build-publish-deploy":
 		// continue
 	default:
@@ -313,7 +314,7 @@ func publishUtility() error {
 
 }
 
-func deployApps(appIds []string) error {
+func deployApps(apps map[string]*repo.AppConfig, appIds []string) error {
 	if len(appIds) == 0 {
 		fmt.Println("No applications have buildable changes. If this is unexpected, " +
 			"double check your artifact dependency configuration in the launch yaml or stack.yaml.")
@@ -334,7 +335,12 @@ func deployApps(appIds []string) error {
 	}
 
 	if shouldDeploy() {
-		if err := platformevents.NewDeployPublisher(ctx).DeployApps(ctx, appIds); err != nil {
+		images, objects := artifactcheck.NewAWSCheckers(ctx)
+		deployableAppIds, err := artifactcheck.FilterDeployable(ctx, apps, appIds, images, objects)
+		if err != nil {
+			return err
+		}
+		if err := platformevents.NewDeployPublisher(ctx).DeployApps(ctx, deployableAppIds); err != nil {
 			return err
 		}
 	}

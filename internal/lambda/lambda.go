@@ -34,7 +34,7 @@ func (l *Lambda) Publish(ctx context.Context, binaryPath, artifactName string) e
 	for _, region := range environment.LambdaRegions {
 		region := region
 		bucket := fmt.Sprintf("%s-%s", l.artifactBucketPrefix, region)
-		key := s3Key(artifactName)
+		key := S3Key(artifactName)
 		s3uri := fmt.Sprintf("s3://%s/%s", bucket, key)
 
 		fmt.Println("uploading lambda artifact", binaryPath, "to", s3uri, "...")
