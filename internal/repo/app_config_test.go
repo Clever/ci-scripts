@@ -356,7 +356,7 @@ build:
   command: make build
 `)
 
-		apps, err := discoverKubernetesApplications("config")
+		apps, err := discoverKubernetesApplications("config", SelectByDependencies)
 		assert.NoError(t, err)
 		assert.Len(t, apps, 2)
 		assert.Equal(t, &AppConfig{
@@ -389,7 +389,7 @@ stack:
 			t.Fatalf("write stray file: %v", err)
 		}
 
-		apps, err := discoverKubernetesApplications("config")
+		apps, err := discoverKubernetesApplications("config", SelectByDependencies)
 		assert.NoError(t, err)
 		assert.Len(t, apps, 1)
 		assert.Contains(t, apps, "my-app")
@@ -403,7 +403,7 @@ stack:
 			t.Fatalf("mkdir: %v", err)
 		}
 
-		apps, err := discoverKubernetesApplications("config")
+		apps, err := discoverKubernetesApplications("config", SelectByDependencies)
 		assert.NoError(t, err)
 		assert.Empty(t, apps)
 	})
@@ -412,7 +412,7 @@ stack:
 		dir := t.TempDir()
 		t.Chdir(dir)
 
-		_, err := discoverKubernetesApplications("config")
+		_, err := discoverKubernetesApplications("config", SelectByDependencies)
 		assert.Error(t, err)
 	})
 }

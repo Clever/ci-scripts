@@ -16,15 +16,14 @@ import (
 // DiscoverApplications returns buildable apps with detected changes. It reads
 // from both ./config (Kubernetes) and ./launch (Catapult), merging results with
 // the Kubernetes config winning when the same app appears in both.
-func DiscoverApplications() (map[string]*AppConfig, error) {
+func DiscoverApplications(selection ChangeSelection) (map[string]*AppConfig, error) {
 	catapultApps, catapultErr := discoverCatapultApplications("./launch")
 	if catapultErr != nil && !errors.Is(catapultErr, os.ErrNotExist) {
 		return nil, catapultErr
 	}
 	fmt.Println("Discovered Catapult apps:", len(catapultApps))
-	
 
-	kubernetesApps, kubernetesErr := discoverKubernetesApplications("./config")
+	kubernetesApps, kubernetesErr := discoverKubernetesApplications("./config", selection)
 	if kubernetesErr != nil && !errors.Is(kubernetesErr, os.ErrNotExist) {
 		return nil, kubernetesErr
 	}
@@ -101,7 +100,7 @@ func discoverCatapultApplications(dir string) (map[string]*AppConfig, error) {
 // discoverKubernetesApplications reads config/<app>/stack.yaml for each app
 // directory under the given dir, filters out apps with no detected changes,
 // and returns a map of app name to AppConfig.
-func discoverKubernetesApplications(dir string) (map[string]*AppConfig, error) {
+func discoverKubernetesApplications(dir string, selection ChangeSelection) (map[string]*AppConfig, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -110,6 +109,7 @@ func discoverKubernetesApplications(dir string) (map[string]*AppConfig, error) {
 		return nil, fmt.Errorf("failed to read config directory: %v", err)
 	}
 
+	finder := newChangePathFinder(selection)
 	apps := map[string]*AppConfig{}
 	for _, entry := range entries {
 		if !entry.IsDir() {
@@ -122,7 +122,11 @@ func discoverKubernetesApplications(dir string) (map[string]*AppConfig, error) {
 			return nil, fmt.Errorf("failed to read app config for %s: %v", appName, err)
 		}
 
-		changed, err := DetectArtifactDependencyChange(ac.Dependencies)
+		paths, err := finder.paths(ac)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list change paths for %s: %v", appName, err)
+		}
+		changed, err := DetectArtifactDependencyChange(paths)
 		if err != nil {
 			return nil, fmt.Errorf("failed to detect artifact dependency change for %s: %v", appName, err)
 		}
