@@ -1,7 +1,8 @@
-v1.17.0
-INFRA-1467 push a shared Docker image under each Kubernetes app name that uses it, since Kubernetes pods pull an image named after the app
+v1.19.0
+INFRA-1604 select changed Kubernetes apps from the Go import graph of build.package in stack.yaml, so a change to a shared package rebuilds every app that imports it
 
 Previously:
+- INFRA-1467 push a shared Docker image under each Kubernetes app name that uses it, since Kubernetes pods pull an image named after the app
 - INFRA-1076 attribute a fleet-merge deploy to the run owner (the Co-authored-by trailer) and fall back to the fleet bot; detect fleet merges by the clever-fleet[bot] commit author, not the message body
 - Namespace the pr-review skill invocation and allow the Skill tool, so the claude-code action runs Clever's review instead of Claude's built-in one
 - INFRA-1076 make CI bot-tolerant: attribute a fleet-merge deploy (detected by the clever-fleet[bot] co-author trailer) to the fleet bot, and skip the CI-failure notify for bot authors instead of failing the job
