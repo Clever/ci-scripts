@@ -53,18 +53,13 @@ func main() {
 
 func run(mode string) error {
 	var apps map[string]*repo.AppConfig
-	var appIDs []string
 	var err error
 
 	// Only discover applications for specific modes
-	if mode == "validate" || mode == "detect" || mode == "artifact-build-publish-deploy" || mode == "deploy-apps" {
+	if mode == "validate" || mode == "detect" || mode == "artifact-build-publish-deploy" {
 		apps, err = repo.DiscoverApplications()
 		if err != nil {
 			return err
-		}
-		appIDs = []string{}
-		for app := range apps {
-			appIDs = append(appIDs, app)
 		}
 	}
 
@@ -78,9 +73,13 @@ func run(mode string) error {
 		}
 		return nil
 	case "detect":
-		fmt.Println(strings.Join(appIDs, " "))
+		fmt.Println(strings.Join(appIDsOf(apps), " "))
 		return nil
 	case "deploy-apps":
+		appIDs, err := selectDeployAppIDs()
+		if err != nil {
+			return err
+		}
 		return deployApps(appIDs)
 	case "artifact-build-publish-deploy":
 		// continue
@@ -311,6 +310,27 @@ func publishUtility() error {
 	fmt.Printf("Successfully synced catalog entity %s \n", catalogInfo.GetName())
 	return nil
 
+}
+
+// selectDeployAppIDs returns the apps in DEPLOY_APP_IDS when it is set, and the changed apps otherwise.
+func selectDeployAppIDs() ([]string, error) {
+	if appIDs, ok := environment.DeployAppIDs(); ok {
+		fmt.Println("Deploying apps from DEPLOY_APP_IDS:", strings.Join(appIDs, " "))
+		return appIDs, nil
+	}
+	apps, err := repo.DiscoverApplications()
+	if err != nil {
+		return nil, err
+	}
+	return appIDsOf(apps), nil
+}
+
+func appIDsOf(apps map[string]*repo.AppConfig) []string {
+	appIDs := []string{}
+	for app := range apps {
+		appIDs = append(appIDs, app)
+	}
+	return appIDs
 }
 
 func deployApps(appIds []string) error {

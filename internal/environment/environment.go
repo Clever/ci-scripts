@@ -275,6 +275,13 @@ func gitLogHead(format string) (string, error) {
 	return string(out), nil
 }
 
+// DeployAppIDs returns the space-separated app IDs in DEPLOY_APP_IDS. ok is false when
+// the variable is unset; an empty value means no apps to deploy.
+func DeployAppIDs() (appIDs []string, ok bool) {
+	value, ok := os.LookupEnv("DEPLOY_APP_IDS")
+	return strings.Fields(value), ok
+}
+
 func Repo() string {
 	if repo == "" {
 		repo = envMustString("CIRCLE_PROJECT_REPONAME", true)
