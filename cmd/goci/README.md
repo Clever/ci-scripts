@@ -19,6 +19,7 @@ goci reads from **both** paths and merges the results. If the same app appears i
 2. `goci artifact-build-publish-deploy` builds, publishes and deploys any application artifacts.
 3. `goci validate` validates an applications go version, while also checking for compatible branch naming conventions for catapult.
 4. `goci publish-utility` publishes catalog-info.yaml to the service catalog.
+5. `goci deploy-apps` syncs changed apps with the service catalog and sends deploy events. When `DEPLOY_APP_IDS` is set, it deploys those space-separated app IDs and skips change detection. An empty value deploys nothing.
 
 
 ## Multi-app Support

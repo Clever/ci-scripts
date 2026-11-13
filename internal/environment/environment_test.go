@@ -1,6 +1,10 @@
 package environment
 
-import "testing"
+import (
+	"os"
+	"strings"
+	"testing"
+)
 
 func TestAuthorIsFleetBot(t *testing.T) {
 	tests := []struct {
@@ -94,5 +98,31 @@ func TestEmailBetweenAngles(t *testing.T) {
 		if got := emailBetweenAngles(tt.in); got != tt.want {
 			t.Errorf("emailBetweenAngles(%q) = %q, want %q", tt.in, got, tt.want)
 		}
+	}
+}
+
+func TestDeployAppIDs(t *testing.T) {
+	tests := []struct {
+		name    string
+		set     bool
+		value   string
+		wantIDs string
+		wantOK  bool
+	}{
+		{name: "unset", set: false, wantIDs: "", wantOK: false},
+		{name: "empty", set: true, value: "", wantIDs: "", wantOK: true},
+		{name: "two apps", set: true, value: " app-a  app-b ", wantIDs: "app-a,app-b", wantOK: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("DEPLOY_APP_IDS", tt.value)
+			if !tt.set {
+				os.Unsetenv("DEPLOY_APP_IDS")
+			}
+			gotIDs, gotOK := DeployAppIDs()
+			if strings.Join(gotIDs, ",") != tt.wantIDs || gotOK != tt.wantOK {
+				t.Errorf("DeployAppIDs() = %q, %v, want %q, %v", gotIDs, gotOK, tt.wantIDs, tt.wantOK)
+			}
+		})
 	}
 }

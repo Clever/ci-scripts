@@ -56,6 +56,13 @@ func run(mode string) error {
 	var appIDs []string
 	var err error
 
+	if mode == "deploy-apps" {
+		if deployAppIDs, ok := environment.DeployAppIDs(); ok {
+			fmt.Println("Deploying apps from DEPLOY_APP_IDS:", strings.Join(deployAppIDs, " "))
+			return deployApps(deployAppIDs)
+		}
+	}
+
 	// Only discover applications for specific modes
 	if mode == "validate" || mode == "detect" || mode == "artifact-build-publish-deploy" || mode == "deploy-apps" {
 		apps, err = repo.DiscoverApplications()
