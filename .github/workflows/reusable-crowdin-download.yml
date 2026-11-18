@@ -44,6 +44,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -83,7 +85,8 @@ jobs:
         env:
           TRANSLATION_PATHS: ${{ inputs.translation_paths }}
         run: |
-          # Staging first so new locale files count; unquoted so multiple pathspecs split
+          # Staging first so new locale files count; unquoted so multiple pathspecs split, set -f so the shell doesn't expand globs
+          set -f
           git add -A -- $TRANSLATION_PATHS
           if git diff --cached -I '^"PO-Revision-Date:' --quiet; then
             echo "Only PO-Revision-Date changed (or nothing); skipping PR."
@@ -101,8 +104,6 @@ jobs:
           PR_BODY: ${{ inputs.pull_request_body }}
           PR_ASSIGNEES: ${{ inputs.pull_request_assignees }}
         run: |
-          # Drop checkout's github.token header so the push uses CROWDIN_GH_TOKEN and CI runs on the PR
-          git config --local --unset-all http.https://github.com/.extraheader || true
           git config user.name "Crowdin Bot"
           git config user.email "support+bot@crowdin.com"
           git checkout -B "$BRANCH"
