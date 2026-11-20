@@ -88,8 +88,9 @@ jobs:
           # Staging first so new locale files count; unquoted so multiple pathspecs split, set -f so the shell doesn't expand globs
           set -f
           git add -A -- $TRANSLATION_PATHS
-          if git diff --cached -I '^"PO-Revision-Date:' --quiet; then
-            echo "Only PO-Revision-Date changed (or nothing); skipping PR."
+          # Header dates and #: source references churn without any translation change
+          if git diff --cached -I '^"PO-Revision-Date:' -I '^"POT-Creation-Date:' -I '^#: ' --quiet; then
+            echo "Only PO-Revision-Date, POT-Creation-Date or #: reference lines changed (or nothing); skipping PR."
             git reset --hard
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
