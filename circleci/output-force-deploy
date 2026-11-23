@@ -6,22 +6,21 @@ REPO=$CIRCLE_PROJECT_REPONAME
 : "${CIRCLE_PROJECT_USERNAME?"Missing required env var"}"
 USER=$CIRCLE_PROJECT_USERNAME
 
-# CircleCI rejects a pipeline that receives a parameter its config does not declare.
-if grep -q "force_deploy_apps:" .circleci/config.yml 2>/dev/null; then
-  PARAMETERS='"force_deploy": true,
-    "force_deploy_apps": ""'
-  APPS_HINT=" Set force_deploy_apps to the space-separated app IDs to deploy, for example \"app-a app-b\". Leave it empty to deploy every app under config/."
-else
-  PARAMETERS='"force_deploy": true'
-  APPS_HINT=""
-fi
+# build_publish_deploy persists this file; MANIFEST_APPS lists the apps it published.
+MANIFEST_FILE="${DEPLOY_MANIFEST_DIR:-/tmp/clever-orb}/deploy-manifest.env"
 
-echo "frontend-test failed! As a result, your deploy will not start automatically."
-echo "If you think this is a transient issue, try re-running this job with the \"Rerun from failed\" option."
-echo "To force deploy, do the following:"
-echo "1) Create a CircleCI api token for yourself: https://circleci.com/account/api. Save it to your 1password vault."
-echo "2) Run the following command, replacing CIRCLE_API_TOKEN with the token from step 1. (The colon after the token matters.)$APPS_HINT"
-echo "curl -u CIRCLE_API_TOKEN: \\
+main() {
+  select_parameters
+  echo "frontend-test failed! As a result, your deploy will not start automatically."
+  echo "If you think this is a transient issue, try re-running this job with the \"Rerun from failed\" option."
+  if [ -n "$NOTHING_TO_DEPLOY" ]; then
+    echo "build_publish_deploy published no apps, so there is nothing to force deploy."
+    return
+  fi
+  echo "To force deploy, do the following:"
+  echo "1) Create a CircleCI api token for yourself: https://circleci.com/account/api. Save it to your 1password vault."
+  echo "2) Run the following command, replacing CIRCLE_API_TOKEN with the token from step 1. (The colon after the token matters.)$APPS_HINT"
+  echo "curl -u CIRCLE_API_TOKEN: \\
 -X POST \\
 --header \"Content-Type: application/json\" -d '{
   \"branch\": \"master\",
@@ -29,3 +28,32 @@ echo "curl -u CIRCLE_API_TOKEN: \\
     $PARAMETERS
     }
 }' https://circleci.com/api/v2/project/github/$USER/$REPO/pipeline"
+}
+
+select_parameters() {
+  PARAMETERS='"force_deploy": true'
+  APPS_HINT=""
+  NOTHING_TO_DEPLOY=""
+  if [ -f "$MANIFEST_FILE" ]; then
+    # shellcheck disable=SC1090
+    source "$MANIFEST_FILE"
+  fi
+  if [ -n "${MANIFEST_APPS+set}" ]; then
+    if [ -z "$MANIFEST_APPS" ]; then
+      NOTHING_TO_DEPLOY=true
+      return
+    fi
+    set_force_deploy_apps "$MANIFEST_APPS" " force_deploy_apps lists the apps this pipeline published."
+  # CircleCI rejects a pipeline that receives a parameter its config does not declare.
+  elif grep -q "force_deploy_apps:" .circleci/config.yml 2>/dev/null; then
+    set_force_deploy_apps "" " Set force_deploy_apps to the space-separated app IDs to deploy, for example \"app-a app-b\". Leave it empty to deploy every app under config/."
+  fi
+}
+
+set_force_deploy_apps() {
+  PARAMETERS="\"force_deploy\": true,
+    \"force_deploy_apps\": \"$1\""
+  APPS_HINT="$2"
+}
+
+main
