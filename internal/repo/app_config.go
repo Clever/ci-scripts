@@ -14,6 +14,8 @@ const (
 
 	RunTypeDocker = "docker"
 	RunTypeLambda = "lambda"
+
+	DefaultDockerfile = "Dockerfile"
 )
 
 type appHelmYAML struct {
@@ -135,4 +137,12 @@ func appConfigForKubernetes(appName string) (*AppConfig, error) {
 		Dependencies: stack.Build.Dependencies,
 		IsKubernetes: true,
 	}, nil
+}
+
+// DockerfilePath resolves an empty build.dockerfile to the default Dockerfile.
+func DockerfilePath(dockerfile string) string {
+	if dockerfile == "" {
+		return DefaultDockerfile
+	}
+	return dockerfile
 }

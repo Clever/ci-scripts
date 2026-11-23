@@ -14,8 +14,6 @@ const (
 	SelectByImportGraph
 )
 
-const defaultDockerfile = "Dockerfile"
-
 // changePathFinder caches go inputs per package, because several apps can build from one package.
 type changePathFinder struct {
 	selection         ChangeSelection
@@ -45,7 +43,7 @@ func (finder *changePathFinder) paths(ac *AppConfig) ([]string, error) {
 	}
 	paths := append(slices.Clone(goPaths), "go.mod", "go.sum", path.Join("config", ac.Name))
 	if IsDockerRunType(ac) {
-		paths = append(paths, dockerfilePath(ac))
+		paths = append(paths, DockerfilePath(ac.Dockerfile))
 	}
 	return append(paths, ac.Dependencies...), nil
 }
@@ -61,11 +59,4 @@ func (finder *changePathFinder) goInputs(packageDir string) ([]string, error) {
 	}
 	finder.goInputsByPackage[key] = paths
 	return paths, nil
-}
-
-func dockerfilePath(ac *AppConfig) string {
-	if ac.Dockerfile == "" {
-		return defaultDockerfile
-	}
-	return ac.Dockerfile
 }

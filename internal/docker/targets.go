@@ -81,7 +81,7 @@ func BuildTargets(apps map[string]*repo.AppConfig) (map[string]DockerTarget, []*
 					"publish to different artifacts, so goci cannot build distinct "+
 					"images from it. Give each app its own build.docker.file. "+
 					"Conflicting apps: %q (artifact %q) and %q (artifact %q)",
-				dockerfileDisplayName(launch.Dockerfile),
+				repo.DockerfilePath(launch.Dockerfile),
 				prev.app, prev.artifact, name, artifact,
 			)
 		}
@@ -111,14 +111,4 @@ func ecrTag(repository string) string {
 		"%s.dkr.ecr.%s.amazonaws.com/%s:%s",
 		environment.ECRAccountID(), ecrRootRegion, repository, environment.ShortSHA1(),
 	)
-}
-
-// dockerfileDisplayName returns a human-readable Dockerfile name for
-// error messages. An empty path is the default that docker.Build
-// resolves to "Dockerfile".
-func dockerfileDisplayName(path string) string {
-	if path == "" {
-		return "Dockerfile"
-	}
-	return path
 }
