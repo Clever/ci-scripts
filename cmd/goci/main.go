@@ -57,7 +57,7 @@ func run(mode string) error {
 
 	// Only discover applications for specific modes
 	if mode == "validate" || mode == "detect" || mode == "artifact-build-publish-deploy" {
-		apps, err = repo.DiscoverApplications()
+		apps, err = repo.DiscoverApplications(changeSelection(mode))
 		if err != nil {
 			return err
 		}
@@ -169,6 +169,13 @@ func run(mode string) error {
 
 	// We want to validate on every run, not just when the mode is "validate".
 	return validateRun()
+}
+
+func changeSelection(mode string) repo.ChangeSelection {
+	if mode == "artifact-build-publish-deploy" || mode == "detect" {
+		return repo.SelectByImportGraph
+	}
+	return repo.SelectByDependencies
 }
 
 // validateRun checks the env.branch and go version to ensure the build is valid.
@@ -318,7 +325,7 @@ func selectDeployAppIDs() ([]string, error) {
 		fmt.Println("Deploying apps from DEPLOY_APP_IDS:", strings.Join(appIDs, " "))
 		return appIDs, nil
 	}
-	apps, err := repo.DiscoverApplications()
+	apps, err := repo.DiscoverApplications(repo.SelectByDependencies)
 	if err != nil {
 		return nil, err
 	}
