@@ -1,21 +1,31 @@
 #!/bin/bash
 
 # Set automatically by CircleCI
-: ${CIRCLE_PROJECT_REPONAME?"Missing required env var"}
+: "${CIRCLE_PROJECT_REPONAME?"Missing required env var"}"
 REPO=$CIRCLE_PROJECT_REPONAME
-: ${CIRCLE_PROJECT_USERNAME?"Missing required env var"}
+: "${CIRCLE_PROJECT_USERNAME?"Missing required env var"}"
 USER=$CIRCLE_PROJECT_USERNAME
+
+# CircleCI rejects a pipeline that receives a parameter its config does not declare.
+if grep -q "force_deploy_apps:" .circleci/config.yml 2>/dev/null; then
+  PARAMETERS='"force_deploy": true,
+    "force_deploy_apps": ""'
+  APPS_HINT=" Set force_deploy_apps to the space-separated app IDs to deploy, for example \"app-a app-b\". Leave it empty to deploy every app under config/."
+else
+  PARAMETERS='"force_deploy": true'
+  APPS_HINT=""
+fi
 
 echo "frontend-test failed! As a result, your deploy will not start automatically."
 echo "If you think this is a transient issue, try re-running this job with the \"Rerun from failed\" option."
 echo "To force deploy, do the following:"
 echo "1) Create a CircleCI api token for yourself: https://circleci.com/account/api. Save it to your 1password vault."
-echo "2) Run the following command, replacing CIRCLE_API_TOKEN with the token from step 1. (The colon after the token matters.)"
+echo "2) Run the following command, replacing CIRCLE_API_TOKEN with the token from step 1. (The colon after the token matters.)$APPS_HINT"
 echo "curl -u CIRCLE_API_TOKEN: \\
 -X POST \\
 --header \"Content-Type: application/json\" -d '{
   \"branch\": \"master\",
   \"parameters\": {
-    \"force_deploy\": true
+    $PARAMETERS
     }
 }' https://circleci.com/api/v2/project/github/$USER/$REPO/pipeline"
